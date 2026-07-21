@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pothenot · Resección Inversa</title>
+<title>CRTM05 · Distancias y Azimuts</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -11,7 +11,6 @@
     --navy: #0B1E33;
     --navy-line: #1C3A5E;
     --paper: #EDE6D6;
-    --paper-dim: #E1D8C4;
     --ink: #1A1A1A;
     --brass: #B8860B;
     --brass-bright: #D6A421;
@@ -33,7 +32,6 @@
   }
   .wrap{max-width: 980px; margin: 0 auto;}
 
-  /* HERO */
   .hero{
     display:flex; flex-wrap:wrap; gap:32px; align-items:center;
     margin-bottom:48px; padding-bottom: 32px;
@@ -48,115 +46,95 @@
   }
   h1{
     font-family:'Spectral', serif; font-weight:700;
-    font-size: clamp(32px, 5vw, 48px);
+    font-size: clamp(30px, 5vw, 46px);
     line-height:1.05; margin:0 0 14px; color:var(--paper);
   }
-  .lede{
-    font-size:15px; line-height:1.55; color:#C9C0AC; max-width:46ch; margin:0;
-  }
+  .lede{ font-size:15px; line-height:1.55; color:#C9C0AC; max-width:48ch; margin:0; }
   .hero-diagram{
     width:260px; height:260px; flex-shrink:0;
-    background: var(--paper);
-    border-radius: 4px;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.35);
-    position:relative;
+    background: var(--paper); border-radius: 4px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35); position:relative;
   }
   .hero-diagram svg{width:100%; height:100%; display:block;}
 
-  /* SECTIONS */
   section.card{
-    background: var(--paper);
-    color: var(--ink);
-    border-radius: 4px;
-    padding: 28px 30px;
-    margin-bottom: 24px;
+    background: var(--paper); color: var(--ink);
+    border-radius: 4px; padding: 28px 30px; margin-bottom: 24px;
     box-shadow: 0 10px 24px rgba(0,0,0,0.28);
   }
-  .section-head{
-    display:flex; align-items:baseline; gap:12px; margin-bottom:20px;
-  }
+  .section-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:20px; }
   .section-num{
     font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--brass);
     border:1px solid var(--brass); border-radius:2px; padding:2px 7px;
   }
-  .section-title{
-    font-family:'Spectral', serif; font-weight:600; font-size:20px; margin:0; color:var(--ink);
+  .section-title{ font-family:'Spectral', serif; font-weight:600; font-size:20px; margin:0; color:var(--ink); }
+  .section-sub{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--muted); margin: -10px 0 18px; }
+
+  .camera-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .btn{
+    font-family:'Spectral', serif; font-weight:600; font-size:15px;
+    border:none; border-radius:3px; padding:13px 20px; cursor:pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn-primary{ background: var(--brass); color:#1A1A1A; }
+  .btn-primary:hover{ background: var(--brass-bright); }
+  .btn-ghost{ background: transparent; color: var(--navy); border:1px solid var(--navy); }
+  .btn-ghost:hover{ background: rgba(11,30,51,0.06); }
+  .btn-small{ font-size:13px; padding:8px 14px; }
+  .btn-danger{ background: transparent; color: var(--err); border:1px solid var(--err); }
+
+  input[type="file"]{ display:none; }
+
+  .preview-box{ margin-bottom:14px; }
+  .preview-box img{ max-width:100%; max-height:260px; border-radius:4px; border:1px solid #c9bfa6; display:block; }
+
+  .ocr-status{ font-family:'IBM Plex Mono', monospace; font-size:13px; color: var(--navy); margin: 10px 0; }
+  .ocr-progress{ height:6px; background:#ddd3ba; border-radius:3px; overflow:hidden; margin:8px 0 14px; display:none; }
+  .ocr-progress-bar{ height:100%; width:0%; background: var(--brass); transition: width 0.2s ease; }
+
+  .raw-text{
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; background:#FBF9F3;
+    border:1px solid #c9bfa6; border-radius:3px; padding:10px 12px; white-space:pre-wrap;
+    max-height:140px; overflow:auto; color:#444; margin-bottom:14px; display:none;
   }
 
-  .points-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px 28px;}
-  @media (max-width:640px){.points-grid{grid-template-columns:1fr;}}
-
-  .point-block h3{
-    font-family:'IBM Plex Mono', monospace; font-size:13px; letter-spacing:0.08em;
-    text-transform:uppercase; color:var(--muted); margin:0 0 10px;
-    display:flex; align-items:center; gap:8px;
+  .detected-list{ margin-bottom:14px; }
+  .detected-item{
+    display:flex; gap:10px; align-items:center; font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px; padding:7px 0; border-bottom:1px dashed #ddd3ba;
   }
-  .point-dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
-  .dot-A{background:#2E6E8E;} .dot-B{background:var(--brass);} .dot-C{background:#7A4E9E;} .dot-P{background:var(--err);}
+  .detected-item input{ width:130px; }
 
-  label{
-    display:block; font-family:'IBM Plex Mono', monospace; font-size:11.5px;
-    color:var(--muted); margin-bottom:4px;
+  table{ width:100%; border-collapse:collapse; margin-bottom:16px; font-family:'IBM Plex Mono', monospace; font-size:13.5px; }
+  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); padding:6px 8px; border-bottom:1px solid #ddd3ba; }
+  td{ padding:6px 8px; border-bottom:1px dashed #e4dcc6; }
+  td input{ width:100%; }
+  input[type="text"], input[type="number"]{
+    padding:7px 8px; font-family:'IBM Plex Mono', monospace; font-size:13.5px;
+    border:1px solid #c9bfa6; border-radius:3px; background:#FBF9F3; color:var(--ink);
   }
-  .field{margin-bottom:14px;}
-  input[type="number"]{
-    width:100%; padding:9px 10px; font-family:'IBM Plex Mono', monospace;
-    font-size:14px; border:1px solid #c9bfa6; border-radius:3px;
-    background:#FBF9F3; color:var(--ink);
-  }
-  input[type="number"]:focus{outline:2px solid var(--brass); outline-offset:1px; border-color:var(--brass);}
-
-  .angle-row{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
-
-  .angles-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px 28px;}
-  @media (max-width:640px){.angles-grid{grid-template-columns:1fr;}}
-
-  .calc-btn{
-    display:block; width:100%; margin-top:6px;
-    background: var(--brass); color:#1A1A1A; border:none; border-radius:3px;
-    padding:15px; font-family:'Spectral', serif; font-weight:600; font-size:17px;
-    cursor:pointer; transition: background 0.15s ease, transform 0.1s ease;
-  }
-  .calc-btn:hover{background: var(--brass-bright);}
-  .calc-btn:active{transform: translateY(1px);}
-  .calc-btn:focus-visible{outline:3px solid var(--navy); outline-offset:2px;}
-
-  .results{display:none;}
-  .results.show{display:block;}
-
-  .status{
-    font-family:'IBM Plex Mono', monospace; font-size:13px; padding:12px 14px;
-    border-radius:3px; margin-bottom:18px;
-  }
-  .status.ok{background:#E1EBE3; color:var(--ok); border:1px solid #B7CFBB;}
-  .status.err{background:#F3E1DD; color:var(--err); border:1px solid #DDB6AD;}
-
-  .coord-card{
-    background: var(--navy); color:var(--paper);
-    border-radius:4px; padding:22px 24px; margin-bottom:18px;
-    display:flex; gap:32px; flex-wrap:wrap;
-  }
-  .coord-item .k{
-    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em;
-    text-transform:uppercase; color:var(--brass-bright); margin:0 0 6px;
-  }
-  .coord-item .v{
-    font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:600; margin:0;
+  input:focus{ outline:2px solid var(--brass); outline-offset:1px; border-color:var(--brass); }
+  .row-actions{ text-align:right; }
+  .icon-btn{
+    background:none; border:none; color:var(--err); cursor:pointer;
+    font-family:'IBM Plex Mono', monospace; font-size:12px;
   }
 
-  details{border-top:1px solid #ddd3ba; padding-top:14px;}
-  summary{
-    font-family:'IBM Plex Mono', monospace; font-size:13px; cursor:pointer;
-    color:var(--navy); text-transform:uppercase; letter-spacing:0.06em;
-  }
-  .breakdown-list{list-style:none; padding:0; margin:14px 0 0; font-family:'IBM Plex Mono', monospace; font-size:13.5px;}
-  .breakdown-list li{padding:6px 0; border-bottom:1px dashed #ddd3ba; display:flex; justify-content:space-between; gap:10px;}
-  .breakdown-list li span:last-child{color:var(--navy); font-weight:600;}
+  .results{ display:none; }
+  .results.show{ display:block; }
+  .status{ font-family:'IBM Plex Mono', monospace; font-size:13px; padding:12px 14px; border-radius:3px; margin-bottom:18px; }
+  .status.ok{ background:#E1EBE3; color:var(--ok); border:1px solid #B7CFBB; }
+  .status.err{ background:#F3E1DD; color:var(--err); border:1px solid #DDB6AD; }
 
-  footer{
-    text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12px;
-    color:#8494a8; margin-top:40px;
+  .total-card{
+    background: var(--navy); color:var(--paper); border-radius:4px; padding:20px 24px;
+    margin-bottom:18px; display:flex; gap:32px; flex-wrap:wrap;
   }
+  .total-item .k{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--brass-bright); margin:0 0 6px; }
+  .total-item .v{ font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600; margin:0; }
+
+  footer{ text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12px; color:#8494a8; margin-top:40px; }
 </style>
 </head>
 <body>
@@ -164,246 +142,377 @@
 
   <div class="hero">
     <div class="hero-text">
-      <p class="eyebrow">Levantamiento topográfico · Resección</p>
-      <h1>Método de Pothenot</h1>
-      <p class="lede">Calcula las coordenadas UTM de una estación libre (P) a partir de tres puntos de control (A, B, C) y los dos ángulos observados entre ellos.</p>
+      <p class="eyebrow">CRTM05 · SIRGAS Costa Rica</p>
+      <h1>Coordenadas a Distancias</h1>
+      <p class="lede">Fotografía una libreta o plano con coordenadas CRTM05, extrae los pares X/Y automáticamente con la cámara, calcula distancia y azimut entre cada punto, y exporta el polígono cerrado en DXF georeferenciado.</p>
     </div>
     <div class="hero-diagram">
-      <svg viewBox="0 0 260 260" id="diagram">
-        <!-- populated by JS -->
-      </svg>
+      <svg viewBox="0 0 260 260" id="diagram"></svg>
     </div>
   </div>
 
   <section class="card">
-    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Coordenadas conocidas (UTM)</h2></div>
-    <div class="points-grid">
-      <div class="point-block">
-        <h3><span class="point-dot dot-A"></span>Punto A</h3>
-        <div class="field"><label for="XA">Este (X)</label><input type="number" id="XA" step="0.001" value="274600.21"></div>
-        <div class="field"><label for="YA">Norte (Y)</label><input type="number" id="YA" step="0.001" value="8662610.80"></div>
-      </div>
-      <div class="point-block">
-        <h3><span class="point-dot dot-B"></span>Punto B (central)</h3>
-        <div class="field"><label for="XB">Este (X)</label><input type="number" id="XB" step="0.001" value="274881.40"></div>
-        <div class="field"><label for="YB">Norte (Y)</label><input type="number" id="YB" step="0.001" value="8662582.60"></div>
-      </div>
-      <div class="point-block">
-        <h3><span class="point-dot dot-C"></span>Punto C</h3>
-        <div class="field"><label for="XC">Este (X)</label><input type="number" id="XC" step="0.001" value="275330.60"></div>
-        <div class="field"><label for="YC">Norte (Y)</label><input type="number" id="YC" step="0.001" value="8662624.10"></div>
-      </div>
+    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Capturar coordenadas con cámara</h2></div>
+    <p class="section-sub">Toma una foto clara de las coordenadas escritas (ej. "X: 506218.34  Y: 1096223.12"). El reconocimiento funciona mejor con letra o impresión legible.</p>
+
+    <div class="camera-row">
+      <label class="btn btn-primary" for="cameraInput">📷 Tomar foto</label>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment">
+      <label class="btn btn-ghost" for="galleryInput">Subir imagen</label>
+      <input type="file" id="galleryInput" accept="image/*">
     </div>
+
+    <div class="preview-box" id="previewBox" style="display:none;">
+      <img id="previewImg" alt="Vista previa de la foto capturada">
+    </div>
+
+    <div class="ocr-status" id="ocrStatus"></div>
+    <div class="ocr-progress" id="ocrProgress"><div class="ocr-progress-bar" id="ocrProgressBar"></div></div>
+    <div class="raw-text" id="rawText"></div>
+
+    <div class="detected-list" id="detectedList"></div>
+    <button class="btn btn-ghost btn-small" id="addDetectedBtn" style="display:none;">+ Agregar coordenadas detectadas a la lista de puntos</button>
   </section>
 
   <section class="card">
-    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Ángulos observados</h2></div>
-    <div class="angles-grid">
-      <div class="point-block">
-        <h3>Ángulo Alfa (α) · en P entre A y B</h3>
-        <div class="angle-row">
-          <div class="field"><label for="ag">Grados</label><input type="number" id="ag" step="1" value="30"></div>
-          <div class="field"><label for="am">Minutos</label><input type="number" id="am" step="1" min="0" max="59" value="12"></div>
-          <div class="field"><label for="as_">Segundos</label><input type="number" id="as_" step="0.1" min="0" max="59.99" value="10.0"></div>
-        </div>
-      </div>
-      <div class="point-block">
-        <h3>Ángulo Beta (β) · en P entre B y C</h3>
-        <div class="angle-row">
-          <div class="field"><label for="bg">Grados</label><input type="number" id="bg" step="1" value="49"></div>
-          <div class="field"><label for="bm">Minutos</label><input type="number" id="bm" step="1" min="0" max="59" value="53"></div>
-          <div class="field"><label for="bs_">Segundos</label><input type="number" id="bs_" step="0.1" min="0" max="59.99" value="40.0"></div>
-        </div>
-      </div>
-    </div>
-    <button class="calc-btn" id="calcBtn">Calcular coordenadas de P</button>
+    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de puntos</h2></div>
+    <p class="section-sub">Revisa, corrige o agrega puntos manualmente. El orden de la lista define el recorrido (P1 → P2 → P3…).</p>
+    <table id="pointsTable">
+      <thead>
+        <tr><th>Nombre</th><th>Este (X)</th><th>Norte (Y)</th><th></th></tr>
+      </thead>
+      <tbody id="pointsBody"></tbody>
+    </table>
+    <button class="btn btn-ghost btn-small" id="addPointBtn">+ Agregar punto manualmente</button>
+    <button class="btn btn-primary" id="calcBtn" style="display:block; width:100%; margin-top:18px;">Calcular distancias y azimuts</button>
   </section>
 
   <section class="card results" id="results">
-    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados del levantamiento</h2></div>
+    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados</h2></div>
     <div id="statusBox"></div>
-    <div class="coord-card" id="coordCard" style="display:none;">
-      <div class="coord-item"><p class="k">Este (X)</p><p class="v" id="outX">—</p></div>
-      <div class="coord-item"><p class="k">Norte (Y)</p><p class="v" id="outY">—</p></div>
+    <div class="total-card" id="totalCard" style="display:none;">
+      <div class="total-item"><p class="k">Distancia total</p><p class="v" id="outTotal">—</p></div>
+      <div class="total-item"><p class="k">Tramos</p><p class="v" id="outCount">—</p></div>
     </div>
-    <details id="breakdown" style="display:none;">
-      <summary>Ver desglose analítico</summary>
-      <ul class="breakdown-list" id="breakdownList"></ul>
-    </details>
+    <table id="resultsTable" style="display:none;">
+      <thead><tr><th>Tramo</th><th>Distancia (m)</th><th>Azimut</th></tr></thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+    <button class="btn btn-primary" id="dxfBtn" style="display:none; width:100%;">⬇ Descargar polígono cerrado (DXF georeferenciado)</button>
+    <p class="section-sub" id="dxfHint" style="display:none; margin-top:10px;">Se necesitan mínimo 3 puntos para cerrar un polígono. El DXF usa las coordenadas CRTM05 reales (sin desplazar el origen), listo para abrir en AutoCAD/Civil 3D u otro software CAD/GIS.</p>
   </section>
 
-  <footer>Convertido desde el script Streamlit original · cálculo ejecutado localmente en el navegador</footer>
+  <footer>Lectura de coordenadas por OCR (Tesseract.js, procesado localmente en el navegador) · CRTM05 / SIRGAS Costa Rica</footer>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 <script>
-function dmsToDecimal(g, m, s){ return g + (m/60.0) + (s/3600.0); }
+let pointCounter = 0;
+let points = []; // {id, name, x, y}
 
-function decimalToDms(decimal){
-  const g = Math.trunc(decimal);
-  const mFull = (decimal - g) * 60;
-  const m = Math.trunc(mFull);
-  const s = (mFull - m) * 60;
-  return `${g}\u00B0 ${m}' ${s.toFixed(2)}"`;
+function addPointRow(name, x, y){
+  pointCounter++;
+  const id = 'pt' + pointCounter;
+  points.push({id, name: name || ('P' + pointCounter), x: x ?? '', y: y ?? ''});
+  renderPointsTable();
 }
 
+function removePoint(id){
+  points = points.filter(p => p.id !== id);
+  renderPointsTable();
+}
+
+function renderPointsTable(){
+  const body = document.getElementById('pointsBody');
+  body.innerHTML = '';
+  points.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${p.name}" data-id="${p.id}" data-field="name"></td>
+      <td><input type="number" step="0.01" value="${p.x}" data-id="${p.id}" data-field="x"></td>
+      <td><input type="number" step="0.01" value="${p.y}" data-id="${p.id}" data-field="y"></td>
+      <td class="row-actions"><button class="icon-btn" data-remove="${p.id}">Quitar</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const id = e.target.dataset.id, field = e.target.dataset.field;
+      const p = points.find(pt => pt.id === id);
+      if(p) p[field] = field === 'name' ? e.target.value : parseFloat(e.target.value);
+      updatePreviewDiagram();
+    });
+  });
+  body.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', e => removePoint(e.target.dataset.remove));
+  });
+  updatePreviewDiagram();
+}
+
+document.getElementById('addPointBtn').addEventListener('click', () => addPointRow());
+
+// --- seed with two empty points to start ---
+addPointRow('P1', '', '');
+addPointRow('P2', '', '');
+
+// --- DIAGRAM ---
+function renderDiagram(pts){
+  const svg = document.getElementById('diagram');
+  const valid = pts.filter(p => !isNaN(p.x) && !isNaN(p.y) && p.x !== '' && p.y !== '');
+  if(valid.length < 2){ svg.innerHTML = ''; return; }
+  const xs = valid.map(p=>p.x), ys = valid.map(p=>p.y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs);
+  const minY=Math.min(...ys), maxY=Math.max(...ys);
+  const pad = 30, w = 260, h = 260;
+  const spanX = (maxX-minX)||1, spanY=(maxY-minY)||1;
+  const scale = Math.min((w-2*pad)/spanX, (h-2*pad)/spanY);
+  function proj(p){
+    const px = pad + (p.x-minX)*scale + (w-2*pad-spanX*scale)/2;
+    const py = h - (pad + (p.y-minY)*scale + (h-2*pad-spanY*scale)/2);
+    return {x:px, y:py};
+  }
+  const proj_pts = valid.map(proj);
+  let lines = '';
+  for(let i=0;i<proj_pts.length-1;i++){
+    lines += `<line x1="${proj_pts[i].x}" y1="${proj_pts[i].y}" x2="${proj_pts[i+1].x}" y2="${proj_pts[i+1].y}" stroke="#8B3A2E" stroke-width="1.5"/>`;
+  }
+  let dots = '';
+  proj_pts.forEach((p, i) => {
+    dots += `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#B8860B"/>
+      <text x="${p.x+7}" y="${p.y-6}" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1A1A">${valid[i].name}</text>`;
+  });
+  svg.innerHTML = lines + dots;
+}
+
+function updatePreviewDiagram(){ renderDiagram(points); }
+
+// --- AZIMUTH / DISTANCE MATH ---
 function calcularAzimut(x1,y1,x2,y2){
   const azRad = Math.atan2(x2-x1, y2-y1);
   let azDeg = azRad * 180/Math.PI;
   return (azDeg + 360) % 360;
 }
-
-function num(id){ return parseFloat(document.getElementById(id).value); }
-
-function renderDiagram(A,B,C,P){
-  const svg = document.getElementById('diagram');
-  const pts = P ? [A,B,C,P] : [A,B,C];
-  const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
-  const minX=Math.min(...xs), maxX=Math.max(...xs);
-  const minY=Math.min(...ys), maxY=Math.max(...ys);
-  const pad = 30;
-  const w = 260, h = 260;
-  const spanX = (maxX-minX)||1, spanY=(maxY-minY)||1;
-  const scale = Math.min((w-2*pad)/spanX, (h-2*pad)/spanY);
-  function proj(p){
-    const px = pad + (p.x-minX)*scale + (w-2*pad-spanX*scale)/2;
-    const py = h - (pad + (p.y-minY)*scale + (h-2*pad-spanY*scale)/2); // flip Y (north=up)
-    return {x:px, y:py};
-  }
-  const a = proj(A), b = proj(B), c = proj(C);
-  let inner = `
-    <line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#c9bfa6" stroke-width="1.5"/>
-    <line x1="${b.x}" y1="${b.y}" x2="${c.x}" y2="${c.y}" stroke="#c9bfa6" stroke-width="1.5"/>
-    <line x1="${a.x}" y1="${a.y}" x2="${c.x}" y2="${c.y}" stroke="#c9bfa6" stroke-width="1" stroke-dasharray="3 3"/>
-  `;
-  if(P){
-    const p = proj(P);
-    inner += `
-      <line x1="${p.x}" y1="${p.y}" x2="${a.x}" y2="${a.y}" stroke="#8B3A2E" stroke-width="1.5"/>
-      <line x1="${p.x}" y1="${p.y}" x2="${b.x}" y2="${b.y}" stroke="#8B3A2E" stroke-width="1.5"/>
-      <line x1="${p.x}" y1="${p.y}" x2="${c.x}" y2="${c.y}" stroke="#8B3A2E" stroke-width="1.5"/>
-      <circle cx="${p.x}" cy="${p.y}" r="5" fill="#8B3A2E"/>
-      <text x="${p.x+8}" y="${p.y+4}" font-family="IBM Plex Mono, monospace" font-size="11" fill="#8B3A2E" font-weight="600">P</text>
-    `;
-  }
-  inner += `
-    <circle cx="${a.x}" cy="${a.y}" r="4.5" fill="#2E6E8E"/>
-    <text x="${a.x+7}" y="${a.y-6}" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1A1A">A</text>
-    <circle cx="${b.x}" cy="${b.y}" r="4.5" fill="#B8860B"/>
-    <text x="${b.x+7}" y="${b.y-6}" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1A1A">B</text>
-    <circle cx="${c.x}" cy="${c.y}" r="4.5" fill="#7A4E9E"/>
-    <text x="${c.x+7}" y="${c.y-6}" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1A1A">C</text>
-  `;
-  svg.innerHTML = inner;
+function decimalToDms(decimal){
+  const g = Math.trunc(decimal);
+  const mFull = (decimal - g) * 60;
+  const m = Math.trunc(mFull);
+  const s = (mFull - m) * 60;
+  return `${g}\u00B0 ${m}' ${s.toFixed(1)}"`;
 }
 
-function updatePreviewDiagram(){
-  try{
-    const A={x:num('XA'), y:num('YA')};
-    const B={x:num('XB'), y:num('YB')};
-    const C={x:num('XC'), y:num('YC')};
-    if([A.x,A.y,B.x,B.y,C.x,C.y].every(v=>!isNaN(v))){
-      renderDiagram(A,B,C,null);
-    }
-  }catch(e){ /* ignore during typing */ }
-}
-
-['XA','YA','XB','YB','XC','YC'].forEach(id=>{
-  document.getElementById(id).addEventListener('input', updatePreviewDiagram);
-});
-updatePreviewDiagram();
-
-document.getElementById('calcBtn').addEventListener('click', function(){
+document.getElementById('calcBtn').addEventListener('click', () => {
   const resultsSection = document.getElementById('results');
   const statusBox = document.getElementById('statusBox');
-  const coordCard = document.getElementById('coordCard');
-  const breakdown = document.getElementById('breakdown');
-  const breakdownList = document.getElementById('breakdownList');
+  const totalCard = document.getElementById('totalCard');
+  const resultsTable = document.getElementById('resultsTable');
+  const resultsBody = document.getElementById('resultsBody');
   resultsSection.classList.add('show');
 
-  try{
-    const XA=num('XA'), YA=num('YA');
-    const XB=num('XB'), YB=num('YB');
-    const XC=num('XC'), YC=num('YC');
-    const ag=num('ag'), am=num('am'), as_=num('as_');
-    const bg=num('bg'), bm=num('bm'), bs_=num('bs_');
+  const valid = points.filter(p => !isNaN(p.x) && !isNaN(p.y) && p.x !== '' && p.y !== '' && p.x !== null && p.y !== null);
 
-    const alphaDeg = dmsToDecimal(ag, am, as_);
-    const betaDeg = dmsToDecimal(bg, bm, bs_);
-    const alpha = alphaDeg * Math.PI/180;
-    const beta = betaDeg * Math.PI/180;
+  if(valid.length < 2){
+    statusBox.innerHTML = `<div class="status err">Necesitas al menos 2 puntos con coordenadas X/Y válidas.</div>`;
+    totalCard.style.display = 'none';
+    resultsTable.style.display = 'none';
+    return;
+  }
 
-    const AB = Math.hypot(XB-XA, YB-YA);
-    const BC = Math.hypot(XC-XB, YC-YB);
+  statusBox.innerHTML = `<div class="status ok">Cálculo realizado sobre ${valid.length} puntos (${valid.length-1} tramos).</div>`;
+  resultsBody.innerHTML = '';
+  let total = 0;
+  for(let i=0; i<valid.length-1; i++){
+    const a = valid[i], b = valid[i+1];
+    const dist = Math.hypot(b.x-a.x, b.y-a.y);
+    const az = calcularAzimut(a.x, a.y, b.x, b.y);
+    total += dist;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${a.name} → ${b.name}</td><td>${dist.toFixed(3)}</td><td>${decimalToDms(az)} (${az.toFixed(4)}°)</td>`;
+    resultsBody.appendChild(tr);
+  }
+  document.getElementById('outTotal').textContent = total.toFixed(3) + ' m';
+  document.getElementById('outCount').textContent = (valid.length - 1);
+  totalCard.style.display = 'flex';
+  resultsTable.style.display = 'table';
+  renderDiagram(valid);
 
-    const Z_AB = calcularAzimut(XA,YA,XB,YB);
-    const Z_CB = calcularAzimut(XC,YC,XB,YB);
-
-    const Z_BA = (Z_AB + 180) % 360;
-    const Z_BC = (Z_CB + 180) % 360;
-
-    const thetaDeg = ((Z_BA - Z_BC) % 360 + 360) % 360;
-
-    const sumaACDeg = 360 - (thetaDeg + alphaDeg + betaDeg);
-    const sumaAC = sumaACDeg * Math.PI/180;
-
-    const cotSuma = 1/Math.tan(sumaAC);
-    const ctgA = (AB*Math.sin(beta))/(BC*Math.sin(alpha)*Math.sin(sumaAC)) + cotSuma;
-
-    let A_rad = Math.atan(1/ctgA);
-    let A_deg = A_rad * 180/Math.PI;
-    if(A_deg < 0){ A_deg += 180; }
-
-    const C_deg = sumaACDeg - A_deg;
-
-    const theta1Deg = 180 - (A_deg + alphaDeg);
-    const theta2Deg = 180 - (C_deg + betaDeg);
-    const theta1 = theta1Deg * Math.PI/180;
-    const theta2 = theta2Deg * Math.PI/180;
-
-    const AP = AB * Math.sin(theta1) / Math.sin(alpha);
-    const CP = BC * Math.sin(theta2) / Math.sin(beta);
-
-    const Z_AP = (Z_AB + A_deg) % 360;
-    const Z_CP = (Z_CB - C_deg + 360) % 360;
-
-    const XP_A = XA + AP * Math.sin(Z_AP * Math.PI/180);
-    const YP_A = YA + AP * Math.cos(Z_AP * Math.PI/180);
-    const XP_C = XC + CP * Math.sin(Z_CP * Math.PI/180);
-    const YP_C = YC + CP * Math.cos(Z_CP * Math.PI/180);
-
-    const errorCierre = Math.hypot(XP_A - XP_C, YP_A - YP_C);
-
-    if(!isFinite(errorCierre)){
-      throw new Error("Los datos ingresados producen una configuración geométrica indeterminada (revisa que A, B y C no estén alineados).");
-    }
-
-    if(errorCierre < 0.005){
-      statusBox.innerHTML = `<div class="status ok">Cierre matemático correcto — error de cierre: ${errorCierre.toFixed(4)} m (&lt; 5 mm)</div>`;
-      coordCard.style.display = 'flex';
-      document.getElementById('outX').textContent = XP_A.toFixed(3);
-      document.getElementById('outY').textContent = YP_A.toFixed(3);
-
-      breakdown.style.display = 'block';
-      breakdownList.innerHTML = `
-        <li><span>Ángulo calculado en A</span><span>${decimalToDms(A_deg)}</span></li>
-        <li><span>Ángulo calculado en C</span><span>${decimalToDms(C_deg)}</span></li>
-        <li><span>Distancia a P desde A</span><span>${AP.toFixed(3)} m</span></li>
-        <li><span>Distancia a P desde C</span><span>${CP.toFixed(3)} m</span></li>
-      `;
-
-      const A={x:XA,y:YA}, B={x:XB,y:YB}, C={x:XC,y:YC}, P={x:XP_A,y:YP_A};
-      renderDiagram(A,B,C,P);
-    } else {
-      statusBox.innerHTML = `<div class="status err">Atención: hay una discrepancia de ${errorCierre.toFixed(4)} m en la comprobación matemática. Revisa los datos ingresados.</div>`;
-      coordCard.style.display = 'none';
-      breakdown.style.display = 'none';
-    }
-  } catch(e){
-    statusBox.innerHTML = `<div class="status err">Ocurrió un error en el cálculo. Verifica los datos. Detalles: ${e.message}</div>`;
-    coordCard.style.display = 'none';
-    breakdown.style.display = 'none';
+  lastValidPoints = valid;
+  const dxfBtn = document.getElementById('dxfBtn');
+  const dxfHint = document.getElementById('dxfHint');
+  if(valid.length >= 3){
+    dxfBtn.style.display = 'block';
+    dxfHint.style.display = 'block';
+    dxfHint.textContent = `Polígono cerrado con ${valid.length} vértices, listo para exportar.`;
+  } else {
+    dxfBtn.style.display = 'none';
+    dxfHint.style.display = 'block';
+    dxfHint.textContent = 'Se necesitan mínimo 3 puntos para cerrar un polígono y habilitar la descarga DXF.';
   }
 });
+
+let lastValidPoints = [];
+
+// --- DXF EXPORT ---
+function buildDXF(pts){
+  const lines = [];
+  const add = (code, value) => { lines.push(String(code)); lines.push(String(value)); };
+
+  // Minimal, widely-compatible DXF (R12-style ASCII) with a closed polyline + point markers + labels
+  add(0, 'SECTION');
+  add(2, 'ENTITIES');
+
+  // Closed polyline (the georeferenced boundary)
+  add(0, 'POLYLINE');
+  add(8, 'POLIGONO');   // layer
+  add(66, 1);           // "entities follow" flag
+  add(70, 1);           // 1 = closed polyline
+  pts.forEach(p => {
+    add(0, 'VERTEX');
+    add(8, 'POLIGONO');
+    add(10, p.x.toFixed(4));
+    add(20, p.y.toFixed(4));
+    add(30, '0.0');
+  });
+  add(0, 'SEQEND');
+
+  // Point + label for each vertex (so the coordinates remain visible when opened in CAD/GIS)
+  pts.forEach(p => {
+    add(0, 'POINT');
+    add(8, 'VERTICES');
+    add(10, p.x.toFixed(4));
+    add(20, p.y.toFixed(4));
+    add(30, '0.0');
+
+    add(0, 'TEXT');
+    add(8, 'ETIQUETAS');
+    add(10, (p.x + 0.5).toFixed(4));
+    add(20, (p.y + 0.5).toFixed(4));
+    add(30, '0.0');
+    add(40, '1.0');       // text height
+    add(1, p.name);       // text content
+  });
+
+  add(0, 'ENDSEC');
+  add(0, 'EOF');
+
+  return lines.join('\n');
+}
+
+document.getElementById('dxfBtn').addEventListener('click', () => {
+  if(lastValidPoints.length < 3) return;
+  const dxfContent = buildDXF(lastValidPoints);
+  const blob = new Blob([dxfContent], { type: 'application/dxf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.href = url;
+  a.download = `poligono-crtm05-${stamp}.dxf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// --- OCR ---
+function handleImageFile(file){
+  if(!file) return;
+  const previewBox = document.getElementById('previewBox');
+  const previewImg = document.getElementById('previewImg');
+  const ocrStatus = document.getElementById('ocrStatus');
+  const ocrProgress = document.getElementById('ocrProgress');
+  const ocrProgressBar = document.getElementById('ocrProgressBar');
+  const rawText = document.getElementById('rawText');
+  const detectedList = document.getElementById('detectedList');
+  const addDetectedBtn = document.getElementById('addDetectedBtn');
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    previewImg.src = e.target.result;
+    previewBox.style.display = 'block';
+    rawText.style.display = 'none';
+    detectedList.innerHTML = '';
+    addDetectedBtn.style.display = 'none';
+    ocrStatus.textContent = 'Preparando reconocimiento de texto…';
+    ocrProgress.style.display = 'block';
+    ocrProgressBar.style.width = '0%';
+
+    if(typeof Tesseract === 'undefined'){
+      ocrStatus.textContent = 'No se pudo cargar el motor de OCR (revisa tu conexión). Puedes agregar los puntos manualmente abajo.';
+      ocrProgress.style.display = 'none';
+      return;
+    }
+
+    Tesseract.recognize(e.target.result, 'spa+eng', {
+      logger: m => {
+        if(m.status === 'recognizing text'){
+          const pct = Math.round((m.progress || 0) * 100);
+          ocrProgressBar.style.width = pct + '%';
+          ocrStatus.textContent = `Reconociendo texto… ${pct}%`;
+        } else {
+          ocrStatus.textContent = m.status;
+        }
+      }
+    }).then(({ data: { text } }) => {
+      ocrProgress.style.display = 'none';
+      ocrStatus.textContent = 'Reconocimiento completo. Revisa el texto y las coordenadas detectadas.';
+      rawText.textContent = text.trim() || '(no se detectó texto)';
+      rawText.style.display = 'block';
+      extractCoordinatePairs(text);
+    }).catch(err => {
+      ocrProgress.style.display = 'none';
+      ocrStatus.textContent = 'Error durante el reconocimiento: ' + err.message + '. Agrega los puntos manualmente.';
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function extractCoordinatePairs(text){
+  const detectedList = document.getElementById('detectedList');
+  const addDetectedBtn = document.getElementById('addDetectedBtn');
+  detectedList.innerHTML = '';
+
+  // Find numbers with 5+ integer digits (typical CRTM05 magnitude) allowing decimals, commas as decimal sep too
+  const cleaned = text.replace(/,/g, '.');
+  const matches = cleaned.match(/\d{5,7}(?:\.\d{1,4})?/g) || [];
+
+  if(matches.length < 2){
+    detectedList.innerHTML = '<p style="font-family:\'IBM Plex Mono\',monospace; font-size:13px; color:#6b6456;">No se detectaron suficientes números con formato de coordenada. Puedes escribirlos manualmente en la tabla de abajo.</p>';
+    addDetectedBtn.style.display = 'none';
+    return;
+  }
+
+  const pairs = [];
+  for(let i=0; i+1 < matches.length; i+=2){
+    pairs.push({ x: parseFloat(matches[i]), y: parseFloat(matches[i+1]) });
+  }
+
+  pairs.forEach((pair, idx) => {
+    const row = document.createElement('div');
+    row.className = 'detected-item';
+    row.innerHTML = `
+      <span>Punto ${idx+1}:</span>
+      <label style="font-size:11px;">X <input type="number" step="0.01" value="${pair.x}" data-pair="${idx}" data-field="x"></label>
+      <label style="font-size:11px;">Y <input type="number" step="0.01" value="${pair.y}" data-pair="${idx}" data-field="y"></label>
+    `;
+    detectedList.appendChild(row);
+  });
+
+  detectedList.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const idx = parseInt(e.target.dataset.pair), field = e.target.dataset.field;
+      pairs[idx][field] = parseFloat(e.target.value);
+    });
+  });
+
+  addDetectedBtn.style.display = 'inline-block';
+  addDetectedBtn.onclick = () => {
+    pairs.forEach(pair => addPointRow(null, pair.x, pair.y));
+    detectedList.innerHTML = '<p style="font-family:\'IBM Plex Mono\',monospace; font-size:13px; color:#3F6B4C;">Puntos agregados a la lista ↓</p>';
+    addDetectedBtn.style.display = 'none';
+  };
+}
+
+document.getElementById('cameraInput').addEventListener('change', e => handleImageFile(e.target.files[0]));
+document.getElementById('galleryInput').addEventListener('change', e => handleImageFile(e.target.files[0]));
 </script>
 </body>
 </html>
