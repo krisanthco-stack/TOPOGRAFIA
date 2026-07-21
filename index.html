@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRTM05 · Distancias y Azimuts</title>
+<title>TOPO MAPS PRO · CRTM05 / SIRGAS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -71,7 +71,7 @@
   .section-title{ font-family:'Spectral', serif; font-weight:600; font-size:20px; margin:0; color:var(--ink); }
   .section-sub{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--muted); margin: -10px 0 18px; }
 
-  .camera-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .action-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
   .btn{
     font-family:'Spectral', serif; font-weight:600; font-size:15px;
     border:none; border-radius:3px; padding:13px 20px; cursor:pointer;
@@ -88,16 +88,7 @@
 
   .preview-box{ margin-bottom:14px; }
   .preview-box img{ max-width:100%; max-height:260px; border-radius:4px; border:1px solid #c9bfa6; display:block; }
-
-  .ocr-status{ font-family:'IBM Plex Mono', monospace; font-size:13px; color: var(--navy); margin: 10px 0; }
-  .ocr-progress{ height:6px; background:#ddd3ba; border-radius:3px; overflow:hidden; margin:8px 0 14px; display:none; }
-  .ocr-progress-bar{ height:100%; width:0%; background: var(--brass); transition: width 0.2s ease; }
-
-  .raw-text{
-    font-family:'IBM Plex Mono', monospace; font-size:12.5px; background:#FBF9F3;
-    border:1px solid #c9bfa6; border-radius:3px; padding:10px 12px; white-space:pre-wrap;
-    max-height:140px; overflow:auto; color:#444; margin-bottom:14px; display:none;
-  }
+  .status-msg{ font-family:'IBM Plex Mono', monospace; font-size:13px; color: var(--navy); margin: 10px 0; }
 
   table{ width:100%; border-collapse:collapse; margin-bottom:16px; font-family:'IBM Plex Mono', monospace; font-size:13.5px; }
   th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); padding:6px 8px; border-bottom:1px solid #ddd3ba; }
@@ -138,9 +129,9 @@
 
   <div class="hero">
     <div class="hero-text">
-      <p class="eyebrow">CRTM05 · SIRGAS Costa Rica</p>
-      <h1>Coordenadas a Distancias</h1>
-      <p class="lede">Captura tablas de coordenadas CRTM05. Extracción OCR local blindada, cálculo de azimuts, plano y exportación DXF.</p>
+      <p class="eyebrow">CRTM05 · SIRGAS Costa Rica[span_0](start_span)[span_0](end_span)</p>
+      <h1>Gestión Topográfica CRTM05</h1>
+      <p class="lede">Importación instantánea desde Excel/CSV o carga visual de planos. Cálculo automatizado de distancias, azimuts en DMS[span_1](start_span)[span_1](end_span), polígonos, mapa WGS84 y exportación CAD/DXF[span_2](start_span)[span_2](end_span).</p>
     </div>
     <div class="hero-diagram">
       <svg viewBox="0 0 260 260" id="diagram"></svg>
@@ -148,31 +139,29 @@
   </div>
 
   <section class="card">
-    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Capturar coordenadas con cámara</h2></div>
-    <p class="section-sub">Fotografía la tabla de coordenadas. El sistema procesará la imagen localmente[span_0](start_span)[span_0](end_span).</p>
+    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Ingreso de Datos (Excel / CSV o Imagen)</h2></div>
+    <p class="section-sub">Carga un archivo Excel con columnas de coordenadas o sube una imagen de referencia visual[span_3](start_span)[span_3](end_span).</p>
 
-    <div class="camera-row">
-      <label class="btn btn-primary" for="cameraInput">📷 Tomar foto</label>
-      <input type="file" id="cameraInput" accept="image/*" capture="environment">
-      <label class="btn btn-ghost" for="galleryInput">Subir imagen</label>
-      <input type="file" id="galleryInput" accept="image/*">
+    <div class="action-row">
+      <label class="btn btn-primary" for="excelInput">📊 Cargar Excel / CSV</label>
+      <input type="file" id="excelInput" accept=".xlsx, .xls, .csv">
+      <label class="btn btn-ghost" for="imageInput">🖼️ Ver Plano / Imagen</label>
+      <input type="file" id="imageInput" accept="image/*">
     </div>
 
     <div class="preview-box" id="previewBox" style="display:none;">
-      <img id="previewImg" alt="Vista previa">
+      <img id="previewImg" alt="Referencia visual">
     </div>
 
-    <div class="ocr-status" id="ocrStatus"></div>
-    <div class="ocr-progress" id="ocrProgress"><div class="ocr-progress-bar" id="ocrProgressBar"></div></div>
-    <div class="raw-text" id="rawText"></div>
+    <div class="status-msg" id="statusMsg"></div>
   </section>
 
   <section class="card">
-    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de puntos</h2></div>
-    <p class="section-sub">Edita cualquier valor directamente y presiona actualizar para recalcular.</p>
+    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de Puntos Activos</h2></div>
+    <p class="section-sub">Edita nombres o coordenadas y presiona actualizar para recalcular[span_4](start_span)[span_4](end_span).</p>
     <table id="pointsTable">
       <thead>
-        <tr><th>Nombre</th><th>Este (X)</th><th>Norte (Y)</th><th></th></tr>
+        <tr><th>Vértice</th><th>Este (X) [m]</th><th>Norte (Y) [m]</th><th></th></tr>
       </thead>
       <tbody id="pointsBody"></tbody>
     </table>
@@ -183,34 +172,34 @@
   </section>
 
   <section class="card results" id="results">
-    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados y Cálculos</h2></div>
+    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados Analíticos</h2></div>
     <div id="statusBox"></div>
     <div class="total-card" id="totalCard" style="display:none;">
-      <div class="total-item"><p class="k">Distancia total</p><p class="v" id="outTotal">—</p></div>
+      <div class="total-item"><p class="k">Perímetro total</p><p class="v" id="outTotal">—</p></div>
       <div class="total-item"><p class="k">Tramos</p><p class="v" id="outCount">—</p></div>
     </div>
     <table id="resultsTable" style="display:none;">
-      <thead><tr><th>Tramo</th><th>Distancia (m)</th><th>Azimut</th></tr></thead>
+      <thead><tr><th>Tramo</th><th>Distancia (m)</th><th>Azimut (DMS / Dec)[span_5](start_span)[span_5](end_span)</th></tr></thead>
       <tbody id="resultsBody"></tbody>
     </table>
     <div class="result-diagram-box" id="resultDiagramBox" style="display:none;">
-      <p class="section-sub" style="margin:0 0 10px;">Dibujo del polígono</p>
+      <p class="section-sub" style="margin:0 0 10px;">Diagrama del Polígono[span_6](start_span)[span_6](end_span)</p>
       <svg viewBox="0 0 400 400" id="resultDiagram" style="width:100%; max-width:400px; height:auto; display:block; background:#FBF9F3; border:1px solid #c9bfa6; border-radius:4px;"></svg>
     </div>
-    <button class="btn btn-primary" id="dxfBtn" style="display:none; width:100%; margin-top:16px;">⬇ Descargar polígono cerrado (DXF georeferenciado)</button>
+    <button class="btn btn-primary" id="dxfBtn" style="display:none; width:100%; margin-top:16px;">⬇ Descargar DXF Georreferenciado[span_7](start_span)[span_7](end_span)</button>
     <p class="section-sub" id="dxfHint" style="display:none; margin-top:10px;"></p>
   </section>
 
   <section class="card results" id="mapSection">
-    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Ver en el mapa</h2></div>
-    <p class="section-sub">Polígono georreferenciado (CRTM05 → WGS84) sobre OpenStreetMap.</p>
+    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Visualización Cartográfica</h2></div>
+    <p class="section-sub">Polígono convertido de CRTM05 a WGS84 sobre OpenStreetMap[span_8](start_span)[span_8](end_span)[span_9](start_span)[span_9](end_span).</p>
     <div id="mapView"></div>
   </section>
 
-  <footer>Procesamiento local blindado · CRTM05 / SIRGAS Costa Rica[span_1](start_span)[span_1](end_span)</footer>
+  <footer>Topografía Costa Rica · CRTM05 / SIRGAS[span_10](start_span)[span_10](end_span)</footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 let pointCounter = 0;
@@ -235,8 +224,8 @@ function renderPointsTable(){
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input type="text" value="${p.name}" data-id="${p.id}" data-field="name"></td>
-      <td><input type="number" step="0.01" value="${p.x}" data-id="${p.id}" data-field="x"></td>
-      <td><input type="number" step="0.01" value="${p.y}" data-id="${p.id}" data-field="y"></td>
+      <td><input type="number" step="0.001" value="${p.x}" data-id="${p.id}" data-field="x"></td>
+      <td><input type="number" step="0.001" value="${p.y}" data-id="${p.id}" data-field="y"></td>
       <td class="row-actions"><button class="icon-btn" data-remove="${p.id}">Quitar</button></td>
     `;
     body.appendChild(tr);
@@ -259,8 +248,85 @@ function renderPointsTable(){
 document.getElementById('addPointBtn').addEventListener('click', () => addPointRow());
 document.getElementById('updateAllBtn').addEventListener('click', () => calculateAndRender());
 
-renderPointsTable();
+// Iniciar con dos puntos vacíos por defecto
+addPointRow('P1', '', '');
+addPointRow('P2', '', '');
 
+// --- PROCESAMIENTO EXCEL / CSV ---
+document.getElementById('excelInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const statusMsg = document.getElementById('statusMsg');
+  statusMsg.textContent = 'Procesando archivo tabular...';
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, {type: 'array'});
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
+
+      let parsedPoints = [];
+      rows.forEach((row, idx) => {
+        // Filtrar celdas numéricas con magnitud de coordenada CRTM05 en CR (> 100000)
+        let numericCols = [];
+        let rowName = 'P' + (parsedPoints.length + 1);
+
+        row.forEach((cell, cellIdx) => {
+          let val = parseFloat(cell);
+          if (!isNaN(val)) {
+            if (val > 10000 || val < -10000) { // Magnitud típica CRTM05 Este/Norte
+              numericCols.push(val);
+            } else if (cellIdx === 0 && String(cell).trim() !== '') {
+              rowName = String(cell).trim();
+            }
+          }
+        });
+
+        if (numericCols.length >= 2) {
+          parsedPoints.push({
+            name: rowName,
+            x: numericCols[0],
+            y: numericCols[1]
+          });
+        }
+      });
+
+      if (parsedPoints.length > 0) {
+        points = [];
+        pointCounter = 0;
+        parsedPoints.forEach(p => {
+          pointCounter++;
+          points.push({ id: 'pt' + pointCounter, name: p.name, x: p.x, y: p.y });
+        });
+        renderPointsTable();
+        statusMsg.innerHTML = `<span style="color:var(--ok);">¡Excel cargado correctamente (${parsedPoints.length} vértices)!</span>`;
+      } else {
+        statusMsg.innerHTML = '<span style="color:var(--err);">No se detectaron columnas válidas de coordenadas (Este/Norte).</span>';
+      }
+    } catch(err) {
+      statusMsg.innerHTML = `<span style="color:var(--err);">Error al leer Excel: ${err.message}</span>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// --- VISUALIZADOR DE IMAGEN / PLANO ---
+document.getElementById('imageInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    document.getElementById('previewImg').src = evt.target.result;
+    document.getElementById('previewBox').style.display = 'block';
+    document.getElementById('statusMsg').textContent = 'Plano o imagen cargada como referencia visual.';
+  };
+  reader.readAsDataURL(file);
+});
+
+// --- DIAGRAMA VECTORIAL (SVG) ---
 function renderDiagram(pts){
   const svg = document.getElementById('diagram');
   const valid = pts.filter(p => !isNaN(p.x) && !isNaN(p.y) && p.x !== '' && p.y !== '');
@@ -291,6 +357,7 @@ function renderDiagram(pts){
 
 function updatePreviewDiagram(){ renderDiagram(points); }
 
+// --- MOTOR TOPOMÉTRICO (AZIMUTS Y DISTANCIAS) ---
 function calcularAzimut(x1,y1,x2,y2){
   const azRad = Math.atan2(x2-x1, y2-y1);
   let azDeg = azRad * 180/Math.PI;
@@ -322,7 +389,7 @@ function calculateAndRender(){
   resultsSection.classList.add('show');
   document.getElementById('mapSection').classList.add('show');
 
-  statusBox.innerHTML = `<div class="status ok">Cálculo actualizado correctamente sobre ${valid.length} puntos (${valid.length-1} tramos).</div>`;
+  statusBox.innerHTML = `<div class="status ok">Cálculo completado exitosamente para ${valid.length} vértices (${valid.length-1} tramos).</div>`;
   resultsBody.innerHTML = '';
   let total = 0;
   for(let i=0; i<valid.length-1; i++){
@@ -351,11 +418,11 @@ function calculateAndRender(){
   if(valid.length >= 3){
     dxfBtn.style.display = 'block';
     dxfHint.style.display = 'block';
-    dxfHint.textContent = `Polígono cerrado con ${valid.length} vértices, listo para exportar.`;
+    dxfHint.textContent = `Polígono cerrado con ${valid.length} vértices, listo para exportación CAD.`;
   } else {
     dxfBtn.style.display = 'none';
     dxfHint.style.display = 'block';
-    dxfHint.textContent = 'Se necesitan mínimo 3 puntos para cerrar un polígono y habilitar la descarga DXF.';
+    dxfHint.textContent = 'Se requieren al menos 3 vértices para cerrar el polígono y habilitar el formato DXF.';
   }
 }
 
@@ -392,6 +459,7 @@ function renderResultDiagram(valid){
   svg.innerHTML = lines + dots;
 }
 
+// --- EXPORTACIÓN DXF INDUSTRIAL ---
 function buildDXF(pts){
   const lines = [];
   const add = (code, value) => { lines.push(String(code)); lines.push(String(value)); };
@@ -449,106 +517,7 @@ document.getElementById('dxfBtn').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-// --- OCR BLINDADO (Tesseract.recognize nativo) ---
-function handleImageFile(file){
-  if(!file) return;
-  const previewBox = document.getElementById('previewBox');
-  const previewImg = document.getElementById('previewImg');
-  const ocrStatus = document.getElementById('ocrStatus');
-  const ocrProgress = document.getElementById('ocrProgress');
-  const ocrProgressBar = document.getElementById('ocrProgressBar');
-  const rawText = document.getElementById('rawText');
-
-  const reader = new FileReader();
-  reader.onload = function(e){
-    const img = new Image();
-    img.onload = function(){
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const scale = Math.max(1, 2000 / Math.max(img.width, img.height));
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const processedDataUrl = canvas.toDataURL('image/jpeg', 0.95);
-
-      previewImg.src = processedDataUrl;
-      previewBox.style.display = 'block';
-      rawText.style.display = 'none';
-      ocrStatus.textContent = 'Procesando imagen con OCR local…';
-      ocrProgress.style.display = 'block';
-      ocrProgressBar.style.width = '10%';
-
-      if(typeof Tesseract === 'undefined'){
-        ocrStatus.textContent = 'Error: El motor OCR no está disponible.';
-        ocrProgress.style.display = 'none';
-        return;
-      }
-
-      Tesseract.recognize(processedDataUrl, 'spa+eng', {
-        logger: m => {
-          if(m.status === 'recognizing text'){
-            const pct = Math.round((m.progress || 0) * 90);
-            ocrProgressBar.style.width = (10 + pct) + '%';
-            ocrStatus.textContent = `Leyendo tabla de coordenadas… ${pct}%`;
-          } else {
-            ocrStatus.textContent = m.status;
-          }
-        }
-      }).then(({ data: { text } }) => {
-        ocrProgress.style.display = 'none';
-        ocrStatus.textContent = '¡Lectura completada y calculada automáticamente!';
-        rawText.textContent = text.trim() || '(sin texto detectado)';
-        rawText.style.display = 'block';
-        extractAndCalculateAutomatic(text);
-      }).catch(err => {
-        ocrProgress.style.display = 'none';
-        ocrStatus.textContent = 'Error en OCR: ' + err.message;
-      });
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-function extractAndCalculateAutomatic(text){
-  let cleaned = text.replace(/[Oo]/g, '0')
-                    .replace(/[lI]/g, '1')
-                    .replace(/[S]/g, '5')
-                    .replace(/,/g, '.');
-
-  // Expresión regular robusta para capturar números con formato CRTM05 (5 a 7 dígitos enteros + decimales)
-  const matches = cleaned.match(/\b\d{5,7}(?:\.\d{1,4})?\b/g) || [];
-
-  if (matches.length < 2) {
-    ocrStatus.innerHTML = '<span style="color:#8B3A2E;">No se detectaron suficientes coordenadas. Ingresa los puntos en la tabla inferior.</span>';
-    return;
-  }
-
-  const pairs = [];
-  for(let i = 0; i + 1 < matches.length; i += 2){
-    pairs.push({ 
-      name: 'P' + (pairs.length + 1), 
-      x: parseFloat(matches[i]), 
-      y: parseFloat(matches[i+1]) 
-    });
-  }
-
-  if (pairs.length === 0) return;
-
-  points = [];
-  pointCounter = 0;
-  pairs.forEach(pair => {
-    pointCounter++;
-    const id = 'pt' + pointCounter;
-    points.push({ id, name: pair.name, x: pair.x, y: pair.y });
-  });
-
-  renderPointsTable();
-}
-
-document.getElementById('cameraInput').addEventListener('change', e => handleImageFile(e.target.files[0]));
-document.getElementById('galleryInput').addEventListener('change', e => handleImageFile(e.target.files[0]));
-
+// --- CONVERSIÓN GEODÉSICA CRTM05 (EPSG:5367) -> WGS84 ---
 function crtm05ToLatLon(x, y){
   const a = 6378137.0;
   const f = 1/298.257223563;
@@ -592,6 +561,7 @@ function crtm05ToLatLon(x, y){
   return { lat: lat*180/Math.PI, lon: lon*180/Math.PI };
 }
 
+// --- MAPA LEAFLET ---
 let leafletMap = null;
 let mapPolygonLayer = null;
 let mapMarkersLayer = null;
@@ -608,7 +578,7 @@ function updateMap(valid){
     leafletMap = L.map('mapView');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 21,
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap contributors[span_11](start_span)[span_11](end_span)'
     }).addTo(leafletMap);
     mapPolygonLayer = L.layerGroup().addTo(leafletMap);
     mapMarkersLayer = L.layerGroup().addTo(leafletMap);
