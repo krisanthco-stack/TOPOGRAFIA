@@ -149,7 +149,7 @@
 
   <section class="card">
     <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Capturar coordenadas con cámara</h2></div>
-    <p class="section-sub">Toma una foto clara de las coordenadas escritas (ej. "X: 506218.34  Y: 1096223.12").</p>
+    <p class="section-sub">Toma una foto clara de las coordenadas escritas (ej. "X: 506218.34  Y: 1096223.12")[span_1](start_span)[span_1](end_span).</p>
 
     <div class="camera-row">
       <label class="btn btn-primary" for="cameraInput">📷 Tomar foto</label>
@@ -169,18 +169,21 @@
 
   <section class="card">
     <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de puntos</h2></div>
-    <p class="section-sub">Los puntos extraídos por la cámara aparecen aquí automáticamente. Puedes editarlos o agregar más si lo requieres.</p>
+    <p class="section-sub">Si corriges o editas alguna coordenada en la tabla, presiona el botón de actualización para recalcular todo.</p>
     <table id="pointsTable">
       <thead>
         <tr><th>Nombre</th><th>Este (X)</th><th>Norte (Y)</th><th></th></tr>
       </thead>
       <tbody id="pointsBody"></tbody>
     </table>
-    <button class="btn btn-ghost btn-small" id="addPointBtn">+ Agregar punto manualmente</button>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:14px;">
+      <button class="btn btn-ghost btn-small" id="addPointBtn">+ Agregar punto</button>
+      <button class="btn btn-primary btn-small" id="updateAllBtn" style="flex:1;">🔄 Actualizar todo (Recalcular)</button>
+    </div>
   </section>
 
   <section class="card results" id="results">
-    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados y Cálculos Automáticos</h2></div>
+    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados y Cálculos</h2></div>
     <div id="statusBox"></div>
     <div class="total-card" id="totalCard" style="display:none;">
       <div class="total-item"><p class="k">Distancia total</p><p class="v" id="outTotal">—</p></div>
@@ -204,7 +207,7 @@
     <div id="mapView"></div>
   </section>
 
-  <footer>Lectura automática por OCR y procesamiento local · CRTM05 / SIRGAS Costa Rica</footer>
+  <footer>Lectura automática por OCR y procesamiento local · CRTM05 / SIRGAS Costa Rica[span_2](start_span)[span_2](end_span)</footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
@@ -244,7 +247,6 @@ function renderPointsTable(){
       const p = points.find(pt => pt.id === id);
       if(p) p[field] = field === 'name' ? e.target.value : parseFloat(e.target.value);
       updatePreviewDiagram();
-      calculateAndRender();
     });
   });
   body.querySelectorAll('[data-remove]').forEach(btn => {
@@ -255,8 +257,11 @@ function renderPointsTable(){
 }
 
 document.getElementById('addPointBtn').addEventListener('click', () => addPointRow());
+document.getElementById('updateAllBtn').addEventListener('click', () => {
+  calculateAndRender();
+});
 
-// Inicializar vacio
+// Inicializar vacío
 renderPointsTable();
 
 // --- DIAGRAM ---
@@ -322,7 +327,7 @@ function calculateAndRender(){
   resultsSection.classList.add('show');
   document.getElementById('mapSection').classList.add('show');
 
-  statusBox.innerHTML = `<div class="status ok">Cálculo realizado automáticamente sobre ${valid.length} puntos (${valid.length-1} tramos).</div>`;
+  statusBox.innerHTML = `<div class="status ok">Cálculo actualizado correctamente sobre ${valid.length} puntos (${valid.length-1} tramos).</div>`;
   resultsBody.innerHTML = '';
   let total = 0;
   for(let i=0; i<valid.length-1; i++){
@@ -510,7 +515,6 @@ function extractAndCalculateAutomatic(text){
     pairs.push({ x: parseFloat(matches[i]), y: parseFloat(matches[i+1]) });
   }
 
-  // Carga automática directa en la lista de puntos principal
   points = [];
   pointCounter = 0;
   pairs.forEach(pair => {
@@ -519,7 +523,6 @@ function extractAndCalculateAutomatic(text){
     points.push({ id, name: 'P' + pointCounter, x: pair.x, y: pair.y });
   });
 
-  // Renderiza y calcula al instante
   renderPointsTable();
 }
 
