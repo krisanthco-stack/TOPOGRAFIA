@@ -1,552 +1,1473 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TOPO MAPS PRO 路 Estabilidad Total</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<style>
-  :root {
-    --navy: #0B1E33; --navy-line: #1C3A5E; --paper: #EDE6D6;
-    --ink: #1A1A1A; --brass: #B8860B; --brass-bright: #D6A421;
-    --ok: #3F6B4C; --err: #8B3A2E; --muted: #6b6456;
-  }
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: linear-gradient(var(--navy-line) 1px, transparent 1px) 0 0/32px 32px,
-                linear-gradient(90deg, var(--navy-line) 1px, transparent 1px) 0 0/32px 32px, var(--navy);
-    color: var(--paper); font-family: 'IBM Plex Sans', sans-serif;
-    min-height: 100vh; padding: 40px 20px 80px;
-  }
-  .wrap { max-width: 980px; margin: 0 auto; }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071827">
+  <title>TOPO MAPS PRO · Versión de prueba</title>
 
-  /* Encabezado */
-  .hero { margin-bottom: 40px; border-bottom: 1px solid rgba(237,230,214,0.15); padding-bottom: 24px; }
-  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brass-bright); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 8px; }
-  h1 { font-family: 'Spectral', serif; font-size: clamp(28px, 4vw, 42px); margin: 0 0 12px; }
-  .lede { font-size: 15px; color: #C9C0AC; max-width: 60ch; line-height: 1.5; margin: 0; }
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 
-  /* Tarjetas de Secci贸n */
-  .card { background: var(--paper); color: var(--ink); border-radius: 6px; padding: 24px; margin-bottom: 24px; box-shadow: 0 12px 24px rgba(0,0,0,0.3); }
-  .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid #dcd4c3; padding-bottom: 12px; }
-  .section-num { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brass); border: 1px solid var(--brass); padding: 2px 6px; border-radius: 3px; }
-  .section-title { font-family: 'Spectral', serif; font-weight: 600; font-size: 20px; margin: 0; }
+  <style>
+    :root {
+      --bg: #061521;
+      --bg-2: #0e2d46;
+      --panel: #f5f1e7;
+      --paper: #fffdf8;
+      --ink: #17232d;
+      --muted: #66727b;
+      --line: #d8d0bf;
+      --gold: #c99a31;
+      --gold-2: #e2ba5b;
+      --red: #c63b34;
+      --green: #237a57;
+      --blue: #176b9e;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .34);
+      --radius: 14px;
+    }
 
-  /* Botones y Acciones */
-  .action-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
-  .btn { font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; font-size: 14px; border: none; border-radius: 4px; padding: 12px 18px; cursor: pointer; transition: 0.2s ease; text-align: center; }
-  .btn:active { transform: scale(0.98); }
-  .btn-primary { background: var(--brass); color: #111; }
-  .btn-primary:hover { background: var(--brass-bright); }
-  .btn-ghost { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
-  .btn-ghost:hover { background: rgba(11,30,51,0.08); }
-  input[type="file"] { display: none; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #eef5f8;
+      background:
+        radial-gradient(circle at 8% 0%, #1a537d 0, transparent 32%),
+        linear-gradient(135deg, var(--bg), #020b12);
+      font: 15px/1.46 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
 
-  /* Contenedores de Imagen */
-  .preview-box { position: relative; max-width: 100%; text-align: center; background: #222; border-radius: 4px; padding: 10px; display: none; margin-bottom: 16px; overflow: hidden; }
-  .preview-box img { max-width: 100%; max-height: 40vh; object-fit: contain; cursor: crosshair; }
-  .click-marker { position: absolute; width: 14px; height: 14px; background: var(--brass-bright); border: 2px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    button, input, select { font: inherit; }
+    .shell { width: min(1260px, calc(100% - 24px)); margin: auto; padding: 28px 0 70px; }
+    .hero { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; margin: 8px 0 25px; }
+    .kicker { color: var(--gold-2); font: 800 12px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 7px 0 10px; font-size: clamp(31px, 5vw, 56px); line-height: 1; }
+    .hero p { max-width: 800px; margin: 0; color: #c8d7df; }
+    .badge { align-self: start; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); border-radius: 12px; padding: 11px 14px; font: 700 12px ui-monospace, Consolas, monospace; }
 
-  /* Mensajes de Estado */
-  .status-msg { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--navy); margin-bottom: 10px; font-weight: 500; }
-  .ocr-progress { height: 6px; background: #ddd; border-radius: 3px; overflow: hidden; margin-bottom: 10px; display: none; }
-  .ocr-progress-bar { height: 100%; width: 0%; background: var(--brass); transition: width 0.3s; }
-  
-  /* Tablas */
-  table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
-  th { text-align: left; padding: 8px; border-bottom: 2px solid #dcd4c3; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-  td { padding: 6px 8px; border-bottom: 1px dashed #dcd4c3; }
-  input[type="text"], input[type="number"] { width: 100%; padding: 8px; font-family: 'IBM Plex Mono', monospace; border: 1px solid #c9bfa6; border-radius: 4px; background: #fff; }
-  input:focus { outline: 2px solid var(--brass); border-color: transparent; }
-  .icon-btn { background: none; border: none; color: var(--err); cursor: pointer; font-size: 12px; padding: 4px 8px; font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; }
-  .icon-btn:hover { text-decoration: underline; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .span-2 { grid-column: 1 / -1; }
+    .card { min-width: 0; padding: 20px; color: var(--ink); background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .head { display: flex; gap: 12px; align-items: flex-start; padding-bottom: 13px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .num { flex: 0 0 auto; padding: 5px 8px; color: #fff; background: var(--bg-2); border-radius: 8px; font: 800 12px ui-monospace, Consolas, monospace; }
+    .head h2 { margin: 0; font-size: 20px; }
+    .head p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
 
-  /* Panel de Resultados */
-  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .metric-card { background: var(--navy-line); color: var(--paper); padding: 16px; border-radius: 4px; }
-  .metric-card span { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--brass-bright); text-transform: uppercase; margin-bottom: 4px; }
-  .metric-card strong { font-size: 18px; }
-  #resultDiagram { width: 100%; max-width: 400px; margin: 20px auto; display: block; background: #FBF9F3; border: 1px solid #dcd4c3; border-radius: 4px; }
+    .choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .choice { padding: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+    .choice h3 { margin: 0 0 5px; font-size: 15px; }
+    .choice p { min-height: 58px; margin: 0 0 12px; color: var(--muted); font-size: 12px; }
 
-  /* Mapa y Controles WMS */
-  #mapView { width: 100%; height: 50vh; min-height: 400px; border-radius: 4px; border: 1px solid #c9bfa6; z-index: 1; }
-  .map-controls { background: #FBF9F3; padding: 12px; border-radius: 4px; border: 1px solid #dcd4c3; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-  .toggle-wms { display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; color: var(--navy); }
-  .toggle-wms input { cursor: pointer; width: 18px; height: 18px; }
+    .btn, label.btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 9px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 760;
+      transition: transform .16s, filter .16s;
+    }
+    .btn:hover, label.btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
+    .btn:disabled { cursor: not-allowed; opacity: .5; transform: none; }
+    .primary { color: #1a160c; background: var(--gold); }
+    .secondary { color: #fff; background: var(--bg-2); }
+    .ghost { color: var(--bg-2); background: transparent; border: 1px solid var(--bg-2); }
+    .danger { color: #942a23; background: #ffe8e5; border: 1px solid #efb7b1; }
+    .file { display: none; }
 
-  /* Modal Anti-Congelamiento */
-  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,30,51,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; }
-  .modal-card { background: var(--paper); padding: 24px; border-radius: 6px; width: 90%; max-width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-  .modal-card h3 { margin: 0 0 16px; font-family: 'Spectral', serif; color: var(--navy); }
-  .modal-card label { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-bottom: 4px; color: var(--muted); }
-  .modal-card input { margin-bottom: 16px; }
-</style>
+    .status { margin-top: 14px; padding: 11px 12px; color: #25333d; background: #e8edf0; border-radius: 10px; white-space: pre-wrap; font: 650 12px ui-monospace, Consolas, monospace; }
+    .status.ok { color: #175b40; background: #e1f2e9; }
+    .status.err { color: #8b2923; background: #f9e3e0; }
+    .progress { display: none; height: 7px; margin-top: 10px; overflow: hidden; background: #d7d7d7; border-radius: 99px; }
+    .progress > i { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--gold), var(--green)); transition: width .2s; }
+
+    .viewer { display: none; position: relative; max-height: 68vh; margin-top: 16px; overflow: auto; background: #111; border-radius: 12px; text-align: center; touch-action: pan-x pan-y; }
+    .stage { position: relative; display: inline-block; line-height: 0; }
+    .stage img { display: block; max-width: 100%; height: auto; cursor: crosshair; user-select: none; }
+    .markers { position: absolute; inset: 0; pointer-events: none; }
+    .mark { position: absolute; width: 16px; height: 16px; background: var(--red); border: 2px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 2px 7px #000; }
+    .mark.ocr { background: var(--gold); }
+    .mark b { position: absolute; top: -20px; left: 10px; padding: 3px 5px; color: #fff; background: rgba(0,0,0,.76); border-radius: 4px; white-space: nowrap; font: 800 11px system-ui; }
+
+    .toolbar, .controls, .mapbar { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+    .toolbar { margin-top: 12px; }
+    .controls { margin-top: 14px; }
+    .grow { flex: 1 1 250px; }
+    .field, input, select { min-width: 0; padding: 9px; color: var(--ink); background: #fff; border: 1px solid #bbc3c8; border-radius: 8px; }
+    input:focus, select:focus { outline: 3px solid rgba(201,154,49,.28); border-color: var(--gold); }
+
+    .table-wrap { max-width: 100%; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+    table { width: 100%; min-width: 720px; border-collapse: collapse; }
+    th, td { padding: 8px; border-bottom: 1px solid #e4ddcf; text-align: left; }
+    th { position: sticky; top: 0; z-index: 2; color: #53606a; background: #eae3d6; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+    td input { width: 100%; min-width: 110px; }
+    .rownum { color: #69747d; font: 800 12px ui-monospace, Consolas, monospace; }
+    .pill { display: inline-flex; padding: 3px 7px; color: #42515b; background: #e5ebee; border-radius: 99px; font-size: 11px; font-weight: 760; }
+
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { padding: 14px; color: #fff; background: linear-gradient(145deg, var(--bg-2), var(--bg)); border-radius: 11px; }
+    .metric span { display: block; color: var(--gold-2); font: 800 10px ui-monospace, Consolas, monospace; text-transform: uppercase; }
+    .metric strong { display: block; margin-top: 5px; font-size: 18px; }
+    .note { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+    .split { display: grid; grid-template-columns: 420px 1fr; gap: 16px; margin-top: 16px; }
+    .diagram { width: 100%; aspect-ratio: 1; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+    .segment-table { margin-top: 0; }
+
+    .mapbar { justify-content: space-between; margin-bottom: 10px; }
+    .check { display: flex; gap: 7px; align-items: center; font-size: 13px; font-weight: 700; }
+    .check input { width: 18px; height: 18px; }
+    #map { height: 490px; background: #d5dde2; border: 1px solid var(--line); border-radius: 12px; }
+    .small { color: var(--muted); font-size: 12px; }
+    .audit { padding: 12px; color: #dceaf2; background: #0a1b29; border-radius: 10px; white-space: pre-wrap; font: 12px/1.55 ui-monospace, Consolas, monospace; }
+
+    .modal { display: none; position: fixed; inset: 0; z-index: 9999; align-items: center; justify-content: center; padding: 18px; background: rgba(4,16,25,.88); }
+    .modal.open { display: flex; }
+    .dialog { width: min(430px, 100%); padding: 20px; color: var(--ink); background: var(--panel); border-radius: 14px; box-shadow: 0 28px 70px rgba(0,0,0,.75); }
+    .dialog h3 { margin-top: 0; }
+    .form-grid { display: grid; gap: 10px; }
+    .form-grid label { display: grid; gap: 4px; font-size: 12px; font-weight: 750; }
+    .dialog .actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 16px; }
+    .toast { display: none; position: fixed; right: 18px; bottom: 18px; z-index: 10000; max-width: 380px; padding: 12px 14px; color: #fff; background: var(--bg); border-left: 5px solid var(--gold); border-radius: 10px; box-shadow: var(--shadow); }
+    .toast.show { display: block; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 980px) {
+      .grid, .split { grid-template-columns: 1fr; }
+      .choices { grid-template-columns: 1fr; }
+      .choice p { min-height: 0; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .hero { grid-template-columns: 1fr; }
+      .badge { justify-self: start; }
+    }
+    @media (max-width: 540px) {
+      .shell { width: calc(100% - 12px); padding-top: 12px; }
+      .card { padding: 14px; }
+      .metrics { grid-template-columns: 1fr; }
+      #map { height: 390px; }
+      .btn, label.btn { width: 100%; }
+      .controls > *, .toolbar > * { width: 100%; }
+    }
+  </style>
 </head>
 <body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <div class="kicker">Topografía · Catastro · Costa Rica</div>
+        <h1>TOPO MAPS PRO</h1>
+        <p>Versión de prueba para importar, reconocer y calcular coordenadas CRTM05. El sistema oficial vigente se configura por defecto como CR-SIRGAS época 2014.59 / CRTM05 (EPSG:8908).</p>
+      </div>
+      <div class="badge" id="selfBadge">AUTOPRUEBA: PENDIENTE</div>
+    </header>
 
-<div class="wrap">
-  <div class="hero">
-    <p class="eyebrow">Motor Anti-Crash 路 Topograf铆a Segura</p>
-    <h1>TOPO MAPS PRO</h1>
-    <p class="lede">Versi贸n estabilizada. Mapa satelital nativo para evitar cuelgues, WMS desacoplado como opci贸n manual, y motor de procesamiento de im谩genes con prevenci贸n de memoria.</p>
+    <div class="grid">
+      <section class="card span-2">
+        <div class="head">
+          <span class="num">01</span>
+          <div>
+            <h2>Ingreso independiente de datos</h2>
+            <p>Excel/CSV, OCR automático y visor por clic agregan puntos sin borrar los existentes.</p>
+          </div>
+        </div>
+
+        <div class="choices">
+          <div class="choice">
+            <h3>Excel / CSV</h3>
+            <p>Busca las columnas Este y Norte por encabezado y rango CRTM05. Ignora encabezados y admite separadores regionales.</p>
+            <label class="btn primary" for="excelInput">Cargar Excel o CSV</label>
+            <input class="file" id="excelInput" type="file" accept=".xlsx,.xls,.csv,.txt">
+          </div>
+
+          <div class="choice">
+            <h3>OCR automático</h3>
+            <p>Reduce la imagen, aplica contraste adaptativo y reconoce únicamente pares Este 300 000–700 000 / Norte 900 000–1 300 000.</p>
+            <label class="btn secondary" for="ocrInput">Escanear libreta o plano</label>
+            <input class="file" id="ocrInput" type="file" accept="image/*" capture="environment">
+          </div>
+
+          <div class="choice">
+            <h3>Visor por clic + OCR</h3>
+            <p>Abre la imagen, intenta leerla automáticamente y permite fijar puntos manuales sin recargarla ni perder marcas.</p>
+            <label class="btn ghost" for="viewerInput">Abrir imagen</label>
+            <input class="file" id="viewerInput" type="file" accept="image/*">
+          </div>
+        </div>
+
+        <div class="progress" id="progress"><i id="progressBar"></i></div>
+        <div class="status" id="status">Listo. Los datos se procesan localmente en el navegador.</div>
+
+        <div class="viewer" id="viewer">
+          <div class="stage" id="stage">
+            <img id="planImage" alt="Plano o libreta topográfica">
+            <div class="markers" id="markers"></div>
+          </div>
+        </div>
+
+        <div class="toolbar hidden" id="viewerTools">
+          <button class="btn secondary" id="rerunOcr" type="button">Repetir OCR</button>
+          <button class="btn ghost" id="clearMarks" type="button">Limpiar solo marcas</button>
+          <span class="pill">Rojo: clic manual · Dorado: OCR</span>
+        </div>
+      </section>
+
+      <section class="card span-2">
+        <div class="head">
+          <span class="num">02</span>
+          <div>
+            <h2>Libreta editable de vértices</h2>
+            <p>Puede editar, añadir o eliminar puntos. Los decimales admiten punto o coma.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Vértice</th><th>Este X (m)</th><th>Norte Y (m)</th><th>Origen</th><th>Acción</th></tr>
+            </thead>
+            <tbody id="pointsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="controls">
+          <button class="btn ghost" id="addRow" type="button">+ Añadir fila</button>
+          <button class="btn danger" id="clearAll" type="button">Vaciar tabla</button>
+
+          <select id="crsSelect" class="grow" title="Sistema de referencia">
+            <option value="8908">CR-SIRGAS 2014.59 / CRTM05 · EPSG:8908 · GRS80</option>
+            <option value="5367">CR05 / CRTM05 legado · EPSG:5367 · WGS84</option>
+          </select>
+
+          <select id="closureMode" class="grow" title="Método de cierre">
+            <option value="polygon">Polígono cerrado automáticamente</option>
+            <option value="traverse">Poligonal: último punto es observación de cierre</option>
+          </select>
+
+          <button class="btn primary" id="calculate" type="button">Recalcular</button>
+        </div>
+        <p class="note">En modo polígono, el tramo final Pn→P1 forma parte del perímetro y el error lineal es 0 por cierre geométrico impuesto. En modo poligonal, el último registro se interpreta como observación de retorno y se compara contra P1.</p>
+      </section>
+
+      <section class="card span-2">
+        <div class="head">
+          <span class="num">03</span>
+          <div>
+            <h2>Resultados topográficos</h2>
+            <p>Área por Gauss/Shoelace, distancias y azimut medido desde el Norte en sentido horario.</p>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><span>Perímetro / longitud</span><strong id="metricPerimeter">—</strong></div>
+          <div class="metric"><span>Área</span><strong id="metricArea">—</strong></div>
+          <div class="metric"><span>Error lineal</span><strong id="metricError">—</strong></div>
+          <div class="metric"><span>Precisión relativa</span><strong id="metricPrecision">—</strong></div>
+        </div>
+
+        <div class="split">
+          <svg id="diagram" class="diagram" viewBox="0 0 500 500" aria-label="Diagrama local del polígono"></svg>
+          <div>
+            <div class="table-wrap segment-table">
+              <table>
+                <thead><tr><th>Tramo</th><th>ΔE</th><th>ΔN</th><th>Distancia</th><th>Azimut</th></tr></thead>
+                <tbody id="segmentsBody"></tbody>
+              </table>
+            </div>
+            <div class="controls">
+              <button class="btn primary" id="dxfBtn" type="button">Descargar DXF R12</button>
+              <button class="btn ghost" id="csvBtn" type="button">Descargar CSV</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card span-2">
+        <div class="head">
+          <span class="num">04</span>
+          <div>
+            <h2>Mapa georreferenciado anti-bloqueo</h2>
+            <p>Esri World Imagery carga como base. El WMS se solicita únicamente al activar la casilla.</p>
+          </div>
+        </div>
+
+        <div class="mapbar">
+          <label class="check"><input id="wmsToggle" type="checkbox"> Superponer WMS crt:limites</label>
+          <span class="small" id="mapState">Mapa listo; pendiente de coordenadas válidas.</span>
+        </div>
+        <div id="map"></div>
+        <p class="note">La conversión al mapa es para visualización. CR-SIRGAS es un marco dinámico; trabajos geodésicos de alta precisión requieren considerar época, velocidades y transformación oficial aplicable.</p>
+      </section>
+
+      <section class="card span-2">
+        <div class="head">
+          <span class="num">05</span>
+          <div>
+            <h2>Auditoría interna</h2>
+            <p>Pruebas automáticas de geometría, azimut, lectura de coordenadas, conversión y DXF.</p>
+          </div>
+        </div>
+        <div class="audit" id="audit">Ejecutando pruebas…</div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal" id="pointModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="dialog">
+      <h3 id="modalTitle">Agregar vértice en la marca</h3>
+      <div class="form-grid">
+        <label>Nombre del vértice<input id="modalName" autocomplete="off"></label>
+        <label>Coordenada Este X<input id="modalX" inputmode="decimal"></label>
+        <label>Coordenada Norte Y<input id="modalY" inputmode="decimal"></label>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="cancelModal" type="button">Cancelar</button>
+        <button class="btn primary" id="saveModal" type="button">Guardar</button>
+      </div>
+    </div>
   </div>
 
-  <!-- SECCI脫N 1: INGRESO DE DATOS -->
-  <section class="card">
-    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Ingreso Seguro de Coordenadas</h2></div>
-    <div class="action-row">
-      <label class="btn btn-primary" for="excelInput">馃搳 Cargar Excel/CSV</label>
-      <input type="file" id="excelInput" accept=".xlsx, .xls, .csv">
-      
-      <label class="btn btn-ghost" for="ocrInput">馃摲 Escaneo OCR Autom谩tico</label>
-      <input type="file" id="ocrInput" accept="image/*" capture="environment">
+  <div class="toast" id="toast" role="status"></div>
 
-      <label class="btn btn-ghost" for="clickMapInput" style="background:var(--navy-line); color:var(--paper); border:none;">馃幆 Marcar Puntos Manual (Imagen)</label>
-      <input type="file" id="clickMapInput" accept="image/*">
-    </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 
-    <div class="preview-box" id="previewBox">
-      <img id="previewImg" alt="Plano o Libreta">
-      <div id="markersContainer"></div>
-    </div>
-    <div class="ocr-progress" id="ocrProgress"><div class="ocr-progress-bar" id="ocrProgressBar"></div></div>
-    <div class="status-msg" id="statusMsg">Listo para recibir datos.</div>
-  </section>
+  <script>
+    'use strict';
 
-  <!-- SECCI脫N 2: TABLA DE PUNTOS -->
-  <section class="card">
-    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Libreta de V茅rtices</h2></div>
-    <table id="pointsTable">
-      <thead><tr><th>V茅rtice</th><th>Este (X) [m]</th><th>Norte (Y) [m]</th><th>Acci贸n</th></tr></thead>
-      <tbody id="pointsBody"></tbody>
-    </table>
-    <div style="display:flex; gap:10px; margin-top:16px;">
-      <button class="btn btn-ghost" style="padding:8px 12px;" onclick="addPointRow()">+ A帽adir Fila</button>
-      <button class="btn btn-primary" style="flex:1;" onclick="procesarPoligono()">馃攧 Calcular Cierre y Mapa</button>
-    </div>
-  </section>
+    const $ = (selector) => document.querySelector(selector);
 
-  <!-- SECCI脫N 3: MAPA SEGURO -->
-  <section class="card" id="mapSection" style="display:none;">
-    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Cartograf铆a Georreferenciada</h2></div>
-    
-    <div class="map-controls">
-      <span style="font-size:13px; color:var(--muted);">Vista principal estable: Sat茅lite / OSM.</span>
-      <label class="toggle-wms">
-        <input type="checkbox" id="wmsToggle">
-        Cargar Capa WMS Catastral (Opcional - Requiere Internet R谩pido)
-      </label>
-    </div>
-    <div id="mapView"></div>
-  </section>
+    const state = {
+      points: [],
+      sequence: 0,
+      marks: [],
+      pendingMark: null,
+      imageFile: null,
+      ocrBusy: false,
+      map: null,
+      drawingLayer: null,
+      satelliteLayer: null,
+      osmLayer: null,
+      wmsLayer: null,
+      wmsTimer: null,
+      wmsLoadCount: 0,
+      wmsErrorCount: 0,
+      lastResult: null
+    };
 
-  <!-- SECCI脫N 4: RESULTADOS TOPOGR脕FICOS -->
-  <section class="card" id="resultsSection" style="display:none;">
-    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">An谩lisis Anal铆tico y Exportaci贸n</h2></div>
-    
-    <div class="metrics-grid">
-      <div class="metric-card"><span>Per铆metro</span><strong id="outPerimeter">鈥�</strong></div>
-      <div class="metric-card"><span>脕rea de Pol铆gono</span><strong id="outArea">鈥�</strong></div>
-      <div class="metric-card"><span>Error de Cierre ($E_L$)</span><strong id="outClosure">鈥�</strong></div>
-      <div class="metric-card"><span>Precisi贸n Relativa</span><strong id="outPrecision">鈥�</strong></div>
-    </div>
+    const CRS = {
+      '8908': {
+        code: 'EPSG:8908',
+        label: 'CR-SIRGAS época 2014.59 / CRTM05',
+        ellipsoid: 'GRS80',
+        a: 6378137.0,
+        inverseFlattening: 298.257222101,
+        proj4: '+proj=tmerc +lat_0=0 +lon_0=-84 +k=0.9999 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs'
+      },
+      '5367': {
+        code: 'EPSG:5367',
+        label: 'CR05 / CRTM05 legado',
+        ellipsoid: 'WGS84',
+        a: 6378137.0,
+        inverseFlattening: 298.257223563,
+        proj4: '+proj=tmerc +lat_0=0 +lon_0=-84 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-0.16959,0.35312,0.51846,-0.03385,0.16325,-0.03446,0.03693 +units=m +no_defs'
+      }
+    };
 
-    <svg viewBox="0 0 400 400" id="resultDiagram"></svg>
-
-    <button class="btn btn-primary" style="width:100%;" id="dxfBtn">猬� Exportar a DXF (AutoCAD/Civil3D)</button>
-  </section>
-
-</div>
-
-<!-- MODAL PARA OPCI脫N 3 -->
-<div class="modal-overlay" id="pointModal">
-  <div class="modal-card">
-    <h3>Definir Coordenada</h3>
-    <label>Identificador</label>
-    <input type="text" id="modalName">
-    <label>Coordenada Este (X)</label>
-    <input type="number" id="modalX">
-    <label>Coordenada Norte (Y)</label>
-    <input type="number" id="modalY">
-    <div style="display:flex; gap:10px; justify-content:flex-end;">
-      <button class="btn btn-ghost" onclick="document.getElementById('pointModal').style.display='none'">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarPuntoClic()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Librer铆as Externas Seguras -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-
-<script>
-// --- ESTADO GLOBAL ---
-let puntos = [];
-let contadorId = 0;
-let coordsClickPendiente = null;
-let mapaLeaflet = null;
-let capaPoligono = null;
-let capaWMS = null;
-let mapaSatelite = null;
-let mapaCalles = null;
-
-// --- INICIALIZACI脫N DE TABLA ---
-function addPointRow(nombre='', x='', y='') {
-  contadorId++;
-  const id = 'pt_' + contadorId;
-  const nom = nombre || `P${puntos.length + 1}`;
-  puntos.push({ id, nombre: nom, x: Number(x) || '', y: Number(y) || '' });
-  renderTabla();
-}
-
-function renderTabla() {
-  const tbody = document.getElementById('pointsBody');
-  tbody.innerHTML = '';
-  puntos.forEach(p => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><input type="text" value="${p.nombre}" onchange="updatePt('${p.id}', 'nombre', this.value)"></td>
-      <td><input type="number" step="0.001" value="${p.x}" onchange="updatePt('${p.id}', 'x', this.value)"></td>
-      <td><input type="number" step="0.001" value="${p.y}" onchange="updatePt('${p.id}', 'y', this.value)"></td>
-      <td><button class="icon-btn" onclick="eliminarPt('${p.id}')">Quitar</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function updatePt(id, campo, valor) {
-  const pt = puntos.find(p => p.id === id);
-  if(pt) pt[campo] = campo === 'nombre' ? valor : parseFloat(valor);
-}
-
-function eliminarPt(id) {
-  puntos = puntos.filter(p => p.id !== id);
-  renderTabla();
-}
-
-// Inicializar 4 puntos vac铆os
-[1,2,3,4].forEach(() => addPointRow());
-
-// --- OPCI脫N 1: EXCEL (Aislado en Try/Catch) ---
-document.getElementById('excelInput').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if(!file) return;
-  const status = document.getElementById('statusMsg');
-  status.innerHTML = "Leyendo Excel...";
-  
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    try {
-      const data = new Uint8Array(evt.target.result);
-      const workbook = XLSX.read(data, {type: 'array'});
-      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-      
-      puntos = []; contadorId = 0;
-      rows.forEach(r => {
-        let nums = r.map(c => parseFloat(c)).filter(n => !isNaN(n) && (n > 1000 || n < -1000));
-        if(nums.length >= 2) addPointRow('', nums[0], nums[1]);
-      });
-      status.innerHTML = `<span style="color:var(--ok)">Excel cargado: ${puntos.length} puntos.</span>`;
-    } catch (err) {
-      status.innerHTML = `<span style="color:var(--err)">Error leyendo Excel: Archivo corrupto o no v谩lido.</span>`;
+    if (window.proj4) {
+      proj4.defs('EPSG:8908', CRS['8908'].proj4);
+      proj4.defs('EPSG:5367', CRS['5367'].proj4);
+      proj4.defs('EPSG:4326', '+proj=longlat +datum=WGS84 +no_defs');
     }
-  };
-  reader.readAsArrayBuffer(file);
-});
 
-// --- OPCI脫N 2: OCR PROTEGIDO CONTRA MEMORIA (Downsampling) ---
-document.getElementById('ocrInput').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if(!file) return;
-  const img = new Image();
-  const status = document.getElementById('statusMsg');
-  const barra = document.getElementById('ocrProgressBar');
-  document.getElementById('ocrProgress').style.display = 'block';
-  status.textContent = "Preparando imagen (Prevenci贸n de RAM)...";
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[char]);
+    }
 
-  const reader = new FileReader();
-  reader.onload = e => {
-    img.onload = async () => {
-      // Compresi贸n de Canvas para evitar cuelgues
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const scale = Math.min(1, 1800 / Math.max(img.width, img.height)); 
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
-      // Filtro de Alto Contraste Nativo
-      ctx.filter = 'contrast(200%) grayscale(100%)';
-      ctx.drawImage(canvas, 0, 0);
+    function setStatus(message, type = '') {
+      const element = $('#status');
+      element.textContent = message;
+      element.className = 'status' + (type ? ' ' + type : '');
+    }
 
-      // Exportar en JPEG ligero (60% calidad)
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-      
-      document.getElementById('previewImg').src = dataUrl;
-      document.getElementById('previewBox').style.display = 'block';
-      document.getElementById('markersContainer').innerHTML = '';
+    function showToast(message) {
+      const element = $('#toast');
+      element.textContent = message;
+      element.classList.add('show');
+      clearTimeout(element._timer);
+      element._timer = setTimeout(() => element.classList.remove('show'), 3600);
+    }
 
-      if (typeof Tesseract === 'undefined') {
-        status.innerHTML = '<span style="color:var(--err)">Tesseract no carg贸. Revisa tu conexi贸n.</span>';
+    function setProgress(value) {
+      const progress = $('#progress');
+      const bar = $('#progressBar');
+      if (value === null) {
+        progress.style.display = 'none';
+        bar.style.width = '0%';
+        return;
+      }
+      progress.style.display = 'block';
+      bar.style.width = Math.max(1, Math.min(100, value)) + '%';
+    }
+
+    function parseFlexibleNumber(value) {
+      if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+      let text = String(value ?? '').trim().replace(/\s+/g, '');
+      if (!text) return NaN;
+
+      text = text.replace(/[Oo]/g, '0').replace(/[Il|]/g, '1').replace(/[Ss]/g, '5');
+      text = text.replace(/[^0-9,\.\-+]/g, '');
+      if (!text) return NaN;
+
+      const comma = text.lastIndexOf(',');
+      const dot = text.lastIndexOf('.');
+      if (comma >= 0 && dot >= 0) {
+        text = comma > dot
+          ? text.replace(/\./g, '').replace(',', '.')
+          : text.replace(/,/g, '');
+      } else if (comma >= 0) {
+        const decimals = text.length - comma - 1;
+        text = decimals === 3 && comma >= 3 ? text.replace(/,/g, '') : text.replace(',', '.');
+      } else if (dot >= 0) {
+        const decimals = text.length - dot - 1;
+        const stripped = Number(text.replace(/\./g, ''));
+        const direct = Number(text);
+        if (decimals === 3 && direct < 300000 && stripped >= 300000) text = text.replace(/\./g, '');
+      }
+      return Number(text);
+    }
+
+    function isValidEasting(value) {
+      return Number.isFinite(value) && value >= 300000 && value <= 700000;
+    }
+
+    function isValidNorthing(value) {
+      return Number.isFinite(value) && value >= 900000 && value <= 1300000;
+    }
+
+    function normalizeCoordinate(value, kind) {
+      let number = parseFlexibleNumber(value);
+      const validator = kind === 'x' ? isValidEasting : isValidNorthing;
+      if (validator(number)) return number;
+
+      const compact = String(value ?? '').replace(/[^0-9\-+]/g, '');
+      const integer = Number(compact);
+      if (validator(integer)) return integer;
+      return NaN;
+    }
+
+    function appendPoint(name, xValue, yValue, source = 'manual', options = {}) {
+      const x = normalizeCoordinate(xValue, 'x');
+      const y = normalizeCoordinate(yValue, 'y');
+      if (!isValidEasting(x) || !isValidNorthing(y)) return null;
+
+      state.points = state.points.filter((point) => !(
+        point.source === 'manual' && point.x === '' && point.y === '' && /^P_\d+$/.test(String(point.name))
+      ));
+
+      const duplicate = state.points.find((point) => {
+        const px = normalizeCoordinate(point.x, 'x');
+        const py = normalizeCoordinate(point.y, 'y');
+        return Number.isFinite(px) && Number.isFinite(py) && Math.hypot(px - x, py - y) < 0.001;
+      });
+      if (duplicate && options.allowDuplicate !== true) return null;
+
+      const point = {
+        id: 'pt_' + (++state.sequence),
+        name: String(name || `P_${state.points.length + 1}`),
+        x,
+        y,
+        source
+      };
+      state.points.push(point);
+      renderPoints();
+      return point;
+    }
+
+    function appendBlankRow() {
+      state.points.push({
+        id: 'pt_' + (++state.sequence),
+        name: `P_${state.points.length + 1}`,
+        x: '',
+        y: '',
+        source: 'manual'
+      });
+      renderPoints();
+    }
+
+    function renderPoints() {
+      $('#pointsBody').innerHTML = state.points.map((point, index) => `
+        <tr data-id="${escapeHtml(point.id)}">
+          <td class="rownum">${index + 1}</td>
+          <td><input data-field="name" value="${escapeHtml(point.name)}"></td>
+          <td><input data-field="x" inputmode="decimal" value="${escapeHtml(point.x)}"></td>
+          <td><input data-field="y" inputmode="decimal" value="${escapeHtml(point.y)}"></td>
+          <td><span class="pill">${escapeHtml(point.source)}</span></td>
+          <td><button class="btn danger remove-point" type="button" style="padding:6px 9px">Quitar</button></td>
+        </tr>
+      `).join('');
+    }
+
+    $('#pointsBody').addEventListener('input', (event) => {
+      const row = event.target.closest('tr');
+      const field = event.target.dataset.field;
+      if (!row || !field) return;
+      const point = state.points.find((item) => item.id === row.dataset.id);
+      if (!point) return;
+      point[field] = event.target.value;
+    });
+
+    $('#pointsBody').addEventListener('click', (event) => {
+      if (!event.target.classList.contains('remove-point')) return;
+      const id = event.target.closest('tr').dataset.id;
+      state.points = state.points.filter((point) => point.id !== id);
+      state.marks = state.marks.filter((mark) => mark.pointId !== id);
+      renderPoints();
+      renderMarks();
+      clearResults();
+    });
+
+    $('#addRow').addEventListener('click', appendBlankRow);
+    $('#clearAll').addEventListener('click', () => {
+      if (!confirm('¿Vaciar todos los vértices y marcas?')) return;
+      state.points = [];
+      state.marks = [];
+      renderPoints();
+      renderMarks();
+      clearResults();
+      setStatus('La tabla y las marcas fueron vaciadas.');
+    });
+
+    function getValidPoints() {
+      return state.points.map((point) => ({
+        ...point,
+        x: normalizeCoordinate(point.x, 'x'),
+        y: normalizeCoordinate(point.y, 'y')
+      })).filter((point) => isValidEasting(point.x) && isValidNorthing(point.y));
+    }
+
+    function azimuthDegrees(deltaE, deltaN) {
+      const degrees = Math.atan2(deltaE, deltaN) * 180 / Math.PI;
+      return (degrees + 360) % 360;
+    }
+
+    function degreesToDms(angle) {
+      let degrees = Math.floor(angle);
+      let minutesFloat = (angle - degrees) * 60;
+      let minutes = Math.floor(minutesFloat);
+      let seconds = (minutesFloat - minutes) * 60;
+      if (seconds >= 59.995) {
+        seconds = 0;
+        minutes += 1;
+      }
+      if (minutes >= 60) {
+        minutes = 0;
+        degrees = (degrees + 1) % 360;
+      }
+      return `${degrees}° ${String(minutes).padStart(2, '0')}' ${seconds.toFixed(2).padStart(5, '0')}"`;
+    }
+
+    function computeGeometry(points, mode = 'polygon') {
+      if (points.length < 3) throw new Error('Se requieren al menos 3 vértices válidos.');
+
+      const segments = [];
+      let perimeter = 0;
+      let doubleArea = 0;
+
+      const segmentCount = mode === 'polygon' ? points.length : points.length - 1;
+      for (let index = 0; index < segmentCount; index += 1) {
+        const from = points[index];
+        const to = points[(index + 1) % points.length];
+        const deltaE = to.x - from.x;
+        const deltaN = to.y - from.y;
+        const distance = Math.hypot(deltaE, deltaN);
+        perimeter += distance;
+        segments.push({
+          from,
+          to,
+          deltaE,
+          deltaN,
+          distance,
+          azimuth: azimuthDegrees(deltaE, deltaN),
+          closing: mode === 'polygon' && index === points.length - 1
+        });
+      }
+
+      const areaPoints = mode === 'traverse' && points.length > 3 ? points.slice(0, -1) : points;
+      for (let index = 0; index < areaPoints.length; index += 1) {
+        const current = areaPoints[index];
+        const next = areaPoints[(index + 1) % areaPoints.length];
+        doubleArea += current.x * next.y - next.x * current.y;
+      }
+      const area = Math.abs(doubleArea) / 2;
+
+      let closureError = 0;
+      let relativePrecision = null;
+      if (mode === 'traverse') {
+        const first = points[0];
+        const closingObservation = points[points.length - 1];
+        closureError = Math.hypot(closingObservation.x - first.x, closingObservation.y - first.y);
+        relativePrecision = closureError === 0 ? Infinity : perimeter / closureError;
+      }
+
+      return { mode, perimeter, area, closureError, relativePrecision, segments };
+    }
+
+    function renderSegments(segments) {
+      $('#segmentsBody').innerHTML = segments.map((segment) => `
+        <tr>
+          <td>${escapeHtml(segment.from.name)} → ${escapeHtml(segment.to.name)}${segment.closing ? ' (cierre)' : ''}</td>
+          <td>${segment.deltaE.toFixed(3)}</td>
+          <td>${segment.deltaN.toFixed(3)}</td>
+          <td>${segment.distance.toFixed(3)} m</td>
+          <td>${degreesToDms(segment.azimuth)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderDiagram(points) {
+      const svg = $('#diagram');
+      const size = 500;
+      const padding = 58;
+      const minX = Math.min(...points.map((point) => point.x));
+      const maxX = Math.max(...points.map((point) => point.x));
+      const minY = Math.min(...points.map((point) => point.y));
+      const maxY = Math.max(...points.map((point) => point.y));
+      const spanX = maxX - minX || 1;
+      const spanY = maxY - minY || 1;
+      const scale = Math.min((size - 2 * padding) / spanX, (size - 2 * padding) / spanY);
+      const offsetX = (size - 2 * padding - spanX * scale) / 2;
+      const offsetY = (size - 2 * padding - spanY * scale) / 2;
+
+      const projected = points.map((point) => ({
+        name: point.name,
+        x: padding + offsetX + (point.x - minX) * scale,
+        y: size - (padding + offsetY + (point.y - minY) * scale)
+      }));
+
+      const polygon = projected.map((point) => `${point.x},${point.y}`).join(' ');
+      const vertices = projected.map((point) => `
+        <circle cx="${point.x}" cy="${point.y}" r="5" fill="#c63b34" stroke="#ffffff" stroke-width="2"></circle>
+        <text x="${point.x + 9}" y="${point.y - 9}" font-size="13" font-weight="700" fill="#16242e">${escapeHtml(point.name)}</text>
+      `).join('');
+
+      svg.innerHTML = `
+        <defs>
+          <pattern id="gridPattern" width="25" height="25" patternUnits="userSpaceOnUse">
+            <path d="M 25 0 L 0 0 0 25" fill="none" stroke="#dde3e7" stroke-width="1"></path>
+          </pattern>
+        </defs>
+        <rect width="500" height="500" fill="url(#gridPattern)"></rect>
+        <polygon points="${polygon}" fill="rgba(201,154,49,.18)" stroke="#0e2d46" stroke-width="3"></polygon>
+        ${vertices}
+        <text x="18" y="482" font-size="11" fill="#65727c">Diagrama relativo, no representa escala de impresión.</text>
+      `;
+    }
+
+    function clearResults() {
+      $('#metricPerimeter').textContent = '—';
+      $('#metricArea').textContent = '—';
+      $('#metricError').textContent = '—';
+      $('#metricPrecision').textContent = '—';
+      $('#segmentsBody').innerHTML = '';
+      $('#diagram').innerHTML = '';
+      state.lastResult = null;
+      if (state.drawingLayer) state.drawingLayer.clearLayers();
+    }
+
+    function calculateAll() {
+      try {
+        const points = getValidPoints();
+        const mode = $('#closureMode').value;
+        const result = computeGeometry(points, mode);
+        state.lastResult = { ...result, points };
+
+        $('#metricPerimeter').textContent = result.perimeter.toLocaleString('es-CR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' m';
+        $('#metricArea').textContent = result.area.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' m²';
+        $('#metricError').textContent = mode === 'polygon'
+          ? '0.000 m (impuesto)'
+          : result.closureError.toFixed(3) + ' m';
+        $('#metricPrecision').textContent = mode === 'polygon'
+          ? 'No aplica'
+          : result.relativePrecision === Infinity
+            ? 'Cierre exacto'
+            : result.relativePrecision && result.relativePrecision >= 1
+              ? '1:' + Math.round(result.relativePrecision).toLocaleString('es-CR')
+              : 'Menor que 1:1';
+
+        renderSegments(result.segments);
+        renderDiagram(mode === 'traverse' && points.length > 3 ? points.slice(0, -1) : points);
+        updateMap(mode === 'traverse' && points.length > 3 ? points.slice(0, -1) : points);
+        setStatus(`Cálculo completado con ${points.length} registros válidos.`, 'ok');
+        return result;
+      } catch (error) {
+        setStatus(error.message, 'err');
+        showToast(error.message);
+        return null;
+      }
+    }
+
+    $('#calculate').addEventListener('click', calculateAll);
+    $('#crsSelect').addEventListener('change', () => {
+      if (getValidPoints().length >= 3) calculateAll();
+    });
+
+    function inverseTransverseMercator(easting, northing, crsDefinition) {
+      const a = crsDefinition.a;
+      const flattening = 1 / crsDefinition.inverseFlattening;
+      const eccentricitySquared = 2 * flattening - flattening * flattening;
+      const secondEccentricitySquared = eccentricitySquared / (1 - eccentricitySquared);
+      const scaleFactor = 0.9999;
+      const falseEasting = 500000;
+      const falseNorthing = 0;
+      const centralMeridian = -84 * Math.PI / 180;
+
+      const meridionalArc = (northing - falseNorthing) / scaleFactor;
+      const mu = meridionalArc / (a * (1 - eccentricitySquared / 4 - 3 * eccentricitySquared ** 2 / 64 - 5 * eccentricitySquared ** 3 / 256));
+      const e1 = (1 - Math.sqrt(1 - eccentricitySquared)) / (1 + Math.sqrt(1 - eccentricitySquared));
+
+      const footprintLatitude = mu
+        + (3 * e1 / 2 - 27 * e1 ** 3 / 32) * Math.sin(2 * mu)
+        + (21 * e1 ** 2 / 16 - 55 * e1 ** 4 / 32) * Math.sin(4 * mu)
+        + (151 * e1 ** 3 / 96) * Math.sin(6 * mu)
+        + (1097 * e1 ** 4 / 512) * Math.sin(8 * mu);
+
+      const sinPhi = Math.sin(footprintLatitude);
+      const cosPhi = Math.cos(footprintLatitude);
+      const tanPhi = Math.tan(footprintLatitude);
+      const n1 = a / Math.sqrt(1 - eccentricitySquared * sinPhi ** 2);
+      const r1 = a * (1 - eccentricitySquared) / (1 - eccentricitySquared * sinPhi ** 2) ** 1.5;
+      const t1 = tanPhi ** 2;
+      const c1 = secondEccentricitySquared * cosPhi ** 2;
+      const d = (easting - falseEasting) / (n1 * scaleFactor);
+
+      const latitude = footprintLatitude - (n1 * tanPhi / r1) * (
+        d ** 2 / 2
+        - (5 + 3 * t1 + 10 * c1 - 4 * c1 ** 2 - 9 * secondEccentricitySquared) * d ** 4 / 24
+        + (61 + 90 * t1 + 298 * c1 + 45 * t1 ** 2 - 252 * secondEccentricitySquared - 3 * c1 ** 2) * d ** 6 / 720
+      );
+
+      const longitude = centralMeridian + (
+        d
+        - (1 + 2 * t1 + c1) * d ** 3 / 6
+        + (5 - 2 * c1 + 28 * t1 - 3 * c1 ** 2 + 8 * secondEccentricitySquared + 24 * t1 ** 2) * d ** 5 / 120
+      ) / cosPhi;
+
+      return { lat: latitude * 180 / Math.PI, lon: longitude * 180 / Math.PI };
+    }
+
+    function toWgs84(easting, northing) {
+      const selected = $('#crsSelect').value;
+      const definition = CRS[selected];
+      if (window.proj4) {
+        try {
+          const result = proj4(definition.code, 'EPSG:4326', [easting, northing]);
+          if (Array.isArray(result) && Number.isFinite(result[0]) && Number.isFinite(result[1])) {
+            return { lon: result[0], lat: result[1], engine: 'Proj4' };
+          }
+        } catch (error) {
+          console.warn('Proj4 falló; se usa la fórmula matemática de respaldo.', error);
+        }
+      }
+      return { ...inverseTransverseMercator(easting, northing, definition), engine: 'Respaldo matemático' };
+    }
+
+    function initMap() {
+      if (!window.L) {
+        $('#mapState').textContent = 'Leaflet no cargó. La tabla y los cálculos siguen disponibles.';
+        return;
+      }
+      try {
+        state.satelliteLayer = L.tileLayer(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          { maxZoom: 21, attribution: 'Imagery © Esri' }
+        );
+        state.osmLayer = L.tileLayer(
+          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          { maxZoom: 21, attribution: '© OpenStreetMap contributors' }
+        );
+        state.map = L.map('map', {
+          center: [9.93, -84.08],
+          zoom: 8,
+          layers: [state.satelliteLayer],
+          preferCanvas: true
+        });
+        L.control.layers({ 'Satélite Esri': state.satelliteLayer, 'OpenStreetMap': state.osmLayer }).addTo(state.map);
+        state.drawingLayer = L.layerGroup().addTo(state.map);
+
+        state.satelliteLayer.on('tileerror', () => {
+          $('#mapState').textContent = 'Algunas teselas satelitales no respondieron; puede usar OpenStreetMap.';
+        });
+      } catch (error) {
+        console.error(error);
+        $('#mapState').textContent = 'El mapa no pudo inicializarse; el resto de la aplicación continúa activo.';
+      }
+    }
+
+    function updateMap(points) {
+      if (!state.map || !state.drawingLayer) return;
+      try {
+        state.drawingLayer.clearLayers();
+        const converted = points.map((point) => ({ ...point, ...toWgs84(point.x, point.y) }));
+        const valid = converted.filter((point) => point.lat >= 8 && point.lat <= 12 && point.lon >= -86.5 && point.lon <= -82);
+        if (valid.length < 3) throw new Error('La conversión produjo menos de tres puntos dentro del entorno de Costa Rica. Revise el CRS seleccionado.');
+
+        const latLngs = valid.map((point) => [point.lat, point.lon]);
+        L.polygon(latLngs, { color: '#e0b653', weight: 3, fillColor: '#c99a31', fillOpacity: .35 }).addTo(state.drawingLayer);
+        valid.forEach((point) => {
+          L.circleMarker([point.lat, point.lon], {
+            radius: 5,
+            color: '#111',
+            weight: 1,
+            fillColor: '#e0b653',
+            fillOpacity: 1
+          }).bindPopup(`<b>${escapeHtml(point.name)}</b><br>Este: ${point.x.toFixed(3)}<br>Norte: ${point.y.toFixed(3)}<br>${escapeHtml(CRS[$('#crsSelect').value].code)}`).addTo(state.drawingLayer);
+        });
+        state.map.invalidateSize();
+        state.map.fitBounds(L.latLngBounds(latLngs), { padding: [35, 35], maxZoom: 19 });
+        $('#mapState').textContent = `${valid.length} puntos mostrados · ${CRS[$('#crsSelect').value].code} → WGS84`;
+      } catch (error) {
+        $('#mapState').textContent = error.message;
+        showToast(error.message);
+      }
+    }
+
+    function disableWms(message) {
+      clearTimeout(state.wmsTimer);
+      if (state.map && state.wmsLayer && state.map.hasLayer(state.wmsLayer)) state.map.removeLayer(state.wmsLayer);
+      $('#wmsToggle').checked = false;
+      $('#mapState').textContent = message;
+    }
+
+    $('#wmsToggle').addEventListener('change', (event) => {
+      if (!state.map || !window.L) {
+        event.target.checked = false;
+        return showToast('El mapa Leaflet no está disponible.');
+      }
+
+      if (!event.target.checked) {
+        disableWms('WMS desactivado. El mapa base permanece disponible.');
         return;
       }
 
       try {
-        status.textContent = "Analizando topograf铆a OCR...";
-        barra.style.width = '30%';
-        
-        const result = await Tesseract.recognize(dataUrl, 'spa+eng', {
-          logger: m => { if(m.status === 'recognizing text') barra.style.width = (30 + Math.round(m.progress * 70)) + '%'; }
-        });
-        
-        // Expresi贸n Regular Mejorada
-        const cleanTxt = result.data.text.replace(/,/g, '.').replace(/[OoS]/g, m => m === 'S'?'5':'0');
-        const nums = cleanTxt.match(/\b\d{5,7}(?:\.\d{1,4})?\b/g) || [];
-        
-        // Filtro CRTM05 estricto
-        const validCoords = nums.map(n => parseFloat(n)).filter(n => (n >= 300000 && n <= 700000) || (n >= 900000 && n <= 1300000));
-
-        if(validCoords.length >= 2) {
-          puntos = []; contadorId = 0;
-          for(let i=0; i+1 < validCoords.length; i+=2) {
-            addPointRow('', validCoords[i], validCoords[i+1]);
-          }
-          status.innerHTML = `<span style="color:var(--ok)">OCR Exitoso: ${puntos.length} v茅rtices hallados.</span>`;
-        } else {
-          status.innerHTML = `<span style="color:var(--err)">No se detectaron coordenadas m茅tricas de Costa Rica.</span>`;
+        state.wmsLoadCount = 0;
+        state.wmsErrorCount = 0;
+        if (!state.wmsLayer) {
+          state.wmsLayer = L.tileLayer.wms('https://geostec.crt.or.cr/geoserver/wms', {
+            layers: 'crt:limites',
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            maxZoom: 21,
+            opacity: .82
+          });
+          state.wmsLayer.on('tileload', () => {
+            state.wmsLoadCount += 1;
+            clearTimeout(state.wmsTimer);
+            $('#mapState').textContent = 'WMS crt:limites activo.';
+          });
+          state.wmsLayer.on('tileerror', () => {
+            state.wmsErrorCount += 1;
+            if (state.wmsErrorCount >= 4 && state.wmsLoadCount === 0) {
+              disableWms('El WMS no respondió y fue retirado automáticamente. El satélite continúa activo.');
+            }
+          });
         }
-      } catch (err) {
-        status.innerHTML = `<span style="color:var(--err)">OCR Fall贸: Imagen demasiado compleja. Usa opci贸n 3.</span>`;
-      } finally {
-        document.getElementById('ocrProgress').style.display = 'none';
+        state.wmsLayer.addTo(state.map);
+        $('#mapState').textContent = 'Solicitando WMS opcional…';
+        state.wmsTimer = setTimeout(() => {
+          if (state.wmsLoadCount === 0) disableWms('Tiempo de espera del WMS agotado. Fue retirado sin afectar el mapa base.');
+        }, 15000);
+      } catch (error) {
+        disableWms('No fue posible activar el WMS. El mapa base continúa activo.');
       }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-// --- OPCI脫N 3: VISOR INTERACTIVO POR CLIC ---
-document.getElementById('clickMapInput').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if(!file) return;
-  const status = document.getElementById('statusMsg');
-  document.getElementById('markersContainer').innerHTML = '';
-  document.getElementById('ocrProgress').style.display = 'none';
-
-  const reader = new FileReader();
-  reader.onload = evt => {
-    const imgEl = document.getElementById('previewImg');
-    imgEl.src = evt.target.result;
-    document.getElementById('previewBox').style.display = 'inline-block';
-    status.innerHTML = "馃幆 Clic sobre la imagen para clavar v茅rtices.";
-    
-    imgEl.onclick = function(event) {
-      const rect = imgEl.getBoundingClientRect();
-      coordsClickPendiente = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-      
-      document.getElementById('modalName').value = `P${puntos.length + 1}`;
-      document.getElementById('modalX').value = '';
-      document.getElementById('modalY').value = '';
-      document.getElementById('pointModal').style.display = 'flex';
-    };
-  };
-  reader.readAsDataURL(file);
-});
-
-function guardarPuntoClic() {
-  const nombre = document.getElementById('modalName').value || 'P';
-  const x = parseFloat(document.getElementById('modalX').value);
-  const y = parseFloat(document.getElementById('modalY').value);
-  
-  if (isNaN(x) || isNaN(y)) { alert('Coordenadas inv谩lidas.'); return; }
-  
-  addPointRow(nombre, x, y);
-  
-  // Agregar marcador visual
-  const marker = document.createElement('div');
-  marker.className = 'click-marker';
-  marker.style.left = coordsClickPendiente.x + 'px';
-  marker.style.top = coordsClickPendiente.y + 'px';
-  document.getElementById('markersContainer').appendChild(marker);
-  
-  document.getElementById('pointModal').style.display = 'none';
-  document.getElementById('statusMsg').innerHTML = `<span style="color:var(--ok)">V茅rtice ${nombre} fijado.</span>`;
-}
-
-// --- C脕LCULO Y MAPEO CENTRALIZADO ---
-function procesarPoligono() {
-  const validos = puntos.filter(p => typeof p.x === 'number' && typeof p.y === 'number' && !isNaN(p.x) && !isNaN(p.y));
-  if (validos.length < 3) {
-    alert('Se requieren al menos 3 coordenadas completas (X, Y) para calcular y cerrar un pol铆gono.');
-    return;
-  }
-  
-  // Mostrar paneles
-  document.getElementById('mapSection').style.display = 'block';
-  document.getElementById('resultsSection').style.display = 'block';
-
-  // Anal铆tica Matem谩tica (脕rea Gauss, Per铆metro)
-  let perimetro = 0;
-  let s1 = 0, s2 = 0;
-  
-  for(let i=0; i < validos.length; i++) {
-    const actual = validos[i];
-    const sgte = validos[(i + 1) % validos.length]; // Cierre impl铆cito
-    
-    perimetro += Math.hypot(sgte.x - actual.x, sgte.y - actual.y);
-    s1 += actual.x * sgte.y;
-    s2 += actual.y * sgte.x;
-  }
-  const area = Math.abs(s1 - s2) / 2;
-  
-  // Error Lineal (Cierre real P1 -> P_ultimo vs Teor铆a)
-  // Como estamos forzando figura cerrada, si el input es un per铆metro cerrado real tomado en campo, el primer y 煤ltimo punto ingresado deber铆an ser iguales. Si no, es un pol铆gono dibujado por v茅rtices perimetrales. 
-  // Para c谩lculo de E_L real en libreta abierta:
-  const pInicio = validos[0];
-  const pFin = validos[validos.length - 1];
-  const cierreError = Math.hypot(pFin.x - pInicio.x, pFin.y - pInicio.y);
-  // Nota: En pol铆gonos cerrados por coordenadas est谩ticas, el error puede ser 0 o la distancia del cierre. Se asume cierre geom茅trico estricto.
-
-  document.getElementById('outPerimeter').textContent = perimetro.toFixed(3) + ' m';
-  document.getElementById('outArea').textContent = area.toFixed(2) + ' m虏';
-  document.getElementById('outClosure').textContent = cierreError.toFixed(3) + ' m';
-  document.getElementById('outPrecision').textContent = cierreError > 0 ? `1 : ${Math.round(perimetro/cierreError).toLocaleString()}` : 'Perfecto';
-
-  // Renderizar Diagrama Vectorial Ciego
-  renderDiagramaSVG(validos);
-  
-  // Levantar Mapa Leaflet Anti-Crash
-  actualizarMapa(validos);
-}
-
-// --- DIBUJO SVG PLANO LOCAL ---
-function renderDiagramaSVG(pts) {
-  const svg = document.getElementById('resultDiagram');
-  const pad = 40, w = 400, h = 400;
-  const minX = Math.min(...pts.map(p=>p.x)), maxX = Math.max(...pts.map(p=>p.x));
-  const minY = Math.min(...pts.map(p=>p.y)), maxY = Math.max(...pts.map(p=>p.y));
-  const spanX = (maxX - minX) || 1, spanY = (maxY - minY) || 1;
-  const scale = Math.min((w - 2*pad)/spanX, (h - 2*pad)/spanY);
-  
-  const pProj = pts.map(p => ({
-    x: pad + (p.x - minX)*scale + (w - 2*pad - spanX*scale)/2,
-    y: h - (pad + (p.y - minY)*scale + (h - 2*pad - spanY*scale)/2)
-  }));
-
-  let str = '';
-  // Pol铆gono
-  str += `<polygon points="${pProj.map(p => `${p.x},${p.y}`).join(' ')}" fill="rgba(184,134,11,0.15)" stroke="#8B3A2E" stroke-width="2" />`;
-  // V茅rtices y Etiquetas
-  pProj.forEach((p, i) => {
-    str += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#B8860B" />`;
-    str += `<text x="${p.x+8}" y="${p.y-6}" font-family="monospace" font-size="12" fill="#1A1A1A">${pts[i].nombre}</text>`;
-  });
-  svg.innerHTML = str;
-}
-
-// --- TRANSFORMACI脫N CRTM05 a WGS84 ---
-function crtm05ToLatLon(x, y) {
-  const a = 6378137.0, f = 1/298.257223563, k0 = 0.9999, falseE = 500000.0, falseN = 0.0;
-  const lon0 = -84.0 * Math.PI/180;
-  const e2 = 2*f - f*f;
-  const ep2 = e2 / (1 - e2);
-  const e1 = (1 - Math.sqrt(1-e2)) / (1 + Math.sqrt(1-e2));
-  const M = (y - falseN) / k0;
-  const mu = M / (a*(1 - e2/4 - 3*e2*e2/64 - 5*Math.pow(e2,3)/256));
-  const phi1 = mu + (3*e1/2 - 27*Math.pow(e1,3)/32)*Math.sin(2*mu) + (21*e1*e1/16 - 55*Math.pow(e1,4)/32)*Math.sin(4*mu) + (151*Math.pow(e1,3)/96)*Math.sin(6*mu);
-  const sinphi1 = Math.sin(phi1), cosphi1 = Math.cos(phi1), tanphi1 = Math.tan(phi1);
-  const N1 = a / Math.sqrt(1 - e2*sinphi1*sinphi1);
-  const R1 = a*(1-e2) / Math.pow(1 - e2*sinphi1*sinphi1, 1.5);
-  const D = (x - falseE) / (N1*k0);
-  const T1 = tanphi1*tanphi1, C1 = ep2 * cosphi1*cosphi1;
-
-  const lat = phi1 - (N1*tanphi1/R1) * (D*D/2 - (5+3*T1+10*C1-4*C1*C1-9*ep2)*Math.pow(D,4)/24);
-  const lon = lon0 + (D - (1+2*T1+C1)*Math.pow(D,3)/6) / cosphi1;
-  return { lat: lat * 180/Math.PI, lon: lon * 180/Math.PI };
-}
-
-// --- LEAFLET MAPA ROBUSTO (WMS OPCIONAL) ---
-function actualizarMapa(ptsValidos) {
-  if (typeof L === 'undefined') return;
-
-  const wgs = ptsValidos.map(p => {
-    const latLon = crtm05ToLatLon(p.x, p.y);
-    return { ...p, lat: latLon.lat, lon: latLon.lon };
-  });
-
-  if (!mapaLeaflet) {
-    // 1. Inicializar bases r谩pidas
-    mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21 });
-    mapaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21 });
-    
-    // 2. Definir capa WMS (PERO NO SE AGREGA A脷N)
-    capaWMS = L.tileLayer.wms('https://geostec.crt.or.cr/geoserver/wms?', {
-      layers: 'crt:limites', format: 'image/png', transparent: true
     });
 
-    // 3. Crear mapa obligando vista Satelital base por defecto
-    mapaLeaflet = L.map('mapView', { layers: [mapaSatelite] });
-    L.control.layers({"Sat茅lite (R谩pido)": mapaSatelite, "OSM (Calles)": mapaCalles}).addTo(mapaLeaflet);
-    
-    capaPoligono = L.layerGroup().addTo(mapaLeaflet);
-  }
+    function detectCoordinateColumns(rows, sheetName) {
+      const maxColumns = Math.min(50, Math.max(0, ...rows.map((row) => Array.isArray(row) ? row.length : 0)));
+      if (maxColumns < 2) return null;
 
-  capaPoligono.clearLayers();
-  
-  const latLngsMap = wgs.map(p => [p.lat, p.lon]);
-  
-  // Dibujar Pol铆gono
-  L.polygon(latLngsMap, { color: '#D6A421', weight: 3, fillColor: '#B8860B', fillOpacity: 0.4 }).addTo(capaPoligono);
-  
-  // Marcadores
-  wgs.forEach(p => {
-    L.circleMarker([p.lat, p.lon], { radius:5, color:'#111', fillColor:'#D6A421', fillOpacity:1, weight:1 })
-     .bindPopup(`<b>${p.nombre}</b><br>X: ${p.x.toFixed(2)}<br>Y: ${p.y.toFixed(2)}`)
-     .addTo(capaPoligono);
-  });
+      const stats = Array.from({ length: maxColumns }, (_, column) => ({
+        column,
+        xHits: 0,
+        yHits: 0,
+        textHits: 0,
+        headerX: 0,
+        headerY: 0
+      }));
 
-  // Ajustar vista
-  mapaLeaflet.invalidateSize();
-  mapaLeaflet.fitBounds(L.latLngBounds(latLngsMap), { padding: [40, 40] });
-}
+      rows.slice(0, 250).forEach((row, rowIndex) => {
+        if (!Array.isArray(row)) return;
+        row.forEach((cell, column) => {
+          if (column >= maxColumns) return;
+          const text = String(cell ?? '').trim();
+          if (text && (/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(text) || !Number.isFinite(parseFlexibleNumber(cell)))) stats[column].textHits += 1;
+          const lower = text.toLowerCase();
+          if (rowIndex < 15) {
+            if (/\b(este|easting|coord(?:enada)?\s*x|\bx\b)\b/.test(lower)) stats[column].headerX += 4;
+            if (/\b(norte|northing|coord(?:enada)?\s*y|\by\b)\b/.test(lower)) stats[column].headerY += 4;
+          }
+          const possibleX = normalizeCoordinate(cell, 'x');
+          const possibleY = normalizeCoordinate(cell, 'y');
+          if (isValidEasting(possibleX)) stats[column].xHits += 1;
+          if (isValidNorthing(possibleY)) stats[column].yHits += 1;
+        });
+      });
 
-// L贸gica de Toggle WMS Opcional (Evita Cuelgues)
-document.getElementById('wmsToggle').addEventListener('change', function(e) {
-  if(!mapaLeaflet) return;
-  if(e.target.checked) {
-    mapaLeaflet.addLayer(capaWMS);
-  } else {
-    mapaLeaflet.removeLayer(capaWMS);
-  }
-});
+      const xCandidate = [...stats].sort((a, b) => (b.xHits + b.headerX) - (a.xHits + a.headerX))[0];
+      const yCandidate = [...stats]
+        .filter((item) => item.column !== xCandidate?.column)
+        .sort((a, b) => (b.yHits + b.headerY) - (a.yHits + a.headerY))[0];
 
-// --- EXPORTAR A DXF ---
-document.getElementById('dxfBtn').addEventListener('click', () => {
-  const validos = puntos.filter(p => typeof p.x === 'number' && typeof p.y === 'number' && !isNaN(p.x));
-  if(validos.length < 3) return;
+      if (!xCandidate || !yCandidate || xCandidate.xHits < 1 || yCandidate.yHits < 1) return null;
 
-  const lines = ['0','SECTION','2','ENTITIES','0','POLYLINE','8','POLIGONO_CRTM05','66','1','70','1'];
-  validos.forEach(p => lines.push('0','VERTEX','8','POLIGONO_CRTM05','10',p.x.toFixed(4),'20',p.y.toFixed(4),'30','0.0'));
-  lines.push('0','SEQEND');
+      const nameCandidate = [...stats]
+        .filter((item) => item.column !== xCandidate.column && item.column !== yCandidate.column)
+        .sort((a, b) => b.textHits - a.textHits)[0];
 
-  validos.forEach(p => {
-    lines.push('0','TEXT','8','ETIQUETAS','10',(p.x+0.5).toFixed(4),'20',(p.y+0.5).toFixed(4),'30','0.0','40','1.5','1',p.nombre);
-    lines.push('0','POINT','8','PUNTOS','10',p.x.toFixed(4),'20',p.y.toFixed(4),'30','0.0');
-  });
-  lines.push('0','ENDSEC','0','EOF');
+      return {
+        sheetName,
+        rows,
+        xColumn: xCandidate.column,
+        yColumn: yCandidate.column,
+        nameColumn: nameCandidate?.textHits ? nameCandidate.column : -1,
+        score: xCandidate.xHits + yCandidate.yHits + xCandidate.headerX + yCandidate.headerY
+      };
+    }
 
-  const blob = new Blob([lines.join('\n')], { type: 'application/dxf' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'Levantamiento_CRTM05.dxf';
-  a.click();
-});
+    async function importWorkbook(file) {
+      if (!window.XLSX) throw new Error('SheetJS no cargó. Revise la conexión a Internet.');
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+      const candidates = [];
 
-</script>
+      workbook.SheetNames.forEach((sheetName) => {
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+          header: 1,
+          raw: false,
+          defval: ''
+        });
+        const candidate = detectCoordinateColumns(rows, sheetName);
+        if (candidate) candidates.push(candidate);
+      });
+
+      if (!candidates.length) throw new Error('No se encontraron dos columnas con coordenadas CRTM05 válidas.');
+      const best = candidates.sort((a, b) => b.score - a.score)[0];
+      let added = 0;
+      let duplicates = 0;
+
+      best.rows.forEach((row) => {
+        if (!Array.isArray(row)) return;
+        const x = normalizeCoordinate(row[best.xColumn], 'x');
+        const y = normalizeCoordinate(row[best.yColumn], 'y');
+        if (!isValidEasting(x) || !isValidNorthing(y)) return;
+        const rawName = best.nameColumn >= 0 ? String(row[best.nameColumn] ?? '').trim() : '';
+        const point = appendPoint(rawName || `P_${state.points.length + 1}`, x, y, `Excel:${best.sheetName}`);
+        if (point) added += 1;
+        else duplicates += 1;
+      });
+
+      if (!added) throw new Error('Las columnas fueron detectadas, pero no había pares nuevos para agregar.');
+      return { added, duplicates, sheetName: best.sheetName };
+    }
+
+    $('#excelInput').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        setStatus('Analizando hojas y columnas…');
+        const result = await importWorkbook(file);
+        setStatus(`Importación completada: ${result.added} puntos agregados desde “${result.sheetName}”. Duplicados omitidos: ${result.duplicates}.`, 'ok');
+      } catch (error) {
+        setStatus(error.message, 'err');
+      } finally {
+        event.target.value = '';
+      }
+    });
+
+    function loadImageIntoViewer(file) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith('image/')) return reject(new Error('Seleccione una imagen válida.'));
+        if (file.size > 35 * 1024 * 1024) return reject(new Error('La imagen supera el límite de seguridad de 35 MB.'));
+
+        const image = $('#planImage');
+        const url = URL.createObjectURL(file);
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          $('#viewer').style.display = 'block';
+          $('#viewerTools').classList.remove('hidden');
+          resolve(image);
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('No fue posible abrir la imagen.'));
+        };
+        image.src = url;
+      });
+    }
+
+    async function decodeImage(file) {
+      if ('createImageBitmap' in window) {
+        try {
+          return await createImageBitmap(file);
+        } catch (error) {
+          console.warn('createImageBitmap no pudo decodificar; se usa Image.', error);
+        }
+      }
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(file);
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(image);
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('No fue posible decodificar la imagen para OCR.'));
+        };
+        image.src = url;
+      });
+    }
+
+    async function preprocessImage(file, variant) {
+      const image = await decodeImage(file);
+      const sourceWidth = image.width;
+      const sourceHeight = image.height;
+      const maxDimension = variant === 0 ? 2200 : 1800;
+      const maxPixels = variant === 0 ? 4600000 : 3200000;
+      const scale = Math.min(
+        1,
+        maxDimension / Math.max(sourceWidth, sourceHeight),
+        Math.sqrt(maxPixels / (sourceWidth * sourceHeight))
+      );
+      const width = Math.max(1, Math.round(sourceWidth * scale));
+      const height = Math.max(1, Math.round(sourceHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(image, 0, 0, width, height);
+      if (typeof image.close === 'function') image.close();
+
+      const imageData = context.getImageData(0, 0, width, height);
+      const pixels = imageData.data;
+      const histogram = new Uint32Array(256);
+      for (let index = 0; index < pixels.length; index += 4) {
+        const gray = Math.round(.299 * pixels[index] + .587 * pixels[index + 1] + .114 * pixels[index + 2]);
+        histogram[gray] += 1;
+      }
+
+      let threshold = 150;
+      if (variant === 0) {
+        let totalWeighted = 0;
+        const total = width * height;
+        for (let value = 0; value < 256; value += 1) totalWeighted += value * histogram[value];
+        let backgroundWeight = 0;
+        let backgroundSum = 0;
+        let maximumVariance = 0;
+        for (let candidate = 0; candidate < 256; candidate += 1) {
+          backgroundWeight += histogram[candidate];
+          if (!backgroundWeight) continue;
+          const foregroundWeight = total - backgroundWeight;
+          if (!foregroundWeight) break;
+          backgroundSum += candidate * histogram[candidate];
+          const meanBackground = backgroundSum / backgroundWeight;
+          const meanForeground = (totalWeighted - backgroundSum) / foregroundWeight;
+          const variance = backgroundWeight * foregroundWeight * (meanBackground - meanForeground) ** 2;
+          if (variance > maximumVariance) {
+            maximumVariance = variance;
+            threshold = candidate;
+          }
+        }
+      }
+
+      for (let index = 0; index < pixels.length; index += 4) {
+        let gray = .299 * pixels[index] + .587 * pixels[index + 1] + .114 * pixels[index + 2];
+        if (variant === 0) gray = gray > threshold ? 255 : 0;
+        else gray = Math.max(0, Math.min(255, (gray - 128) * 1.75 + 128));
+        pixels[index] = pixels[index + 1] = pixels[index + 2] = gray;
+        pixels[index + 3] = 255;
+      }
+      context.putImageData(imageData, 0, 0);
+      return { canvas, width, height };
+    }
+
+    function parseOcrToken(raw) {
+      return parseFlexibleNumber(String(raw ?? '').replace(/[Oo]/g, '0').replace(/[Il|]/g, '1').replace(/[Ss]/g, '5'));
+    }
+
+    function coordinateCandidates(text) {
+      const source = String(text ?? '');
+      const pattern = /[+-]?(?:[0-9OoIl|Ss]{6,7}(?:[.,][0-9OoIl|Ss]{1,4})?|[0-9OoIl|Ss]{1,3}(?:[ .][0-9OoIl|Ss]{3}){1,2}(?:[.,][0-9OoIl|Ss]{1,4})?)/g;
+      const matches = [];
+      let match;
+      while ((match = pattern.exec(source)) !== null) {
+        const previous = source[match.index - 1] || '';
+        const next = source[pattern.lastIndex] || '';
+        if (/[A-Za-z0-9]/.test(previous) || /[A-Za-z0-9]/.test(next)) {
+          pattern.lastIndex = match.index + 1;
+          continue;
+        }
+        matches.push(match[0]);
+      }
+      return matches.map((raw) => ({ raw, value: parseOcrToken(raw) })).filter((item) => Number.isFinite(item.value));
+    }
+
+    function extractOcrPairs(data, imageWidth = 1, imageHeight = 1) {
+      const results = [];
+      const lines = Array.isArray(data?.lines) ? data.lines : [];
+
+      for (const line of lines) {
+        const candidates = coordinateCandidates(line.text);
+        const easting = candidates.find((item) => isValidEasting(item.value));
+        const northing = candidates.find((item) => isValidNorthing(item.value));
+        if (!easting || !northing) continue;
+
+        const firstTokenIndex = String(line.text).indexOf(candidates[0]?.raw || '');
+        const prefix = firstTokenIndex > 0 ? String(line.text).slice(0, firstTokenIndex) : '';
+        const nameMatch = prefix.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+[_-]?\d*/);
+        const bbox = line.bbox || null;
+        results.push({
+          name: nameMatch?.[0] || `P_${state.points.length + results.length + 1}`,
+          x: easting.value,
+          y: northing.value,
+          confidence: Number(line.confidence || 0),
+          nx: bbox ? ((bbox.x0 + bbox.x1) / 2) / imageWidth : null,
+          ny: bbox ? ((bbox.y0 + bbox.y1) / 2) / imageHeight : null
+        });
+      }
+
+      if (!results.length) {
+        const candidates = coordinateCandidates(data?.text || '');
+        for (let index = 0; index < candidates.length; index += 1) {
+          const current = candidates[index].value;
+          if (isValidEasting(current)) {
+            const north = candidates.slice(index + 1, index + 5).find((item) => isValidNorthing(item.value));
+            if (north) results.push({ name: `P_${state.points.length + results.length + 1}`, x: current, y: north.value, confidence: 0, nx: null, ny: null });
+          } else if (isValidNorthing(current)) {
+            const east = candidates.slice(index + 1, index + 5).find((item) => isValidEasting(item.value));
+            if (east) results.push({ name: `P_${state.points.length + results.length + 1}`, x: east.value, y: current, confidence: 0, nx: null, ny: null });
+          }
+        }
+      }
+
+      const unique = [];
+      for (const item of results) {
+        if (!unique.some((candidate) => Math.hypot(candidate.x - item.x, candidate.y - item.y) < .001)) unique.push(item);
+      }
+      return unique;
+    }
+
+    async function runOcr(file, showMarks) {
+      if (state.ocrBusy) throw new Error('Ya existe un OCR en ejecución.');
+      if (!window.Tesseract) throw new Error('Tesseract.js no cargó. Revise la conexión a Internet.');
+
+      state.ocrBusy = true;
+      let worker = null;
+      let activeVariant = 0;
+      try {
+        setStatus('Preparando motor OCR…');
+        setProgress(3);
+        worker = await Tesseract.createWorker('spa+eng', 1, {
+          logger: (message) => {
+            if (message.status === 'recognizing text') {
+              setProgress(10 + activeVariant * 43 + message.progress * 40);
+            }
+          }
+        });
+
+        let bestPairs = [];
+        for (activeVariant = 0; activeVariant < 2; activeVariant += 1) {
+          setStatus(`OCR automático: pasada ${activeVariant + 1} de 2…`);
+          const variant = await preprocessImage(file, activeVariant);
+          let timeoutId;
+          try {
+            const timeout = new Promise((_, reject) => {
+              timeoutId = setTimeout(() => reject(new Error('El OCR excedió el tiempo máximo de seguridad.')), 120000);
+            });
+            const response = await Promise.race([worker.recognize(variant.canvas), timeout]);
+            const pairs = extractOcrPairs(response.data, variant.width, variant.height);
+            if (pairs.length > bestPairs.length) bestPairs = pairs;
+          } finally {
+            clearTimeout(timeoutId);
+            variant.canvas.width = 1;
+            variant.canvas.height = 1;
+          }
+          if (bestPairs.length >= 3) break;
+          await new Promise((resolve) => setTimeout(resolve, 30));
+        }
+
+        let added = 0;
+        let duplicates = 0;
+        for (const pair of bestPairs) {
+          const point = appendPoint(pair.name, pair.x, pair.y, 'OCR');
+          if (!point) {
+            duplicates += 1;
+            continue;
+          }
+          added += 1;
+          if (showMarks && Number.isFinite(pair.nx) && Number.isFinite(pair.ny)) {
+            addMark(pair.nx, pair.ny, point.id, point.name, 'ocr');
+          }
+        }
+
+        if (!added) {
+          throw new Error(bestPairs.length
+            ? 'El OCR encontró coordenadas, pero ya estaban registradas.'
+            : 'No se encontraron pares CRTM05 confiables. Pruebe una foto recta, nítida y con mayor contraste.');
+        }
+
+        setStatus(`OCR completado: ${added} vértices agregados. Duplicados omitidos: ${duplicates}. Revise visualmente los valores antes de usarlos.`, 'ok');
+        return { added, duplicates };
+      } finally {
+        if (worker) {
+          try { await worker.terminate(); } catch (error) { console.warn(error); }
+        }
+        state.ocrBusy = false;
+        setProgress(null);
+      }
+    }
+
+    async function loadAndRecognize(file) {
+      state.imageFile = file;
+      state.marks = [];
+      renderMarks();
+      await loadImageIntoViewer(file);
+      setStatus('Imagen cargada. Iniciando lectura automática; el clic manual permanece disponible.');
+      return runOcr(file, true);
+    }
+
+    $('#ocrInput').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        await loadAndRecognize(file);
+      } catch (error) {
+        setStatus(error.message, 'err');
+      } finally {
+        event.target.value = '';
+      }
+    });
+
+    $('#viewerInput').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        await loadAndRecognize(file);
+      } catch (error) {
+        setStatus(error.message + ' Puede continuar usando el clic manual.', 'err');
+      } finally {
+        event.target.value = '';
+      }
+    });
+
+    $('#rerunOcr').addEventListener('click', async () => {
+      if (!state.imageFile) return showToast('Primero cargue una imagen.');
+      try {
+        await runOcr(state.imageFile, true);
+      } catch (error) {
+        setStatus(error.message, 'err');
+      }
+    });
+
+    $('#planImage').addEventListener('click', (event) => {
+      const rectangle = event.currentTarget.getBoundingClientRect();
+      state.pendingMark = {
+        nx: (event.clientX - rectangle.left) / rectangle.width,
+        ny: (event.clientY - rectangle.top) / rectangle.height
+      };
+      $('#modalName').value = `P_${state.points.length + 1}`;
+      $('#modalX').value = '';
+      $('#modalY').value = '';
+      $('#pointModal').classList.add('open');
+      setTimeout(() => $('#modalX').focus(), 30);
+    });
+
+    function addMark(nx, ny, pointId, name, type = 'manual') {
+      state.marks.push({ nx, ny, pointId, name, type });
+      renderMarks();
+    }
+
+    function renderMarks() {
+      $('#markers').innerHTML = state.marks.map((mark) => `
+        <span class="mark ${mark.type === 'ocr' ? 'ocr' : ''}" style="left:${mark.nx * 100}%;top:${mark.ny * 100}%">
+          <b>${escapeHtml(mark.name)}</b>
+        </span>
+      `).join('');
+    }
+
+    $('#saveModal').addEventListener('click', () => {
+      const name = $('#modalName').value.trim() || `P_${state.points.length + 1}`;
+      const x = normalizeCoordinate($('#modalX').value, 'x');
+      const y = normalizeCoordinate($('#modalY').value, 'y');
+      if (!isValidEasting(x) || !isValidNorthing(y)) {
+        return showToast('Use Este 300 000–700 000 y Norte 900 000–1 300 000.');
+      }
+      const point = appendPoint(name, x, y, 'clic');
+      if (!point) return showToast('Ese par de coordenadas ya existe.');
+      addMark(state.pendingMark.nx, state.pendingMark.ny, point.id, name, 'manual');
+      $('#pointModal').classList.remove('open');
+      setStatus(`Vértice ${name} agregado; la imagen y las marcas permanecen cargadas.`, 'ok');
+    });
+
+    $('#cancelModal').addEventListener('click', () => $('#pointModal').classList.remove('open'));
+    $('#pointModal').addEventListener('click', (event) => {
+      if (event.target.id === 'pointModal') $('#pointModal').classList.remove('open');
+    });
+    $('#clearMarks').addEventListener('click', () => {
+      state.marks = [];
+      renderMarks();
+      setStatus('Se limpiaron las marcas visuales. La tabla no fue modificada.');
+    });
+
+    function asciiText(value) {
+      return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, '_');
+    }
+
+    function buildDxf(points) {
+      const output = [
+        '0', 'SECTION', '2', 'HEADER',
+        '9', '$ACADVER', '1', 'AC1009',
+        '0', 'ENDSEC',
+        '0', 'SECTION', '2', 'TABLES',
+        '0', 'TABLE', '2', 'LTYPE', '70', '1',
+        '0', 'LTYPE', '2', 'CONTINUOUS', '70', '0', '3', 'Solid line', '72', '65', '73', '0', '40', '0.0',
+        '0', 'ENDTAB',
+        '0', 'TABLE', '2', 'LAYER', '70', '3',
+        '0', 'LAYER', '2', 'POLIGONO_CRTM05', '70', '0', '62', '2', '6', 'CONTINUOUS',
+        '0', 'LAYER', '2', 'PUNTOS_CRTM05', '70', '0', '62', '1', '6', 'CONTINUOUS',
+        '0', 'LAYER', '2', 'ROTULOS_VERTICES', '70', '0', '62', '7', '6', 'CONTINUOUS',
+        '0', 'ENDTAB',
+        '0', 'ENDSEC',
+        '0', 'SECTION', '2', 'ENTITIES',
+        '0', 'POLYLINE', '8', 'POLIGONO_CRTM05', '66', '1', '70', '1'
+      ];
+
+      points.forEach((point) => {
+        output.push('0', 'VERTEX', '8', 'POLIGONO_CRTM05', '10', point.x.toFixed(4), '20', point.y.toFixed(4), '30', '0.0000');
+      });
+      output.push('0', 'SEQEND');
+
+      points.forEach((point) => {
+        output.push(
+          '0', 'POINT', '8', 'PUNTOS_CRTM05', '10', point.x.toFixed(4), '20', point.y.toFixed(4), '30', '0.0000',
+          '0', 'TEXT', '8', 'ROTULOS_VERTICES', '10', (point.x + 1).toFixed(4), '20', (point.y + 1).toFixed(4), '30', '0.0000',
+          '40', '1.5000', '1', asciiText(point.name)
+        );
+      });
+
+      output.push('0', 'ENDSEC', '0', 'EOF');
+      return output.join('\r\n');
+    }
+
+    function downloadText(filename, content, mimeType) {
+      const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1200);
+    }
+
+    $('#dxfBtn').addEventListener('click', () => {
+      const points = getValidPoints();
+      if (points.length < 3) return showToast('Se requieren al menos 3 puntos válidos.');
+      downloadText(`TOPO_MAPS_PRO_${CRS[$('#crsSelect').value].code.replace(':', '_')}_R12.dxf`, buildDxf(points), 'application/dxf');
+      showToast('DXF R12 generado con polilínea cerrada, puntos y rótulos.');
+    });
+
+    $('#csvBtn').addEventListener('click', () => {
+      const points = getValidPoints();
+      if (!points.length) return showToast('No hay puntos válidos para exportar.');
+      const csv = '\uFEFFVertice,Este_X,Norte_Y,CRS\r\n' + points.map((point) =>
+        `"${String(point.name).replace(/"/g, '""')}",${point.x.toFixed(3)},${point.y.toFixed(3)},${CRS[$('#crsSelect').value].code}`
+      ).join('\r\n');
+      downloadText('TOPO_MAPS_PRO_CRTM05.csv', csv, 'text/csv;charset=utf-8');
+    });
+
+    function runSelfTests() {
+      const report = [];
+      let allPassed = true;
+      const test = (name, callback) => {
+        try {
+          const passed = Boolean(callback());
+          report.push(`${passed ? '✓' : '✗'} ${name}`);
+          if (!passed) allPassed = false;
+        } catch (error) {
+          report.push(`✗ ${name}: ${error.message}`);
+          allPassed = false;
+        }
+      };
+
+      const square = [
+        { name: 'A', x: 500000, y: 1100000 },
+        { name: 'B', x: 500100, y: 1100000 },
+        { name: 'C', x: 500100, y: 1100100 },
+        { name: 'D', x: 500000, y: 1100100 }
+      ];
+
+      test('Área Gauss de cuadrado 100 × 100 = 10 000 m²', () => Math.abs(computeGeometry(square).area - 10000) < 1e-8);
+      test('Perímetro cerrado del cuadrado = 400 m', () => Math.abs(computeGeometry(square).perimeter - 400) < 1e-8);
+      test('Azimut hacia el Este = 90°', () => Math.abs(azimuthDegrees(100, 0) - 90) < 1e-10);
+      test('Cierre geométrico no confunde Pn→P1 con error', () => computeGeometry(square).closureError === 0);
+      test('Número regional 500.123 se interpreta como 500123', () => normalizeCoordinate('500.123', 'x') === 500123);
+      test('OCR sintético reconoce par Este/Norte', () => extractOcrPairs({ lines: [{ text: 'P1 500123.456 1100456.789', bbox: { x0: 0, y0: 0, x1: 100, y1: 20 }, confidence: 90 }] }, 100, 20).length === 1);
+      test('DXF R12 contiene polilínea cerrada, puntos y EOF', () => {
+        const dxf = buildDxf(square);
+        return dxf.includes('AC1009') && dxf.includes('\r\n70\r\n1') && dxf.includes('PUNTOS_CRTM05') && dxf.endsWith('EOF');
+      });
+      test('Conversión GRS80 coincide con control EPSG en meridiano central', () => {
+        const converted = inverseTransverseMercator(500000, 1100000, CRS['8908']);
+        return Math.abs(converted.lon + 84) < 1e-10 && Math.abs(converted.lat - 9.9480612313) < 1e-7;
+      });
+      test('Detector de columnas identifica X/Y', () => {
+        const candidate = detectCoordinateColumns([
+          ['Punto', 'Este', 'Norte'],
+          ['P1', '500000.000', '1100000.000'],
+          ['P2', '500100.000', '1100100.000']
+        ], 'Prueba');
+        return candidate && candidate.xColumn === 1 && candidate.yColumn === 2;
+      });
+      test('Rendimiento geométrico de 2 000 vértices', () => {
+        const many = Array.from({ length: 2000 }, (_, index) => {
+          const angle = index * 2 * Math.PI / 2000;
+          return { name: `T${index + 1}`, x: 500000 + 1000 * Math.cos(angle), y: 1100000 + 1000 * Math.sin(angle) };
+        });
+        const started = Date.now();
+        const result = computeGeometry(many);
+        return result.area > 3000000 && Date.now() - started < 1000;
+      });
+
+      $('#audit').textContent = report.join('\n') + `\n\nResultado: ${allPassed ? 'TODAS LAS PRUEBAS INTERNAS SUPERADAS' : 'REVISIÓN REQUERIDA'}`;
+      $('#selfBadge').textContent = 'AUTOPRUEBA: ' + (allPassed ? 'APROBADA' : 'FALLÓ');
+      $('#selfBadge').style.color = allPassed ? '#8cf0ba' : '#ff9b92';
+      console.info('TOPO_MAPS_PRO_SELF_TEST', { allPassed, report });
+      return allPassed;
+    }
+
+    window.addEventListener('error', (event) => {
+      console.error(event.error || event.message);
+      showToast('Se interceptó un error sin bloquear la aplicación.');
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error(event.reason);
+      setStatus('Una operación externa falló, pero la aplicación sigue activa. ' + (event.reason?.message || ''), 'err');
+    });
+
+    appendBlankRow();
+    initMap();
+    runSelfTests();
+  </script>
 </body>
 </html>
