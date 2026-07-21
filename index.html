@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#071827">
-  <title>TOPO MAPS PRO · Versión de prueba</title>
+  <title>TOPO MAPS PRO · Prueba móvil 0.6 · Cartografía auditada</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 
@@ -114,11 +114,33 @@
     .metric span { display: block; color: var(--gold-2); font: 800 10px ui-monospace, Consolas, monospace; text-transform: uppercase; }
     .metric strong { display: block; margin-top: 5px; font-size: 18px; }
     .note { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+    .area-params { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 10px; margin: 14px 0 10px; }
+    .area-params label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 760; }
+    .area-audit { margin-top: 10px; padding: 12px; border-radius: 10px; background: #e8edf0; color: #25333d; white-space: pre-wrap; font: 650 12px/1.55 ui-monospace, Consolas, monospace; }
+    .area-audit.ok { color: #175b40; background: #e1f2e9; }
+    .area-audit.warn { color: #7a4d00; background: #fff2cf; }
+    .area-audit.err { color: #8b2923; background: #f9e3e0; }
     .split { display: grid; grid-template-columns: 420px 1fr; gap: 16px; margin-top: 16px; }
     .diagram { width: 100%; aspect-ratio: 1; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
     .segment-table { margin-top: 0; }
+    .segment-table table { min-width: 500px; }
+    .segment-table tbody td { color: #25333d; background: var(--paper); }
+    .segment-table tbody td:nth-child(2) { color: #ffffff !important; background: #115f8c !important; font-weight: 850; white-space: nowrap; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+    .segment-table tbody td:nth-child(3) { color: #ffffff !important; background: #216a4d !important; font-weight: 850; white-space: nowrap; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+    .segment-table thead th:nth-child(2) { color: #ffffff !important; background: #0b4f78 !important; }
+    .segment-table thead th:nth-child(3) { color: #ffffff !important; background: #18583f !important; }
 
     .mapbar { justify-content: space-between; margin-bottom: 10px; }
+    .map-tools { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .map-tool { display: grid; gap: 7px; padding: 11px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+    .map-tool label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 760; }
+    .map-tool .inline { display: flex; gap: 7px; align-items: end; flex-wrap: wrap; }
+    .map-tool .inline > * { flex: 1 1 170px; }
+    .map-tool .inline .btn { flex: 0 1 auto; }
+    .wms-fields { display: grid; grid-template-columns: 1.15fr 1fr .75fr; gap: 7px; }
+    #googleMapWrap { display: none; margin-top: 12px; }
+    #googleMapWrap.open { display: block; }
+    #googleMap { height: 490px; background: #d5dde2; border: 1px solid var(--line); border-radius: 12px; }
     .check { display: flex; gap: 7px; align-items: center; font-size: 13px; font-weight: 700; }
     .check input { width: 18px; height: 18px; }
     #map { height: 490px; background: #d5dde2; border: 1px solid var(--line); border-radius: 12px; }
@@ -148,7 +170,8 @@
       .shell { width: calc(100% - 12px); padding-top: 12px; }
       .card { padding: 14px; }
       .metrics { grid-template-columns: 1fr; }
-      #map { height: 390px; }
+      .area-params, .map-tools, .wms-fields { grid-template-columns: 1fr; }
+      #map, #googleMap { height: 390px; }
       .btn, label.btn { width: 100%; }
       .controls > *, .toolbar > * { width: 100%; }
     }
@@ -160,7 +183,7 @@
       <div>
         <div class="kicker">Topografía · Catastro · Costa Rica</div>
         <h1>TOPO MAPS PRO</h1>
-        <p>Versión de prueba para importar, reconocer y calcular coordenadas CRTM05. El sistema oficial vigente se configura por defecto como CR-SIRGAS época 2014.59 / CRTM05 (EPSG:8908).</p>
+        <p>Versión de prueba móvil 0.6 auditada con control de área, tabla DXF de azimut/distancia, mapas Esri–OSM, vista Google opcional y WMS SNIT bajo demanda con cambio automático de proyección. El sistema oficial vigente se configura por defecto como CR-SIRGAS época 2014.59 / CRTM05 (EPSG:8908).</p>
       </div>
       <div class="badge" id="selfBadge">AUTOPRUEBA: PENDIENTE</div>
     </header>
@@ -247,7 +270,9 @@
             <option value="traverse">Poligonal: último punto es observación de cierre</option>
           </select>
 
-          <button class="btn primary" id="calculate" type="button">Recalcular</button>
+          <button class="btn secondary" id="editCoordinates" type="button">Editar o agregar coordenadas</button>
+          <button class="btn primary" id="refreshWork" type="button">Recalcular y refrescar trabajo</button>
+          <button class="btn ghost" id="loadCadastralExample" type="button">Cargar ejemplo técnico de control</button>
         </div>
         <p class="note">En modo polígono, el tramo final Pn→P1 forma parte del perímetro y el error lineal es 0 por cierre geométrico impuesto. En modo poligonal, el último registro se interpreta como observación de retorno y se compara contra P1.</p>
       </section>
@@ -261,19 +286,42 @@
           </div>
         </div>
 
+        <div class="area-params">
+          <label>Área oficial o registral (m², opcional)
+            <input id="officialArea" inputmode="decimal" placeholder="Ej.: 2321">
+          </label>
+          <label>Resolución publicada de coordenadas
+            <select id="coordinateResolution">
+              <option value="0.01" selected>0,01 m (centímetro)</option>
+              <option value="0.001">0,001 m (milímetro)</option>
+              <option value="0.1">0,10 m (decímetro)</option>
+              <option value="1">1,00 m</option>
+            </select>
+          </label>
+          <label>Orden de vértices
+            <select id="vertexOrderPolicy">
+              <option value="entered" selected>Usar el orden ingresado</option>
+              <option value="angle">Ordenar alrededor del centro (solo diagnóstico)</option>
+            </select>
+          </label>
+        </div>
+
         <div class="metrics">
           <div class="metric"><span>Perímetro / longitud</span><strong id="metricPerimeter">—</strong></div>
-          <div class="metric"><span>Área</span><strong id="metricArea">—</strong></div>
+          <div class="metric"><span>Área por coordenadas</span><strong id="metricArea">—</strong></div>
+          <div class="metric"><span>Diferencia vs. oficial</span><strong id="metricAreaDifference">—</strong></div>
+          <div class="metric"><span>Tolerancia por redondeo</span><strong id="metricAreaTolerance">—</strong></div>
           <div class="metric"><span>Error lineal</span><strong id="metricError">—</strong></div>
           <div class="metric"><span>Precisión relativa</span><strong id="metricPrecision">—</strong></div>
         </div>
+        <div class="area-audit" id="areaAudit">Ingrese al menos tres puntos y pulse Recalcular y refrescar trabajo.</div>
 
         <div class="split">
           <svg id="diagram" class="diagram" viewBox="0 0 500 500" aria-label="Diagrama local del polígono"></svg>
           <div>
             <div class="table-wrap segment-table">
               <table>
-                <thead><tr><th>Tramo</th><th>ΔE</th><th>ΔN</th><th>Distancia</th><th>Azimut</th></tr></thead>
+                <thead><tr><th>Tramo</th><th>Azimut</th><th>Distancia</th></tr></thead>
                 <tbody id="segmentsBody"></tbody>
               </table>
             </div>
@@ -289,16 +337,74 @@
         <div class="head">
           <span class="num">04</span>
           <div>
-            <h2>Mapa georreferenciado anti-bloqueo</h2>
-            <p>Esri World Imagery carga como base. El WMS se solicita únicamente al activar la casilla.</p>
+            <h2>Cartografía georreferenciada anti-bloqueo</h2>
+            <p>Leaflet usa Esri satelital como base estable. Google Maps y los servicios WMS se cargan únicamente cuando el usuario los solicita.</p>
           </div>
         </div>
 
+        <div class="map-tools">
+          <div class="map-tool">
+            <label>Mapa base Leaflet
+              <select id="baseMapSelect">
+                <option value="esri" selected>Satélite Esri World Imagery</option>
+                <option value="osm">OpenStreetMap</option>
+              </select>
+            </label>
+            <div class="inline">
+              <button class="btn ghost" id="openGoogleMaps" type="button">Abrir ubicación en Google Maps</button>
+            </div>
+            <span class="small">El botón abre el centro del levantamiento en Google Maps sin requerir clave.</span>
+          </div>
+
+          <div class="map-tool">
+            <label>Google Maps integrado (opcional)
+              <input id="googleApiKey" type="password" autocomplete="off" placeholder="Clave de Google Maps JavaScript API">
+            </label>
+            <div class="inline">
+              <button class="btn secondary" id="googleMapToggle" type="button">Cargar vista Google</button>
+              <button class="btn ghost" id="hideGoogleMap" type="button">Ocultar vista Google</button>
+            </div>
+            <span class="small">Requiere una clave propia de Google Maps JavaScript API. En archivos locales, una clave restringida por dominio puede fallar; la clave se usa solo en esta sesión y no se guarda.</span>
+          </div>
+        </div>
+
+        <div class="map-tool" style="margin-bottom:10px">
+          <div class="inline">
+            <label>Servicio WMS
+              <select id="wmsPreset">
+                <option value="snit_districts" selected>SNIT cartografía · Distritos</option>
+                <option value="snit_roads">SNIT cartografía · Vías 1:5 000</option>
+                <option value="snit_urban">SNIT cartografía · Urbano 1:5 000</option>
+                <option value="snit_values">SNIT cartografía · Zonas de valor ONT</option>
+                <option value="snit_hydro">SNIT cartografía · Hidrografía 1:5 000</option>
+                <option value="snit_ign_current">SNIT · Nodo IGN actual (indicar capa)</option>
+                <option value="siri_custom">SIRI / Registro Inmobiliario (indicar capa)</option>
+                <option value="crt_limits">CRT · Límites</option>
+                <option value="custom">WMS personalizado</option>
+              </select>
+            </label>
+            <label class="check" style="align-self:end"><input id="wmsToggle" type="checkbox"> Activar WMS seleccionado</label>
+          </div>
+          <div class="wms-fields">
+            <label>URL WMS<input id="wmsUrl" autocomplete="off"></label>
+            <label>Nombre exacto de capa<input id="wmsLayerName" autocomplete="off"></label>
+            <label>Proyección solicitada
+              <select id="wmsProjection">
+                <option value="auto" selected>Automática: 3857 → 4326</option>
+                <option value="EPSG:3857">EPSG:3857</option>
+                <option value="EPSG:4326">EPSG:4326</option>
+              </select>
+            </label>
+          </div>
+          <span class="small">El WMS es independiente del mapa base. Si no responde, se retira automáticamente sin bloquear cálculos, DXF ni cartografía principal.</span>
+        </div>
+
         <div class="mapbar">
-          <label class="check"><input id="wmsToggle" type="checkbox"> Superponer WMS crt:limites</label>
+          <button class="btn primary" id="refreshMap" type="button">Refrescar mapa</button>
           <span class="small" id="mapState">Mapa listo; pendiente de coordenadas válidas.</span>
         </div>
         <div id="map"></div>
+        <div id="googleMapWrap"><div id="googleMap"></div></div>
         <p class="note">La conversión al mapa es para visualización. CR-SIRGAS es un marco dinámico; trabajos geodésicos de alta precisión requieren considerar época, velocidades y transformación oficial aplicable.</p>
       </section>
 
@@ -307,7 +413,7 @@
           <span class="num">05</span>
           <div>
             <h2>Auditoría interna</h2>
-            <p>Pruebas automáticas de geometría, azimut, lectura de coordenadas, conversión y DXF.</p>
+            <p>Pruebas automáticas de geometría, azimut, tabla visible, WMS, actualización, conversión y DXF.</p>
           </div>
         </div>
         <div class="audit" id="audit">Ejecutando pruebas…</div>
@@ -334,6 +440,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 
@@ -348,15 +455,23 @@
       marks: [],
       pendingMark: null,
       imageFile: null,
+      imageDataUrl: null,
       ocrBusy: false,
       map: null,
       drawingLayer: null,
       satelliteLayer: null,
       osmLayer: null,
+      baseLayerControl: null,
+      activeBaseLayer: 'esri',
       wmsLayer: null,
       wmsTimer: null,
       wmsLoadCount: 0,
       wmsErrorCount: 0,
+      googleApiPromise: null,
+      googleMap: null,
+      googlePolygon: null,
+      googleMarkers: [],
+      googleVisible: false,
       lastResult: null
     };
 
@@ -377,6 +492,18 @@
         inverseFlattening: 298.257223563,
         proj4: '+proj=tmerc +lat_0=0 +lon_0=-84 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-0.16959,0.35312,0.51846,-0.03385,0.16325,-0.03446,0.03693 +units=m +no_defs'
       }
+    };
+
+    const WMS_PRESETS = {
+      snit_districts: { label: 'SNIT cartografía · Distritos', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'distritos' },
+      snit_roads: { label: 'SNIT cartografía · Vías 1:5 000', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'vias_5000' },
+      snit_urban: { label: 'SNIT cartografía · Urbano 1:5 000', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'urbano_5000' },
+      snit_values: { label: 'SNIT cartografía · Zonas de valor ONT', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'zonas_valor' },
+      snit_hydro: { label: 'SNIT cartografía · Hidrografía 1:5 000', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'hidrografia_5000' },
+      snit_ign_current: { label: 'SNIT · Nodo IGN actual', url: 'https://geos.snitcr.go.cr/be/IGN_5/wms', layer: '' },
+      siri_custom: { label: 'SIRI / Registro Inmobiliario', url: 'https://siri.snitcr.go.cr/Geoservicios/wms', layer: '' },
+      crt_limits: { label: 'CRT · Límites', url: 'https://geostec.crt.or.cr/geoserver/wms', layer: 'crt:limites' },
+      custom: { label: 'WMS personalizado', url: '', layer: '' }
     };
 
     if (window.proj4) {
@@ -601,12 +728,22 @@
       }
 
       const areaPoints = mode === 'traverse' && points.length > 3 ? points.slice(0, -1) : points;
+      // Gauss/Shoelace trasladado a un origen local y sumado con Kahan.
+      // Evita pérdida de precisión al trabajar con coordenadas CRTM05 grandes.
+      const originX = areaPoints[0].x;
+      const originY = areaPoints[0].y;
+      let compensation = 0;
       for (let index = 0; index < areaPoints.length; index += 1) {
         const current = areaPoints[index];
         const next = areaPoints[(index + 1) % areaPoints.length];
-        doubleArea += current.x * next.y - next.x * current.y;
+        const term = (current.x - originX) * (next.y - originY) - (next.x - originX) * (current.y - originY);
+        const corrected = term - compensation;
+        const nextSum = doubleArea + corrected;
+        compensation = (nextSum - doubleArea) - corrected;
+        doubleArea = nextSum;
       }
-      const area = Math.abs(doubleArea) / 2;
+      const signedArea = doubleArea / 2;
+      const area = Math.abs(signedArea);
 
       let closureError = 0;
       let relativePrecision = null;
@@ -617,17 +754,118 @@
         relativePrecision = closureError === 0 ? Infinity : perimeter / closureError;
       }
 
-      return { mode, perimeter, area, closureError, relativePrecision, segments };
+      return { mode, perimeter, area, signedArea, closureError, relativePrecision, segments, areaPoints };
+    }
+
+    function orderPointsAroundCentroid(points) {
+      const centerX = points.reduce((sum, point) => sum + point.x, 0) / points.length;
+      const centerY = points.reduce((sum, point) => sum + point.y, 0) / points.length;
+      return [...points].sort((a, b) => Math.atan2(a.y - centerY, a.x - centerX) - Math.atan2(b.y - centerY, b.x - centerX));
+    }
+
+    function areaRoundingTolerance(points, resolution) {
+      if (!Array.isArray(points) || points.length < 3 || !Number.isFinite(resolution) || resolution <= 0) return 0;
+      const epsilon = resolution / 2;
+      let firstOrderBound = 0;
+      for (let index = 0; index < points.length; index += 1) {
+        const previous = points[(index - 1 + points.length) % points.length];
+        const next = points[(index + 1) % points.length];
+        firstOrderBound += epsilon * (Math.abs(next.y - previous.y) + Math.abs(previous.x - next.x)) / 2;
+      }
+      // Término conservador de segundo orden para errores simultáneos X/Y.
+      return firstOrderBound + points.length * epsilon * epsilon;
+    }
+
+    function orientation2d(a, b, c) {
+      return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    }
+
+    function strictSegmentsIntersect(a, b, c, d) {
+      const o1 = orientation2d(a, b, c);
+      const o2 = orientation2d(a, b, d);
+      const o3 = orientation2d(c, d, a);
+      const o4 = orientation2d(c, d, b);
+      const eps = 1e-9;
+      return ((o1 > eps && o2 < -eps) || (o1 < -eps && o2 > eps))
+        && ((o3 > eps && o4 < -eps) || (o3 < -eps && o4 > eps));
+    }
+
+    function geometryDiagnostics(points, result) {
+      const issues = [];
+      const polygon = result.areaPoints || points;
+      if (polygon.length >= 4) {
+        for (let i = 0; i < polygon.length; i += 1) {
+          const a = polygon[i];
+          const b = polygon[(i + 1) % polygon.length];
+          for (let j = i + 1; j < polygon.length; j += 1) {
+            const adjacent = j === i || j === (i + 1) % polygon.length || (j + 1) % polygon.length === i;
+            if (adjacent) continue;
+            const c = polygon[j];
+            const d = polygon[(j + 1) % polygon.length];
+            if (strictSegmentsIntersect(a, b, c, d)) issues.push(`Cruce geométrico entre ${a.name}–${b.name} y ${c.name}–${d.name}. Revise el orden de los vértices.`);
+          }
+        }
+      }
+      const lengths = result.segments.map((segment) => segment.distance).filter((distance) => distance > 0).sort((a, b) => a - b);
+      if (lengths.length >= 3) {
+        const median = lengths[Math.floor(lengths.length / 2)];
+        result.segments.forEach((segment) => {
+          if (median > 0 && segment.distance > Math.max(100, median * 7)) issues.push(`Tramo atípico ${segment.from.name}–${segment.to.name}: ${segment.distance.toFixed(3)} m, muy superior a la mediana ${median.toFixed(3)} m.`);
+        });
+      }
+      const official = parseFlexibleNumber($('#officialArea').value);
+      if (Number.isFinite(official) && official > 0) {
+        const differenceRatio = Math.abs(result.area - official) / official;
+        if (differenceRatio > 0.20) issues.push(`El área calculada difiere ${(differenceRatio * 100).toFixed(2)}% del área oficial. Revise OCR, dígitos y secuencia antes de exportar.`);
+      }
+      return [...new Set(issues)];
+    }
+
+    function appendGeometryAudit(result, points) {
+      const audit = $('#areaAudit');
+      const issues = geometryDiagnostics(points, result);
+      if (!issues.length) {
+        audit.textContent += '\nAUDITORÍA GEOMÉTRICA: sin cruces ni tramos atípicos evidentes.';
+        return;
+      }
+      if (!audit.classList.contains('err')) audit.className = 'area-audit warn';
+      audit.textContent += '\nAUDITORÍA GEOMÉTRICA:\n- ' + issues.join('\n- ');
+    }
+
+    function updateAreaAudit(result, points) {
+      const official = parseFlexibleNumber($('#officialArea').value);
+      const resolution = parseFlexibleNumber($('#coordinateResolution').value);
+      const tolerance = areaRoundingTolerance(result.areaPoints || points, resolution);
+      const differenceElement = $('#metricAreaDifference');
+      const toleranceElement = $('#metricAreaTolerance');
+      const audit = $('#areaAudit');
+      toleranceElement.textContent = '± ' + tolerance.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + ' m²';
+
+      const orientation = result.signedArea >= 0 ? 'antihorario' : 'horario';
+      if (!Number.isFinite(official) || official <= 0) {
+        differenceElement.textContent = 'Sin referencia';
+        audit.className = 'area-audit';
+        audit.textContent = `Área calculada con Gauss/Shoelace estable: ${result.area.toFixed(4)} m².\nOrden de los vértices: ${orientation}.\nLa tolerancia estimada por coordenadas publicadas a ${resolution} m es ±${tolerance.toFixed(3)} m².`;
+        return;
+      }
+
+      const difference = result.area - official;
+      const absoluteDifference = Math.abs(difference);
+      const percentage = official ? absoluteDifference / official * 100 : 0;
+      differenceElement.textContent = (difference >= 0 ? '+' : '') + difference.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + ' m²';
+      const compatible = absoluteDifference <= tolerance + 1e-9;
+      audit.className = 'area-audit ' + (compatible ? 'ok' : 'warn');
+      audit.textContent = compatible
+        ? `COMPATIBLE CON EL ÁREA OFICIAL.\nÁrea por coordenadas: ${result.area.toFixed(4)} m².\nÁrea oficial: ${official.toFixed(2)} m².\nDiferencia: ${difference.toFixed(4)} m² (${percentage.toFixed(4)}%).\nLa diferencia queda dentro de la tolerancia estimada ±${tolerance.toFixed(3)} m² causada por publicar coordenadas redondeadas a ${resolution} m.`
+        : `REVISAR DATOS U ORDEN DE VÉRTICES.\nÁrea por coordenadas: ${result.area.toFixed(4)} m².\nÁrea oficial: ${official.toFixed(2)} m².\nDiferencia: ${difference.toFixed(4)} m² (${percentage.toFixed(4)}%).\nSupera la tolerancia estimada ±${tolerance.toFixed(3)} m² para resolución ${resolution} m.`;
     }
 
     function renderSegments(segments) {
       $('#segmentsBody').innerHTML = segments.map((segment) => `
         <tr>
           <td>${escapeHtml(segment.from.name)} → ${escapeHtml(segment.to.name)}${segment.closing ? ' (cierre)' : ''}</td>
-          <td>${segment.deltaE.toFixed(3)}</td>
-          <td>${segment.deltaN.toFixed(3)}</td>
-          <td>${segment.distance.toFixed(3)} m</td>
           <td>${degreesToDms(segment.azimuth)}</td>
+          <td>${segment.distance.toFixed(3)} m</td>
         </tr>
       `).join('');
     }
@@ -674,6 +912,10 @@
     function clearResults() {
       $('#metricPerimeter').textContent = '—';
       $('#metricArea').textContent = '—';
+      $('#metricAreaDifference').textContent = '—';
+      $('#metricAreaTolerance').textContent = '—';
+      $('#areaAudit').className = 'area-audit';
+      $('#areaAudit').textContent = 'Ingrese al menos tres puntos y pulse Recalcular y refrescar trabajo.';
       $('#metricError').textContent = '—';
       $('#metricPrecision').textContent = '—';
       $('#segmentsBody').innerHTML = '';
@@ -684,8 +926,9 @@
 
     function calculateAll() {
       try {
-        const points = getValidPoints();
+        let points = getValidPoints();
         const mode = $('#closureMode').value;
+        if ($('#vertexOrderPolicy').value === 'angle' && mode === 'polygon') points = orderPointsAroundCentroid(points);
         const result = computeGeometry(points, mode);
         state.lastResult = { ...result, points };
 
@@ -702,6 +945,8 @@
               ? '1:' + Math.round(result.relativePrecision).toLocaleString('es-CR')
               : 'Menor que 1:1';
 
+        updateAreaAudit(result, points);
+        appendGeometryAudit(result, points);
         renderSegments(result.segments);
         renderDiagram(mode === 'traverse' && points.length > 3 ? points.slice(0, -1) : points);
         updateMap(mode === 'traverse' && points.length > 3 ? points.slice(0, -1) : points);
@@ -714,7 +959,56 @@
       }
     }
 
-    $('#calculate').addEventListener('click', calculateAll);
+    function refreshWork() {
+      const button = $('#refreshWork');
+      button.disabled = true;
+      try {
+        const result = calculateAll();
+        if (state.map) {
+          state.map.invalidateSize();
+          if (state.wmsLayer && state.map.hasLayer(state.wmsLayer)) state.wmsLayer.bringToFront();
+        }
+        if (result && state.googleVisible) updateGoogleMap(result.mode === 'traverse' && result.points.length > 3 ? result.points.slice(0, -1) : result.points);
+        if (result) showToast('Trabajo actualizado: tabla, área, azimuts, distancias y mapas fueron recalculados.');
+        return result;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    $('#editCoordinates').addEventListener('click', () => {
+      let empty = state.points.find((point) => point.x === '' || point.y === '');
+      if (!empty) {
+        appendBlankRow();
+        empty = state.points[state.points.length - 1];
+      }
+      const row = document.querySelector(`#pointsBody tr[data-id="${CSS.escape(empty.id)}"]`);
+      document.querySelector('#pointsBody')?.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => row?.querySelector('[data-field="x"]')?.focus(), 350);
+      setStatus('Modo edición: agregue o cambie coordenadas y luego pulse Recalcular y refrescar trabajo.');
+    });
+
+    $('#refreshWork').addEventListener('click', refreshWork);
+    $('#officialArea').addEventListener('input', () => { if (state.lastResult) calculateAll(); });
+    $('#coordinateResolution').addEventListener('change', () => { if (state.lastResult) calculateAll(); });
+    $('#vertexOrderPolicy').addEventListener('change', () => { if (getValidPoints().length >= 3) calculateAll(); });
+    $('#loadCadastralExample').addEventListener('click', () => {
+      state.points = [];
+      state.marks = [];
+      state.sequence = 0;
+      [
+        ['1', 553036.55, 1116403.52],
+        ['2', 553042.38, 1116411.64],
+        ['3', 553070.98, 1116399.78],
+        ['4', 553065.98, 1116391.12]
+      ].forEach(([name, x, y]) => appendPoint(name, x, y, 'Plano catastral'));
+      $('#officialArea').value = '309,19';
+      $('#coordinateResolution').value = '0.01';
+      $('#closureMode').value = 'polygon';
+      $('#vertexOrderPolicy').value = 'entered';
+      calculateAll();
+      setStatus('Ejemplo técnico de control cargado. El área por coordenadas redondeadas es 309,12 m² y es compatible con la referencia 309,19 m².', 'ok');
+    });
     $('#crsSelect').addEventListener('change', () => {
       if (getValidPoints().length >= 3) calculateAll();
     });
@@ -799,7 +1093,7 @@
           layers: [state.satelliteLayer],
           preferCanvas: true
         });
-        L.control.layers({ 'Satélite Esri': state.satelliteLayer, 'OpenStreetMap': state.osmLayer }).addTo(state.map);
+        state.baseLayerControl = L.control.layers({ 'Satélite Esri': state.satelliteLayer, 'OpenStreetMap': state.osmLayer }).addTo(state.map);
         state.drawingLayer = L.layerGroup().addTo(state.map);
 
         state.satelliteLayer.on('tileerror', () => {
@@ -839,57 +1133,242 @@
       }
     }
 
+    function selectLeafletBaseLayer(key) {
+      if (!state.map) return;
+      const requested = key === 'osm' ? state.osmLayer : state.satelliteLayer;
+      [state.satelliteLayer, state.osmLayer].forEach((layer) => {
+        if (layer && layer !== requested && state.map.hasLayer(layer)) state.map.removeLayer(layer);
+      });
+      if (requested && !state.map.hasLayer(requested)) requested.addTo(state.map);
+      state.activeBaseLayer = key === 'osm' ? 'osm' : 'esri';
+      $('#baseMapSelect').value = state.activeBaseLayer;
+      $('#mapState').textContent = state.activeBaseLayer === 'osm' ? 'OpenStreetMap activo.' : 'Satélite Esri activo.';
+    }
+
+    $('#baseMapSelect').addEventListener('change', (event) => selectLeafletBaseLayer(event.target.value));
+
+    function currentMappedPoints() {
+      if (state.lastResult?.points?.length) {
+        return state.lastResult.mode === 'traverse' && state.lastResult.points.length > 3 ? state.lastResult.points.slice(0, -1) : state.lastResult.points;
+      }
+      return getValidPoints();
+    }
+
+    $('#refreshMap').addEventListener('click', () => {
+      const points = currentMappedPoints();
+      if (points.length < 3) return showToast('Se requieren al menos 3 puntos válidos para actualizar el mapa.');
+      updateMap(points);
+      if (state.googleVisible) updateGoogleMap(points);
+      state.map?.invalidateSize();
+      showToast('Mapa actualizado con las coordenadas vigentes.');
+    });
+
+    $('#openGoogleMaps').addEventListener('click', () => {
+      const points = currentMappedPoints();
+      if (!points.length) return showToast('Primero ingrese coordenadas válidas.');
+      const converted = points.map((point) => toWgs84(point.x, point.y)).filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon));
+      if (!converted.length) return showToast('No fue posible convertir la ubicación a WGS84.');
+      const center = converted.reduce((acc, point) => ({ lat: acc.lat + point.lat, lon: acc.lon + point.lon }), { lat: 0, lon: 0 });
+      center.lat /= converted.length;
+      center.lon /= converted.length;
+      window.open(`https://www.google.com/maps?q=${center.lat.toFixed(8)},${center.lon.toFixed(8)}`, '_blank', 'noopener,noreferrer');
+    });
+
+    function loadGoogleMapsApi(apiKey) {
+      if (window.google?.maps) return Promise.resolve(window.google.maps);
+      if (state.googleApiPromise) return state.googleApiPromise;
+      if (!apiKey) return Promise.reject(new Error('Ingrese una clave válida de Google Maps JavaScript API.'));
+      state.googleApiPromise = new Promise((resolve, reject) => {
+        const callbackName = '__topoMapsGoogleReady_' + Date.now();
+        const script = document.createElement('script');
+        let finished = false;
+        const cleanup = () => {
+          try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
+        };
+        const timer = setTimeout(() => {
+          if (finished) return;
+          finished = true;
+          cleanup();
+          state.googleApiPromise = null;
+          reject(new Error('Google Maps excedió el tiempo de carga. Revise la clave, facturación y conexión.'));
+        }, 25000);
+        window[callbackName] = () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timer);
+          cleanup();
+          resolve(window.google.maps);
+        };
+        script.onerror = () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timer);
+          cleanup();
+          state.googleApiPromise = null;
+          reject(new Error('No se pudo cargar Google Maps. La cartografía Leaflet continúa disponible.'));
+        };
+        script.async = true;
+        script.defer = true;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&callback=${callbackName}`;
+        document.head.appendChild(script);
+      });
+      return state.googleApiPromise;
+    }
+
+    function clearGoogleDrawing() {
+      if (state.googlePolygon) state.googlePolygon.setMap(null);
+      state.googlePolygon = null;
+      state.googleMarkers.forEach((marker) => marker.setMap(null));
+      state.googleMarkers = [];
+    }
+
+    function updateGoogleMap(points) {
+      if (!state.googleMap || !window.google?.maps) return;
+      const converted = points.map((point) => ({ ...point, ...toWgs84(point.x, point.y) })).filter((point) => point.lat >= 8 && point.lat <= 12 && point.lon >= -86.5 && point.lon <= -82);
+      if (converted.length < 3) return;
+      clearGoogleDrawing();
+      const path = converted.map((point) => ({ lat: point.lat, lng: point.lon }));
+      state.googlePolygon = new google.maps.Polygon({ paths: path, strokeColor: '#c99a31', strokeOpacity: 1, strokeWeight: 3, fillColor: '#c99a31', fillOpacity: 0.30, map: state.googleMap });
+      const bounds = new google.maps.LatLngBounds();
+      converted.forEach((point) => {
+        const position = { lat: point.lat, lng: point.lon };
+        bounds.extend(position);
+        state.googleMarkers.push(new google.maps.Marker({ position, map: state.googleMap, title: `${point.name} · E ${point.x.toFixed(3)} · N ${point.y.toFixed(3)}` }));
+      });
+      state.googleMap.fitBounds(bounds, 45);
+    }
+
+    $('#googleMapToggle').addEventListener('click', async () => {
+      const key = $('#googleApiKey').value.trim();
+      const button = $('#googleMapToggle');
+      button.disabled = true;
+      try {
+        await loadGoogleMapsApi(key);
+        $('#googleMapWrap').classList.add('open');
+        state.googleVisible = true;
+        if (!state.googleMap) state.googleMap = new google.maps.Map($('#googleMap'), { center: { lat: 9.93, lng: -84.08 }, zoom: 8, mapTypeId: 'satellite', streetViewControl: false, mapTypeControl: true });
+        const points = currentMappedPoints();
+        if (points.length >= 3) updateGoogleMap(points);
+        showToast('Vista Google cargada. Leaflet y WMS permanecen independientes.');
+      } catch (error) {
+        showToast(error.message);
+        $('#mapState').textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    $('#hideGoogleMap').addEventListener('click', () => {
+      $('#googleMapWrap').classList.remove('open');
+      state.googleVisible = false;
+      showToast('Vista Google oculta.');
+    });
+
+    function applyWmsPreset(key) {
+      const preset = WMS_PRESETS[key] || WMS_PRESETS.custom;
+      $('#wmsUrl').value = preset.url;
+      $('#wmsLayerName').value = preset.layer;
+      $('#wmsProjection').value = 'auto';
+      if ($('#wmsToggle').checked) reloadWms();
+    }
+
     function disableWms(message) {
       clearTimeout(state.wmsTimer);
       if (state.map && state.wmsLayer && state.map.hasLayer(state.wmsLayer)) state.map.removeLayer(state.wmsLayer);
+      state.wmsLayer = null;
       $('#wmsToggle').checked = false;
       $('#mapState').textContent = message;
     }
 
-    $('#wmsToggle').addEventListener('change', (event) => {
-      if (!state.map || !window.L) {
-        event.target.checked = false;
-        return showToast('El mapa Leaflet no está disponible.');
-      }
+    function reloadWms() {
+      if (!state.map || !window.L) return disableWms('Leaflet no está disponible; el WMS no se cargó.');
+      const url = $('#wmsUrl').value.trim();
+      const layerName = $('#wmsLayerName').value.trim();
+      const preset = WMS_PRESETS[$('#wmsPreset').value] || WMS_PRESETS.custom;
+      const requestedProjection = $('#wmsProjection').value || 'auto';
+      if (!url || !layerName) return disableWms('Indique la URL WMS y el nombre exacto de la capa.');
 
-      if (!event.target.checked) {
-        disableWms('WMS desactivado. El mapa base permanece disponible.');
-        return;
-      }
+      clearTimeout(state.wmsTimer);
+      if (state.wmsLayer && state.map.hasLayer(state.wmsLayer)) state.map.removeLayer(state.wmsLayer);
+      state.wmsLayer = null;
 
-      try {
+      const attempts = requestedProjection === 'auto'
+        ? ['EPSG:3857', 'EPSG:4326']
+        : [requestedProjection];
+      let attemptIndex = 0;
+
+      const startAttempt = () => {
+        const projectionCode = attempts[attemptIndex];
+        if (state.wmsLayer && state.map.hasLayer(state.wmsLayer)) state.map.removeLayer(state.wmsLayer);
+        clearTimeout(state.wmsTimer);
         state.wmsLoadCount = 0;
         state.wmsErrorCount = 0;
-        if (!state.wmsLayer) {
-          state.wmsLayer = L.tileLayer.wms('https://geostec.crt.or.cr/geoserver/wms', {
-            layers: 'crt:limites',
+
+        try {
+          const options = {
+            layers: layerName,
             format: 'image/png',
             transparent: true,
             version: '1.1.1',
             maxZoom: 21,
-            opacity: .82
-          });
-          state.wmsLayer.on('tileload', () => {
+            opacity: .82,
+            uppercase: false
+          };
+          if (projectionCode === 'EPSG:4326') options.crs = L.CRS.EPSG4326;
+          const layer = L.tileLayer.wms(url, options);
+          state.wmsLayer = layer;
+
+          const failOrRetry = (reason) => {
+            if (state.wmsLayer !== layer || state.wmsLoadCount > 0) return;
+            if (attemptIndex + 1 < attempts.length) {
+              attemptIndex += 1;
+              $('#mapState').textContent = `${reason} Reintentando en ${attempts[attemptIndex]}…`;
+              startAttempt();
+            } else {
+              disableWms(`${reason} El WMS fue retirado sin afectar Esri/OSM, cálculos ni DXF.`);
+            }
+          };
+
+          layer.on('tileload', () => {
+            if (state.wmsLayer !== layer) return;
             state.wmsLoadCount += 1;
             clearTimeout(state.wmsTimer);
-            $('#mapState').textContent = 'WMS crt:limites activo.';
+            $('#mapState').textContent = `${preset.label}: capa ${layerName} activa en ${projectionCode}.`;
           });
-          state.wmsLayer.on('tileerror', () => {
+          layer.on('tileerror', () => {
+            if (state.wmsLayer !== layer) return;
             state.wmsErrorCount += 1;
             if (state.wmsErrorCount >= 4 && state.wmsLoadCount === 0) {
-              disableWms('El WMS no respondió y fue retirado automáticamente. El satélite continúa activo.');
+              failOrRetry(`El WMS no respondió en ${projectionCode}.`);
             }
           });
+          layer.addTo(state.map);
+          layer.bringToFront();
+          $('#mapState').textContent = `Solicitando ${preset.label} · ${layerName} en ${projectionCode}…`;
+          state.wmsTimer = setTimeout(() => {
+            failOrRetry(`Tiempo de espera agotado en ${projectionCode}.`);
+          }, 18000);
+        } catch (error) {
+          if (attemptIndex + 1 < attempts.length) {
+            attemptIndex += 1;
+            startAttempt();
+          } else {
+            disableWms('No fue posible activar el WMS. El mapa base continúa activo.');
+          }
         }
-        state.wmsLayer.addTo(state.map);
-        $('#mapState').textContent = 'Solicitando WMS opcional…';
-        state.wmsTimer = setTimeout(() => {
-          if (state.wmsLoadCount === 0) disableWms('Tiempo de espera del WMS agotado. Fue retirado sin afectar el mapa base.');
-        }, 15000);
-      } catch (error) {
-        disableWms('No fue posible activar el WMS. El mapa base continúa activo.');
-      }
+      };
+
+      startAttempt();
+    }
+
+    $('#wmsPreset').addEventListener('change', (event) => applyWmsPreset(event.target.value));
+    $('#wmsToggle').addEventListener('change', (event) => {
+      if (!event.target.checked) return disableWms('WMS desactivado. El mapa base permanece disponible.');
+      reloadWms();
     });
+    $('#wmsUrl').addEventListener('change', () => { if ($('#wmsToggle').checked) reloadWms(); });
+    $('#wmsLayerName').addEventListener('change', () => { if ($('#wmsToggle').checked) reloadWms(); });
+    $('#wmsProjection').addEventListener('change', () => { if ($('#wmsToggle').checked) reloadWms(); });
 
     function detectCoordinateColumns(rows, sheetName) {
       const maxColumns = Math.min(50, Math.max(0, ...rows.map((row) => Array.isArray(row) ? row.length : 0)));
@@ -993,48 +1472,146 @@
       }
     });
 
-    function loadImageIntoViewer(file) {
-      return new Promise((resolve, reject) => {
-        if (!file || !file.type.startsWith('image/')) return reject(new Error('Seleccione una imagen válida.'));
-        if (file.size > 35 * 1024 * 1024) return reject(new Error('La imagen supera el límite de seguridad de 35 MB.'));
+    function fileExtension(file) {
+      const name = String(file?.name || '').toLowerCase();
+      const match = name.match(/\.([a-z0-9]+)$/i);
+      return match ? match[1] : '';
+    }
 
-        const image = $('#planImage');
-        const url = URL.createObjectURL(file);
+    function isHeicLike(file) {
+      const type = String(file?.type || '').toLowerCase();
+      const extension = fileExtension(file);
+      return type.includes('heic') || type.includes('heif') || extension === 'heic' || extension === 'heif';
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        const timer = setTimeout(() => {
+          try { reader.abort(); } catch (_) {}
+          reject(new Error('La lectura de la imagen excedió el tiempo máximo.'));
+        }, 45000);
+        reader.onload = () => {
+          clearTimeout(timer);
+          resolve(String(reader.result || ''));
+        };
+        reader.onerror = () => {
+          clearTimeout(timer);
+          reject(new Error('El navegador no pudo leer el archivo de imagen.'));
+        };
+        reader.onabort = () => {
+          clearTimeout(timer);
+          reject(new Error('La lectura de la imagen fue cancelada.'));
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function loadHtmlImage(source, timeoutMs = 45000) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        let settled = false;
+        const timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          image.src = '';
+          reject(new Error('La imagen tardó demasiado en decodificarse.'));
+        }, timeoutMs);
         image.onload = () => {
-          URL.revokeObjectURL(url);
-          $('#viewer').style.display = 'block';
-          $('#viewerTools').classList.remove('hidden');
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
           resolve(image);
         };
         image.onerror = () => {
-          URL.revokeObjectURL(url);
-          reject(new Error('No fue posible abrir la imagen.'));
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          reject(new Error('El navegador no reconoce el formato de la imagen.'));
         };
-        image.src = url;
+        image.src = source;
       });
+    }
+
+    async function normalizeImageFile(file) {
+      if (!file) throw new Error('No se recibió ningún archivo.');
+      if (file.size > 45 * 1024 * 1024) {
+        throw new Error('La imagen supera 45 MB. Redúzcala o use una fotografía de menor resolución.');
+      }
+
+      const type = String(file.type || '').toLowerCase();
+      const extension = fileExtension(file);
+      const plausibleImage = type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'heic', 'heif', 'avif'].includes(extension);
+      if (!plausibleImage) throw new Error('Seleccione una imagen JPG, PNG, WEBP, HEIC/HEIF, AVIF o BMP.');
+
+      if (!isHeicLike(file)) return file;
+      if (typeof window.heic2any !== 'function') {
+        throw new Error('La foto está en formato HEIC/HEIF y el conversor no cargó. Guárdela como JPG o PNG.');
+      }
+
+      setStatus('Convirtiendo fotografía HEIC/HEIF a JPG…');
+      let converted;
+      try {
+        converted = await window.heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+      } catch (error) {
+        throw new Error('No fue posible convertir la imagen HEIC/HEIF. Cambie la cámara a JPG o exporte la foto como JPG/PNG.');
+      }
+      const blob = Array.isArray(converted) ? converted[0] : converted;
+      if (!(blob instanceof Blob)) throw new Error('La conversión HEIC/HEIF no produjo una imagen válida.');
+      const baseName = String(file.name || 'imagen').replace(/\.(heic|heif)$/i, '');
+      return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
+    }
+
+    async function loadImageIntoViewer(originalFile) {
+      const file = await normalizeImageFile(originalFile);
+      let dataUrl;
+      let decoded;
+
+      // Data URL es más estable que blob: dentro de vistas previas e iframes móviles.
+      try {
+        dataUrl = await readFileAsDataUrl(file);
+        decoded = await loadHtmlImage(dataUrl);
+      } catch (firstError) {
+        // Segundo intento con URL temporal para navegadores que administran mejor archivos grandes.
+        const objectUrl = URL.createObjectURL(file);
+        try {
+          decoded = await loadHtmlImage(objectUrl);
+          dataUrl = objectUrl;
+        } catch (secondError) {
+          throw new Error(`No fue posible abrir la imagen (${file.type || fileExtension(file) || 'formato desconocido'}). Pruebe con JPG o PNG.`);
+        }
+      }
+
+      const image = $('#planImage');
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('No fue posible mostrar la imagen en el visor.')), 30000);
+        image.onload = () => { clearTimeout(timer); resolve(); };
+        image.onerror = () => { clearTimeout(timer); reject(new Error('No fue posible mostrar la imagen en el visor.')); };
+        image.src = dataUrl;
+      });
+
+      // Las dimensiones deben existir para poder marcar puntos con precisión.
+      if (!image.naturalWidth || !image.naturalHeight) {
+        throw new Error('La imagen se abrió sin dimensiones válidas. Use JPG o PNG.');
+      }
+
+      $('#viewer').style.display = 'block';
+      $('#viewerTools').classList.remove('hidden');
+      state.imageDataUrl = dataUrl;
+      return { image, file, decoded };
     }
 
     async function decodeImage(file) {
       if ('createImageBitmap' in window) {
         try {
-          return await createImageBitmap(file);
+          return await createImageBitmap(file, { imageOrientation: 'from-image' });
         } catch (error) {
-          console.warn('createImageBitmap no pudo decodificar; se usa Image.', error);
+          console.warn('createImageBitmap no pudo decodificar; se usa FileReader/Image.', error);
         }
       }
-      return new Promise((resolve, reject) => {
-        const image = new Image();
-        const url = URL.createObjectURL(file);
-        image.onload = () => {
-          URL.revokeObjectURL(url);
-          resolve(image);
-        };
-        image.onerror = () => {
-          URL.revokeObjectURL(url);
-          reject(new Error('No fue posible decodificar la imagen para OCR.'));
-        };
-        image.src = url;
-      });
+
+      const dataUrl = await readFileAsDataUrl(file);
+      return loadHtmlImage(dataUrl);
     }
 
     async function preprocessImage(file, variant) {
@@ -1237,21 +1814,30 @@
     }
 
     async function loadAndRecognize(file) {
-      state.imageFile = file;
       state.marks = [];
       renderMarks();
-      await loadImageIntoViewer(file);
-      setStatus('Imagen cargada. Iniciando lectura automática; el clic manual permanece disponible.');
-      return runOcr(file, true);
+      const loaded = await loadImageIntoViewer(file);
+      state.imageFile = loaded.file;
+      setStatus('Imagen abierta correctamente. Iniciando OCR automático…');
+
+      try {
+        return await runOcr(loaded.file, true);
+      } catch (error) {
+        // El fallo del OCR no debe inutilizar el visor ni el ingreso manual.
+        setStatus(`Imagen abierta correctamente, pero el OCR no pudo extraer coordenadas: ${error.message} Puede tocar la imagen y registrar cada vértice manualmente.`, 'err');
+        return { added: 0, duplicates: 0, ocrError: error };
+      }
     }
 
     $('#ocrInput').addEventListener('change', async (event) => {
       const file = event.target.files[0];
       if (!file) return;
       try {
+        setStatus(`Abriendo ${file.name || 'imagen'}…`);
         await loadAndRecognize(file);
       } catch (error) {
-        setStatus(error.message, 'err');
+        state.imageFile = null;
+        setStatus(`${error.message} Seleccione otra imagen, preferiblemente JPG o PNG.`, 'err');
       } finally {
         event.target.value = '';
       }
@@ -1261,9 +1847,11 @@
       const file = event.target.files[0];
       if (!file) return;
       try {
+        setStatus(`Abriendo ${file.name || 'imagen'}…`);
         await loadAndRecognize(file);
       } catch (error) {
-        setStatus(error.message + ' Puede continuar usando el clic manual.', 'err');
+        state.imageFile = null;
+        setStatus(`${error.message} No se activó el clic manual porque la imagen no logró abrirse.`, 'err');
       } finally {
         event.target.value = '';
       }
@@ -1274,7 +1862,7 @@
       try {
         await runOcr(state.imageFile, true);
       } catch (error) {
-        setStatus(error.message, 'err');
+        setStatus(`El OCR no pudo completar la lectura: ${error.message} La imagen sigue disponible para ingreso manual.`, 'err');
       }
     });
 
@@ -1332,7 +1920,99 @@
       return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, '_');
     }
 
-    function buildDxf(points) {
+    function degreesToDmsAscii(angle) {
+      let degrees = Math.floor(angle);
+      let minutesFloat = (angle - degrees) * 60;
+      let minutes = Math.floor(minutesFloat);
+      let seconds = (minutesFloat - minutes) * 60;
+      if (seconds >= 59.995) {
+        seconds = 0;
+        minutes += 1;
+      }
+      if (minutes >= 60) {
+        minutes = 0;
+        degrees = (degrees + 1) % 360;
+      }
+      return `${degrees}%%d ${String(minutes).padStart(2, '0')}' ${seconds.toFixed(2).padStart(5, '0')}"`;
+    }
+
+    function appendDxfLine(output, layer, x1, y1, x2, y2) {
+      output.push(
+        '0', 'LINE', '8', layer,
+        '10', Number(x1).toFixed(4), '20', Number(y1).toFixed(4), '30', '0.0000',
+        '11', Number(x2).toFixed(4), '21', Number(y2).toFixed(4), '31', '0.0000'
+      );
+    }
+
+    function appendDxfText(output, layer, x, y, height, text) {
+      output.push(
+        '0', 'TEXT', '8', layer,
+        '10', Number(x).toFixed(4), '20', Number(y).toFixed(4), '30', '0.0000',
+        '40', Number(height).toFixed(4), '1', asciiText(text)
+      );
+    }
+
+    function appendAzimuthDistanceTable(output, points, segments) {
+      if (!Array.isArray(points) || points.length < 2 || !Array.isArray(segments) || !segments.length) return;
+
+      const minX = Math.min(...points.map((point) => point.x));
+      const maxX = Math.max(...points.map((point) => point.x));
+      const minY = Math.min(...points.map((point) => point.y));
+      const maxY = Math.max(...points.map((point) => point.y));
+      const span = Math.max(maxX - minX, maxY - minY, 1);
+      const textHeight = Math.max(0.80, Math.min(2.50, span * 0.035));
+      const rowHeight = textHeight * 2.15;
+      const margin = Math.max(textHeight * 4, span * 0.12);
+      const tramoWidth = textHeight * 10.5;
+      const azimuthWidth = textHeight * 18.5;
+      const distanceWidth = textHeight * 12.5;
+      const tableWidth = tramoWidth + azimuthWidth + distanceWidth;
+      const x0 = maxX + margin;
+      const x1 = x0 + tramoWidth;
+      const x2 = x1 + azimuthWidth;
+      const x3 = x0 + tableWidth;
+      const yTop = maxY;
+      const rowCount = segments.length + 2; // título + encabezado + datos
+      const yBottom = yTop - rowCount * rowHeight;
+      const layer = 'TABLA_AZIMUT_DIST';
+
+      // Marco exterior y líneas horizontales.
+      appendDxfLine(output, layer, x0, yTop, x3, yTop);
+      appendDxfLine(output, layer, x0, yBottom, x3, yBottom);
+      appendDxfLine(output, layer, x0, yTop, x0, yBottom);
+      appendDxfLine(output, layer, x3, yTop, x3, yBottom);
+      for (let row = 1; row < rowCount; row += 1) {
+        const y = yTop - row * rowHeight;
+        appendDxfLine(output, layer, x0, y, x3, y);
+      }
+
+      // Columnas: no atraviesan la fila de título combinada.
+      appendDxfLine(output, layer, x1, yTop - rowHeight, x1, yBottom);
+      appendDxfLine(output, layer, x2, yTop - rowHeight, x2, yBottom);
+
+      const baseline = (rowIndex) => yTop - rowIndex * rowHeight - rowHeight * 0.70;
+      const inset = textHeight * 0.55;
+      appendDxfText(output, layer, x0 + inset, baseline(0), textHeight * 1.08, 'TABLA DE AZIMUT Y DISTANCIA');
+      appendDxfText(output, layer, x0 + inset, baseline(1), textHeight * 0.88, 'TRAMO');
+      appendDxfText(output, layer, x1 + inset, baseline(1), textHeight * 0.88, 'AZIMUT');
+      appendDxfText(output, layer, x2 + inset, baseline(1), textHeight * 0.88, 'DISTANCIA (m)');
+
+      segments.forEach((segment, index) => {
+        const row = index + 2;
+        const closing = segment.closing ? ' CIERRE' : '';
+        appendDxfText(output, layer, x0 + inset, baseline(row), textHeight * 0.82,
+          `${segment.from.name}-${segment.to.name}${closing}`);
+        appendDxfText(output, layer, x1 + inset, baseline(row), textHeight * 0.82,
+          degreesToDmsAscii(segment.azimuth));
+        appendDxfText(output, layer, x2 + inset, baseline(row), textHeight * 0.82,
+          segment.distance.toFixed(3));
+      });
+    }
+
+    function buildDxf(points, segments = null) {
+      const safeSegments = Array.isArray(segments) && segments.length
+        ? segments
+        : computeGeometry(points, 'polygon').segments;
       const output = [
         '0', 'SECTION', '2', 'HEADER',
         '9', '$ACADVER', '1', 'AC1009',
@@ -1341,10 +2021,11 @@
         '0', 'TABLE', '2', 'LTYPE', '70', '1',
         '0', 'LTYPE', '2', 'CONTINUOUS', '70', '0', '3', 'Solid line', '72', '65', '73', '0', '40', '0.0',
         '0', 'ENDTAB',
-        '0', 'TABLE', '2', 'LAYER', '70', '3',
+        '0', 'TABLE', '2', 'LAYER', '70', '4',
         '0', 'LAYER', '2', 'POLIGONO_CRTM05', '70', '0', '62', '2', '6', 'CONTINUOUS',
         '0', 'LAYER', '2', 'PUNTOS_CRTM05', '70', '0', '62', '1', '6', 'CONTINUOUS',
         '0', 'LAYER', '2', 'ROTULOS_VERTICES', '70', '0', '62', '7', '6', 'CONTINUOUS',
+        '0', 'LAYER', '2', 'TABLA_AZIMUT_DIST', '70', '0', '62', '4', '6', 'CONTINUOUS',
         '0', 'ENDTAB',
         '0', 'ENDSEC',
         '0', 'SECTION', '2', 'ENTITIES',
@@ -1364,6 +2045,7 @@
         );
       });
 
+      appendAzimuthDistanceTable(output, points, safeSegments);
       output.push('0', 'ENDSEC', '0', 'EOF');
       return output.join('\r\n');
     }
@@ -1380,10 +2062,17 @@
     }
 
     $('#dxfBtn').addEventListener('click', () => {
-      const points = getValidPoints();
+      let points = getValidPoints();
       if (points.length < 3) return showToast('Se requieren al menos 3 puntos válidos.');
-      downloadText(`TOPO_MAPS_PRO_${CRS[$('#crsSelect').value].code.replace(':', '_')}_R12.dxf`, buildDxf(points), 'application/dxf');
-      showToast('DXF R12 generado con polilínea cerrada, puntos y rótulos.');
+      const mode = $('#closureMode').value;
+      if ($('#vertexOrderPolicy').value === 'angle' && mode === 'polygon') points = orderPointsAroundCentroid(points);
+      const result = computeGeometry(points, mode);
+      downloadText(
+        `TOPO_MAPS_PRO_${CRS[$('#crsSelect').value].code.replace(':', '_')}_R12.dxf`,
+        buildDxf(points, result.segments),
+        'application/dxf'
+      );
+      showToast('DXF R12 generado con polilínea, puntos, rótulos y tabla de azimut/distancia.');
     });
 
     $('#csvBtn').addEventListener('click', () => {
@@ -1418,14 +2107,47 @@
 
       test('Área Gauss de cuadrado 100 × 100 = 10 000 m²', () => Math.abs(computeGeometry(square).area - 10000) < 1e-8);
       test('Perímetro cerrado del cuadrado = 400 m', () => Math.abs(computeGeometry(square).perimeter - 400) < 1e-8);
+      test('Plano catastral de prueba: área por coordenadas = 309,1198 m²', () => {
+        const cadastral = [
+          { name:'1', x:553036.55, y:1116403.52 },
+          { name:'2', x:553042.38, y:1116411.64 },
+          { name:'3', x:553070.98, y:1116399.78 },
+          { name:'4', x:553065.98, y:1116391.12 }
+        ];
+        return Math.abs(computeGeometry(cadastral).area - 309.1198) < 0.0001;
+      });
+      test('Área oficial 309,19 m² compatible con redondeo a 0,01 m', () => {
+        const cadastral = [
+          { name:'1', x:553036.55, y:1116403.52 },
+          { name:'2', x:553042.38, y:1116411.64 },
+          { name:'3', x:553070.98, y:1116399.78 },
+          { name:'4', x:553065.98, y:1116391.12 }
+        ];
+        const result = computeGeometry(cadastral);
+        return Math.abs(result.area - 309.19) <= areaRoundingTolerance(cadastral, 0.01);
+      });
       test('Azimut hacia el Este = 90°', () => Math.abs(azimuthDegrees(100, 0) - 90) < 1e-10);
       test('Cierre geométrico no confunde Pn→P1 con error', () => computeGeometry(square).closureError === 0);
       test('Número regional 500.123 se interpreta como 500123', () => normalizeCoordinate('500.123', 'x') === 500123);
       test('OCR sintético reconoce par Este/Norte', () => extractOcrPairs({ lines: [{ text: 'P1 500123.456 1100456.789', bbox: { x0: 0, y0: 0, x1: 100, y1: 20 }, confidence: 90 }] }, 100, 20).length === 1);
-      test('DXF R12 contiene polilínea cerrada, puntos y EOF', () => {
+      test('DXF R12 contiene polilínea, puntos, tabla de azimut/distancia y EOF', () => {
         const dxf = buildDxf(square);
-        return dxf.includes('AC1009') && dxf.includes('\r\n70\r\n1') && dxf.includes('PUNTOS_CRTM05') && dxf.endsWith('EOF');
+        return dxf.includes('AC1009')
+          && dxf.includes('\r\n70\r\n1')
+          && dxf.includes('PUNTOS_CRTM05')
+          && dxf.includes('TABLA_AZIMUT_DIST')
+          && dxf.includes('TABLA DE AZIMUT Y DISTANCIA')
+          && dxf.includes('DISTANCIA (m)')
+          && dxf.endsWith('EOF');
       });
+      test('Tabla visible muestra solo Tramo, Azimut y Distancia', () => {
+        const labels = [...document.querySelectorAll('.segment-table thead th')].map((cell) => cell.textContent.trim());
+        return labels.length === 3 && labels.join('|') === 'Tramo|Azimut|Distancia';
+      });
+      test('Preset WMS SNIT oficial configurado bajo demanda', () => WMS_PRESETS.snit_districts.layer === 'distritos' && WMS_PRESETS.snit_roads.layer === 'vias_5000' && WMS_PRESETS.snit_districts.url.includes('snitcr.go.cr'));
+      test('Botones editar, recalcular y refrescar mapa tienen funciones separadas', () => Boolean($('#editCoordinates') && $('#refreshWork') && $('#refreshMap')));
+      test('Selector WMS incluye fallback 3857 → 4326', () => Boolean($('#wmsProjection')));
+
       test('Conversión GRS80 coincide con control EPSG en meridiano central', () => {
         const converted = inverseTransverseMercator(500000, 1100000, CRS['8908']);
         return Math.abs(converted.lon + 84) < 1e-10 && Math.abs(converted.lat - 9.9480612313) < 1e-7;
@@ -1466,6 +2188,7 @@
     });
 
     appendBlankRow();
+    applyWmsPreset('snit_districts');
     initMap();
     runSelfTests();
   </script>
