@@ -133,9 +133,9 @@
 
   <div class="hero">
     <div class="hero-text">
-      <p class="eyebrow">CRTM05 · SIRGAS Costa Rica[span_0](start_span)[span_0](end_span)</p>
+      <p class="eyebrow">CRTM05 · SIRGAS Costa Rica</p>
       <h1>TOPO MAPS PRO</h1>
-      <p class="lede">Sistema dual: importación Excel/CSV o extracción OCR automática por imagen, cálculo de cierre automático ($P_N \to P_1$), área, azimuts en DMS[span_1](start_span)[span_1](end_span), mapa satelital/WMS y DXF[span_2](start_span)[span_2](end_span).</p>
+      <p class="lede">Sistema dual de alta precisión: importación Excel/CSV o escaneo OCR blindado con rutas WASM explícitas, cálculo universal de cierre automático ($P_N \to P_1$), área, azimuts en DMS, mapa satelital/WMS y DXF.</p>
     </div>
     <div class="hero-diagram">
       <svg viewBox="0 0 260 260" id="diagram"></svg>
@@ -144,7 +144,7 @@
 
   <section class="card">
     <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Ingreso Dual de Datos (Excel o Imagen OCR)</h2></div>
-    <p class="section-sub">Selecciona una de las dos opciones para cargar automáticamente los vértices[span_3](start_span)[span_3](end_span).</p>
+    <p class="section-sub">Selecciona una de las dos opciones para cargar automáticamente los vértices.</p>
 
     <div class="action-row">
       <label class="btn btn-primary" for="excelInput">📊 Cargar Excel / CSV</label>
@@ -154,7 +154,7 @@
     </div>
 
     <div class="preview-box" id="previewBox" style="display:none;">
-      <img id="previewImg" alt="Vista previa imagen">
+      <img id="previewImg" alt="Vista previa imagen procesada">
     </div>
 
     <div class="ocr-progress" id="ocrProgress"><div class="ocr-progress-bar" id="ocrProgressBar"></div></div>
@@ -163,7 +163,7 @@
 
   <section class="card">
     <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de Vértices</h2></div>
-    <p class="section-sub">Edita nombres o coordenadas y pulsa actualizar[span_4](start_span)[span_4](end_span).</p>
+    <p class="section-sub">Edita nombres o coordenadas y pulsa actualizar.</p>
     <table id="pointsTable">
       <thead>
         <tr><th>Vértice</th><th>Este (X) [m]</th><th>Norte (Y) [m]</th><th></th></tr>
@@ -188,24 +188,24 @@
     </div>
 
     <table id="resultsTable" style="display:none;">
-      <thead><tr><th>Tramo</th><th>Distancia (m)</th><th>Azimut (DMS / Dec)[span_5](start_span)[span_5](end_span)</th></tr></thead>
+      <thead><tr><th>Tramo</th><th>Distancia (m)</th><th>Azimut (DMS / Dec)</th></tr></thead>
       <tbody id="resultsBody"></tbody>
     </table>
     <div class="result-diagram-box" id="resultDiagramBox" style="display:none;">
-      <p class="section-sub" style="margin:0 0 10px;">Diagrama del Polígono (Incluye Cierre Automático $P_N \to P_1$)[span_6](start_span)[span_6](end_span)</p>
+      <p class="section-sub" style="margin:0 0 10px;">Diagrama del Polígono (Incluye Cierre Automático $P_N \to P_1$)</p>
       <svg viewBox="0 0 400 400" id="resultDiagram" style="width:100%; max-width:400px; height:auto; display:block; background:#FBF9F3; border:1px solid #c9bfa6; border-radius:4px;"></svg>
     </div>
-    <button class="btn btn-primary" id="dxfBtn" style="display:none; width:100%; margin-top:16px;">⬇ Descargar DXF Georreferenciado[span_7](start_span)[span_7](end_span)</button>
+    <button class="btn btn-primary" id="dxfBtn" style="display:none; width:100%; margin-top:16px;">⬇ Descargar DXF Georreferenciado</button>
     <p class="section-sub" id="dxfHint" style="display:none; margin-top:10px;"></p>
   </section>
 
   <section class="card results" id="mapSection">
     <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Visualización Cartográfica y Satelital (WMS)</h2></div>
-    <p class="section-sub">Alterna entre Mapas base (OSM, Satelital Esri) y capas WMS oficiales (SNIT Costa Rica)[span_8](start_span)[span_8](end_span)[span_9](start_span)[span_9](end_span).</p>
+    <p class="section-sub">Alterna entre Mapas base (OSM, Satelital Esri) y capas WMS oficiales (SNIT Costa Rica).</p>
     <div id="mapView"></div>
   </section>
 
-  <footer>TOPO MAPS PRO · CRTM05 / SIRGAS Costa Rica[span_10](start_span)[span_10](end_span)</footer>
+  <footer>TOPO MAPS PRO · CRTM05 / SIRGAS Costa Rica</footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -322,7 +322,7 @@ document.getElementById('excelInput').addEventListener('change', function(e) {
   reader.readAsArrayBuffer(file);
 });
 
-// --- MÓDULO 2: OCR AUTOMÁTICO POR IMAGEN ---
+// --- MÓDULO 2: OCR BLINDADO CON RUTAS EXPLÍCITAS Y BINARIZACIÓN ---
 document.getElementById('ocrInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -338,35 +338,57 @@ document.getElementById('ocrInput').addEventListener('change', function(e) {
     img.onload = async function(){
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const scale = Math.max(1, 2200 / Math.max(img.width, img.height));
+      const scale = Math.max(1, 2400 / Math.max(img.width, img.height));
       canvas.width = img.width * scale;
       canvas.height = img.height * scale;
+      
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        let v = avg > 140 ? 255 : 0; 
+        data[i]     = v;
+        data[i + 1] = v;
+        data[i + 2] = v;
+      }
+      ctx.putImageData(imgData, 0, 0);
+
       const processedDataUrl = canvas.toDataURL('image/jpeg', 1.0);
 
       previewImg.src = processedDataUrl;
       previewBox.style.display = 'block';
-      statusMsg.textContent = 'Iniciando motor OCR para extracción de coordenadas...';
+      statusMsg.textContent = 'Iniciando motor OCR en el dispositivo...';
       ocrProgress.style.display = 'block';
-      ocrProgressBar.style.width = '20%';
+      ocrProgressBar.style.width = '15%';
 
       try {
-        const worker = await Tesseract.createWorker('spa+eng');
+        const worker = await Tesseract.createWorker('spa+eng', 1, {
+          workerPath: 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/worker.min.js',
+          corePath: 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js-core/5.0.0/tesseract-core.wasm.js',
+          logger: m => {
+            if(m.status === 'recognizing text'){
+              const pct = Math.round((m.progress || 0) * 80);
+              ocrProgressBar.style.width = (15 + pct) + '%';
+              statusMsg.textContent = `Escaneando tabla… ${pct}%`;
+            } else {
+              statusMsg.textContent = m.status;
+            }
+          }
+        });
+
         await worker.setParameters({
           tessedit_pageseg_mode: '6',
           tessedit_char_whitelist: '0123456789.,ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzáéíóúÁÉÍÓÚñÑ-_ '
         });
 
-        ocrProgressBar.style.width = '60%';
-        statusMsg.textContent = 'Leyendo celdas de la tabla...';
-
         const ret = await worker.recognize(processedDataUrl);
         await worker.terminate();
 
         ocrProgress.style.display = 'none';
-        statusMsg.textContent = '¡Lectura OCR completada con éxito!';
+        statusMsg.textContent = '¡Escaneo OCR completado con éxito!';
 
-        // Extraer números de coordenadas de la cadena de texto OCR
         let cleaned = ret.data.text.replace(/[Oo]/g, '0').replace(/[lI]/g, '1').replace(/[S]/g, '5').replace(/,/g, '.');
         let matches = cleaned.match(/\b\d{5,7}(?:\.\d{1,4})?\b/g) || [];
 
@@ -387,9 +409,9 @@ document.getElementById('ocrInput').addEventListener('change', function(e) {
             points.push({ id: 'pt' + pointCounter, name: p.name, x: p.x, y: p.y });
           });
           renderPointsTable();
-          statusMsg.innerHTML = `<span style="color:var(--ok);">¡${extractedPairs.length} puntos extraídos por OCR e ingresados a la tabla!</span>`;
+          statusMsg.innerHTML = `<span style="color:var(--ok);">¡${extractedPairs.length} vértices importados por OCR!</span>`;
         } else {
-          statusMsg.innerHTML = '<span style="color:var(--err);">No se detectaron pares de coordenadas válidos en la imagen. Usa la entrada manual o Excel.</span>';
+          statusMsg.innerHTML = '<span style="color:var(--err);">No se detectaron coordenadas válidas en la imagen. Usa Excel o entrada manual.</span>';
         }
       } catch(err) {
         ocrProgress.style.display = 'none';
@@ -472,7 +494,6 @@ function calculateAndRender(){
   resultsBody.innerHTML = '';
   let perimeter = 0;
 
-  // 1. Tramos secuenciales estándar
   for(let i=0; i<valid.length-1; i++){
     const a = valid[i], b = valid[i+1];
     const dist = Math.hypot(b.x-a.x, b.y-a.y);
@@ -483,7 +504,6 @@ function calculateAndRender(){
     resultsBody.appendChild(tr);
   }
 
-  // 2. Tramo de cierre automático universal (P_N -> P_1)
   let closureError = 0;
   let precisionStr = 'N/A';
   let area = 0;
@@ -534,7 +554,7 @@ function calculateAndRender(){
   if(valid.length >= 3){
     dxfBtn.style.display = 'block';
     dxfHint.style.display = 'block';
-    dxfHint.textContent = `Polígono cerrado de ${valid.length} vértices (cierre P${valid.length}→P1 incluido), listo para DXF[span_11](start_span)[span_11](end_span).`;
+    dxfHint.textContent = `Polígono cerrado de ${valid.length} vértices (cierre P${valid.length}→P1 incluido), listo para DXF.`;
   } else {
     dxfBtn.style.display = 'none';
     dxfHint.style.display = 'block';
@@ -691,14 +711,14 @@ function updateMap(valid){
   });
 
   if(!leafletMap){
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21, attribution: '© OpenStreetMap[span_12](start_span)[span_12](end_span)' });
-    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21, attribution: 'Tiles &copy; Esri[span_13](start_span)[span_13](end_span)' });
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21, attribution: '© OpenStreetMap' });
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21, attribution: 'Tiles &copy; Esri' });
 
     const wmsLayer = L.tileLayer.wms('https://geostec.crt.or.cr/geoserver/wms?', {
       layers: 'crt:limites',
       format: 'image/png',
       transparent: true,
-      attribution: 'SNIT Costa Rica WMS[span_14](start_span)[span_14](end_span)'
+      attribution: 'SNIT Costa Rica WMS'
     });
 
     leafletMap = L.map('mapView', {
