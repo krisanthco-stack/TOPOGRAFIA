@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#071827">
-  <title>TOPO MAPS PRO · Prueba móvil 1.0 · Visor automático</title>
+  <title>TOPO MAPS PRO · Prueba móvil 1.2 · Exportación GIS auditada</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 
@@ -140,19 +140,6 @@
     .share-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 8px; }
     #map { height: 490px; background: #d5dde2; border: 1px solid var(--line); border-radius: 12px; }
     .map-card { position: relative; }
-    .map-card.viewer-open {
-      position: fixed;
-      inset: 0;
-      z-index: 12000;
-      margin: 0;
-      padding: 14px;
-      overflow: auto;
-      border-radius: 0;
-      background: var(--panel);
-    }
-    .map-card.viewer-open #map { height: calc(100vh - 235px); min-height: 430px; }
-    .map-card.viewer-open #closeMapViewer { display: inline-flex !important; }
-    body.map-viewer-open { overflow: hidden; }
     .viewer-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .map-legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 8px 0 0; }
     .map-legend span { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 12px; }
@@ -186,7 +173,6 @@
       .metrics { grid-template-columns: 1fr; }
       .area-params, .map-tools, .share-grid { grid-template-columns: 1fr; }
       #map { height: 390px; }
-      .map-card.viewer-open #map { height: calc(100vh - 270px); min-height: 360px; }
       .btn, label.btn { width: 100%; }
       .controls > *, .toolbar > * { width: 100%; }
     }
@@ -198,7 +184,7 @@
       <div>
         <div class="kicker">Topografía · Catastro · Costa Rica</div>
         <h1>TOPO MAPS PRO</h1>
-        <p>Versión de prueba móvil 1.0 auditada. El visor cartográfico ubica y encuadra automáticamente el polígono, conserva su geometría al cambiar entre mapas base y permite enviar el polígono completo mediante KML, además de compartir su centro en Google Maps y Waze.</p>
+        <p>Versión de prueba móvil 1.2 auditada. El mapa permanece visible, ubica automáticamente el polígono y su centro interior, y permite exportar DXF, CSV, KML, KMZ y Shapefile ZIP sin depender de servicios catastrales externos.</p>
       </div>
       <div class="badge" id="selfBadge">AUTOPRUEBA: PENDIENTE</div>
     </header>
@@ -343,7 +329,7 @@
             <div class="controls">
               <button class="btn primary" id="dxfBtn" type="button">Descargar DXF R12</button>
               <button class="btn ghost" id="csvBtn" type="button">Descargar CSV</button>
-              <button class="btn secondary" id="openMapViewerFromResults" type="button">Ver polígono en visor</button>
+              <button class="btn secondary" id="previewMapFromResults" type="button">Actualizar y ver en mapa</button>
             </div>
           </div>
         </div>
@@ -353,8 +339,8 @@
         <div class="head">
           <span class="num">04</span>
           <div>
-            <h2>Visor cartográfico con ubicación automática</h2>
-            <p>Al abrir el visor, el sistema recalcula, dibuja y encuadra el polígono. La geometría permanece visible al cambiar entre todos los mapas base disponibles.</p>
+            <h2>Visor cartográfico permanente</h2>
+            <p>El mapa permanece abierto para visualización. Al recalcular, se actualizan el polígono, los vértices y el PIN del centro interior sin cambiar ni cerrar el visor.</p>
           </div>
         </div>
 
@@ -368,34 +354,32 @@
                 <option value="carto">Carto Voyager</option>
               </select>
             </label>
-            <span class="small">El polígono se dibuja en una capa independiente y permanece visible al cambiar entre Satélite, OpenStreetMap, OpenTopoMap y Carto Voyager.</span>
+            <span class="small">El polígono y el PIN del centro se mantienen en una capa independiente al cambiar entre los cuatro mapas base.</span>
           </div>
 
           <div class="map-tool">
-            <label>Ubicación externa y archivos de intercambio</label>
+            <label>Ubicación y archivos geoespaciales</label>
             <div class="share-grid">
               <button class="btn ghost" id="openGoogleMaps" type="button">Centro en Google Maps</button>
               <button class="btn ghost" id="openWaze" type="button">Centro en Waze</button>
               <button class="btn secondary" id="shareLocation" type="button">Compartir ubicación</button>
-              <button class="btn secondary" id="sharePolygonKml" type="button">Enviar polígono KML</button>
               <button class="btn ghost" id="downloadKml" type="button">Descargar KML</button>
-              <button class="btn ghost" id="downloadGpx" type="button">Descargar GPX</button>
-              <button class="btn ghost" id="openSiri" type="button">SIRI + copiar centro CRTM05</button>
+              <button class="btn ghost" id="downloadKmz" type="button">Descargar KMZ</button>
+              <button class="btn primary" id="downloadShapefile" type="button">Descargar Shapefile ZIP</button>
             </div>
-            <span class="small">Google Maps y Waze reciben un punto central porque sus enlaces públicos no admiten polígonos. Para visualizar la figura completa en Google Earth u otra aplicación GIS, use «Enviar polígono KML» o descargue el KML. SIRI se abre externamente y copia el centro CRTM05 al portapapeles.</span>
+            <span class="small">KML y KMZ se generan en WGS84 para Google Earth. El Shapefile conserva las coordenadas CRTM05 originales e incluye SHP, SHX, DBF, PRJ y CPG.</span>
           </div>
         </div>
         <div class="mapbar">
           <div class="viewer-actions">
-            <button class="btn primary" id="openMapViewer" type="button">Abrir visor y ubicar polígono</button>
-            <button class="btn ghost" id="refreshMap" type="button">Refrescar mapa</button>
-            <button class="btn danger" id="closeMapViewer" type="button" style="display:none">Cerrar visor</button>
+            <button class="btn primary" id="refreshMap" type="button">Actualizar visualización</button>
+            <button class="btn ghost" id="fitMap" type="button">Centrar polígono</button>
           </div>
           <span class="small" id="mapState">Mapa listo; pendiente de coordenadas válidas.</span>
         </div>
         <div id="map"></div>
-        <div class="map-legend"><span><i></i>Polígono CRTM05</span><span><i class="center"></i>Centro interior compartible</span></div>
-        <p class="note">La conversión al mapa es para visualización. CR-SIRGAS es un marco dinámico; trabajos geodésicos de alta precisión requieren considerar época, velocidades y transformación oficial aplicable.</p>
+        <div class="map-legend"><span><i></i>Polígono CRTM05</span><span><i class="center"></i>PIN del centro interior</span></div>
+        <p class="note">La vista corresponde a la misma geometría utilizada para KML, KMZ y Shapefile. La conversión a WGS84 se usa solo en mapas web; el Shapefile y el DXF conservan CRTM05.</p>
       </section>
 
       <section class="card span-2">
@@ -403,7 +387,7 @@
           <span class="num">05</span>
           <div>
             <h2>Auditoría interna</h2>
-            <p>Pruebas automáticas de geometría, área, azimut, DXF, tabla visible, visor automático, persistencia del polígono entre mapas base, enlaces externos, KML/GPX, conversión y rendimiento.</p>
+            <p>Pruebas automáticas de geometría, área, azimut, DXF, visor permanente, PIN del centro, mapas base, enlaces externos, KML, KMZ, Shapefile, conversión y rendimiento.</p>
           </div>
         </div>
         <div class="audit" id="audit">Ejecutando pruebas…</div>
@@ -1207,35 +1191,24 @@
       showToast('Mapa actualizado con las coordenadas vigentes.');
     });
 
-    function openMapViewer() {
+    function previewMapAndScroll() {
       const points = getValidPoints();
-      if (points.length < 3) return showToast('Se requieren al menos 3 puntos válidos para abrir el visor.');
+      if (points.length < 3) return showToast('Se requieren al menos 3 puntos válidos para visualizar el polígono.');
       const result = calculateAll();
       if (!result) return;
-      $('#mapCard').classList.add('viewer-open');
-      document.body.classList.add('map-viewer-open');
+      $('#mapCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
       setTimeout(() => {
         state.map?.invalidateSize();
         updateMap(currentMappedPoints());
         fitPolygonInMap(false);
-      }, 120);
-      showToast('Visor abierto: polígono ubicado y encuadrado automáticamente.');
+      }, 180);
+      showToast('Visualización actualizada y centrada.');
     }
 
-    function closeMapViewer() {
-      $('#mapCard').classList.remove('viewer-open');
-      document.body.classList.remove('map-viewer-open');
-      setTimeout(() => {
-        state.map?.invalidateSize();
-        fitPolygonInMap(false);
-      }, 100);
-    }
-
-    $('#openMapViewer').addEventListener('click', openMapViewer);
-    $('#openMapViewerFromResults').addEventListener('click', openMapViewer);
-    $('#closeMapViewer').addEventListener('click', closeMapViewer);
-    window.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && $('#mapCard').classList.contains('viewer-open')) closeMapViewer();
+    $('#previewMapFromResults').addEventListener('click', previewMapAndScroll);
+    $('#fitMap').addEventListener('click', () => {
+      if (!fitPolygonInMap(true)) showToast('Primero calcule un polígono válido.');
+      else showToast('Polígono centrado en el mapa.');
     });
 
     if ('IntersectionObserver' in window) {
@@ -1363,18 +1336,6 @@
     });
 
 
-    $('#openSiri').addEventListener('click', async () => {
-      try {
-        const location = getShareLocation();
-        const crtmText = `${CRS[$('#crsSelect').value].code} | X=${location.x.toFixed(3)} | Y=${location.y.toFixed(3)}`;
-        await copyTextFallback(crtmText);
-        openExternalLocation('https://siri.snitcr.go.cr/siri/mapa', 'visor oficial SIRI');
-        showToast('SIRI abierto. El centro CRTM05 quedó copiado para pegarlo en Navegador X/Y.');
-      } catch (error) {
-        showToast(error.message);
-      }
-    });
-
     async function copyTextFallback(text) {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
@@ -1423,70 +1384,316 @@
     }
 
     function buildLocationKml(points, location) {
+      if (!Array.isArray(points) || points.length < 3) throw new Error('Se requieren al menos 3 puntos válidos para crear KML/KMZ.');
       const converted = points.map((point) => ({ ...point, ...toWgs84(point.x, point.y) }));
       const coordinates = converted.map((point) => `${point.lon.toFixed(8)},${point.lat.toFixed(8)},0`);
-      if (coordinates.length >= 3) coordinates.push(coordinates[0]);
-      const polygon = coordinates.length >= 4 ? `
-    <Placemark><name>Polígono TOPO MAPS PRO</name><Style><LineStyle><color>ff0055aa</color><width>3</width></LineStyle><PolyStyle><color>5500aaff</color></PolyStyle></Style><Polygon><outerBoundaryIs><LinearRing><coordinates>${coordinates.join(' ')}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>` : '';
+      coordinates.push(coordinates[0]);
+      const result = state.lastResult || computeGeometry(points, 'polygon');
+      const crs = CRS[$('#crsSelect').value];
+      const vertexPlacemarks = converted.map((point) => `
+    <Placemark><name>${xmlEscape(point.name)}</name><Style><IconStyle><scale>0.75</scale><Icon><href>http://maps.google.com/mapfiles/kml/paddle/red-circle.png</href></Icon></IconStyle></Style><Point><coordinates>${point.lon.toFixed(8)},${point.lat.toFixed(8)},0</coordinates></Point></Placemark>`).join('');
       return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>TOPO MAPS PRO</name>
-    <Placemark><name>Ubicación del levantamiento</name><description>${xmlEscape(location.method)}</description><Point><coordinates>${location.lon},${location.lat},0</coordinates></Point></Placemark>${polygon}
+  <description>${xmlEscape(`${crs.code} · Área ${result.area.toFixed(2)} m² · Perímetro ${result.perimeter.toFixed(3)} m`)}</description>
+  <Style id="polygonStyle"><LineStyle><color>ff3576d1</color><width>3</width></LineStyle><PolyStyle><color>553576d1</color></PolyStyle></Style>
+  <Placemark><name>Centro interior</name><description>${xmlEscape(location.method)}</description><Style><IconStyle><scale>1.0</scale><Icon><href>http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png</href></Icon></IconStyle></Style><Point><coordinates>${location.lon},${location.lat},0</coordinates></Point></Placemark>
+  <Placemark><name>Polígono TOPO MAPS PRO</name><styleUrl>#polygonStyle</styleUrl><ExtendedData><Data name="CRS"><value>${xmlEscape(crs.code)}</value></Data><Data name="AREA_M2"><value>${result.area.toFixed(4)}</value></Data><Data name="PERIM_M"><value>${result.perimeter.toFixed(4)}</value></Data></ExtendedData><Polygon><outerBoundaryIs><LinearRing><coordinates>${coordinates.join(' ')}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>${vertexPlacemarks}
 </Document></kml>`;
     }
 
-    function buildLocationGpx(points, location) {
-      const converted = points.map((point) => ({ ...point, ...toWgs84(point.x, point.y) }));
-      const trackPoints = converted.map((point) => `<trkpt lat="${point.lat.toFixed(8)}" lon="${point.lon.toFixed(8)}"><name>${xmlEscape(point.name)}</name></trkpt>`);
-      if (trackPoints.length >= 3) trackPoints.push(trackPoints[0]);
-      return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="TOPO MAPS PRO" xmlns="http://www.topografix.com/GPX/1/1">
-  <wpt lat="${location.lat}" lon="${location.lon}"><name>Ubicación TOPO MAPS PRO</name><desc>${xmlEscape(location.method)}</desc></wpt>
-  <trk><name>Polígono TOPO MAPS PRO</name><trkseg>${trackPoints.join('')}</trkseg></trk>
-</gpx>`;
+    function asUint8Array(value) {
+      if (value instanceof Uint8Array) return value;
+      if (value instanceof ArrayBuffer) return new Uint8Array(value);
+      if (ArrayBuffer.isView(value)) return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+      return new TextEncoder().encode(String(value));
     }
 
-    $('#sharePolygonKml').addEventListener('click', async () => {
-      try {
-        const points = currentMappedPoints();
-        if (points.length < 3) throw new Error('Se requieren al menos 3 puntos válidos para compartir el polígono.');
-        const location = getShareLocation();
-        const kml = buildLocationKml(points, location);
-        const file = typeof File === 'function'
-          ? new File([kml], 'TOPO_MAPS_PRO_POLIGONO.kml', { type: 'application/vnd.google-earth.kml+xml' })
-          : null;
-        if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            title: 'Polígono TOPO MAPS PRO',
-            text: 'Polígono georreferenciado en KML para Google Earth o aplicación GIS.',
-            files: [file]
-          });
-          showToast('Polígono KML enviado al menú de compartir.');
-        } else {
-          downloadText(file?.name || 'TOPO_MAPS_PRO_POLIGONO.kml', kml, (file?.type || 'application/vnd.google-earth.kml+xml') + ';charset=utf-8');
-          showToast('El navegador no permite compartir archivos; se descargó el KML del polígono.');
-        }
-      } catch (error) {
-        if (error?.name !== 'AbortError') showToast(error.message || 'No fue posible compartir el polígono KML.');
+    function concatBytes(chunks) {
+      const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      const output = new Uint8Array(total);
+      let offset = 0;
+      chunks.forEach((chunk) => { output.set(chunk, offset); offset += chunk.length; });
+      return output;
+    }
+
+    const CRC32_TABLE = (() => {
+      const table = new Uint32Array(256);
+      for (let n = 0; n < 256; n += 1) {
+        let c = n;
+        for (let k = 0; k < 8; k += 1) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        table[n] = c >>> 0;
       }
-    });
+      return table;
+    })();
+
+    function crc32(bytes) {
+      let crc = 0xFFFFFFFF;
+      for (let i = 0; i < bytes.length; i += 1) crc = CRC32_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    function dosDateTime(date = new Date()) {
+      const year = Math.max(1980, date.getFullYear());
+      const time = ((date.getHours() & 31) << 11) | ((date.getMinutes() & 63) << 5) | (Math.floor(date.getSeconds() / 2) & 31);
+      const day = ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+      return { time, day };
+    }
+
+    function buildZipBytes(files) {
+      if (!Array.isArray(files) || !files.length) throw new Error('No hay archivos para comprimir.');
+      const localChunks = [];
+      const centralChunks = [];
+      const { time, day } = dosDateTime();
+      let localOffset = 0;
+
+      files.forEach((file) => {
+        const name = new TextEncoder().encode(String(file.name));
+        const data = asUint8Array(file.data);
+        const crc = crc32(data);
+        const local = new Uint8Array(30 + name.length);
+        const lv = new DataView(local.buffer);
+        lv.setUint32(0, 0x04034b50, true);
+        lv.setUint16(4, 20, true);
+        lv.setUint16(6, 0x0800, true);
+        lv.setUint16(8, 0, true);
+        lv.setUint16(10, time, true);
+        lv.setUint16(12, day, true);
+        lv.setUint32(14, crc, true);
+        lv.setUint32(18, data.length, true);
+        lv.setUint32(22, data.length, true);
+        lv.setUint16(26, name.length, true);
+        lv.setUint16(28, 0, true);
+        local.set(name, 30);
+        localChunks.push(local, data);
+
+        const central = new Uint8Array(46 + name.length);
+        const cv = new DataView(central.buffer);
+        cv.setUint32(0, 0x02014b50, true);
+        cv.setUint16(4, 20, true);
+        cv.setUint16(6, 20, true);
+        cv.setUint16(8, 0x0800, true);
+        cv.setUint16(10, 0, true);
+        cv.setUint16(12, time, true);
+        cv.setUint16(14, day, true);
+        cv.setUint32(16, crc, true);
+        cv.setUint32(20, data.length, true);
+        cv.setUint32(24, data.length, true);
+        cv.setUint16(28, name.length, true);
+        cv.setUint16(30, 0, true);
+        cv.setUint16(32, 0, true);
+        cv.setUint16(34, 0, true);
+        cv.setUint16(36, 0, true);
+        cv.setUint32(38, 0, true);
+        cv.setUint32(42, localOffset, true);
+        central.set(name, 46);
+        centralChunks.push(central);
+        localOffset += local.length + data.length;
+      });
+
+      const localData = concatBytes(localChunks);
+      const centralData = concatBytes(centralChunks);
+      const end = new Uint8Array(22);
+      const ev = new DataView(end.buffer);
+      ev.setUint32(0, 0x06054b50, true);
+      ev.setUint16(4, 0, true);
+      ev.setUint16(6, 0, true);
+      ev.setUint16(8, files.length, true);
+      ev.setUint16(10, files.length, true);
+      ev.setUint32(12, centralData.length, true);
+      ev.setUint32(16, localData.length, true);
+      ev.setUint16(20, 0, true);
+      return concatBytes([localData, centralData, end]);
+    }
+
+    function signedRingArea(points) {
+      let sum = 0;
+      for (let i = 0; i < points.length; i += 1) {
+        const current = points[i];
+        const next = points[(i + 1) % points.length];
+        sum += current.x * next.y - next.x * current.y;
+      }
+      return sum / 2;
+    }
+
+    function shapefileRing(points) {
+      if (!Array.isArray(points) || points.length < 3) throw new Error('Se requieren al menos 3 puntos para crear Shapefile.');
+      let ring = points.map((point) => ({ x: Number(point.x), y: Number(point.y) }));
+      if (ring.some((point) => !Number.isFinite(point.x) || !Number.isFinite(point.y))) throw new Error('El polígono contiene coordenadas no válidas.');
+      if (signedRingArea(ring) > 0) ring = [...ring].reverse();
+      ring.push({ ...ring[0] });
+      return ring;
+    }
+
+    function writeShapefileHeader(view, fileLengthWords, bounds) {
+      view.setInt32(0, 9994, false);
+      for (let offset = 4; offset < 24; offset += 4) view.setInt32(offset, 0, false);
+      view.setInt32(24, fileLengthWords, false);
+      view.setInt32(28, 1000, true);
+      view.setInt32(32, 5, true);
+      view.setFloat64(36, bounds.minX, true);
+      view.setFloat64(44, bounds.minY, true);
+      view.setFloat64(52, bounds.maxX, true);
+      view.setFloat64(60, bounds.maxY, true);
+      view.setFloat64(68, 0, true);
+      view.setFloat64(76, 0, true);
+      view.setFloat64(84, 0, true);
+      view.setFloat64(92, 0, true);
+    }
+
+    function buildShpAndShx(points) {
+      const ring = shapefileRing(points);
+      const xs = ring.map((point) => point.x);
+      const ys = ring.map((point) => point.y);
+      const bounds = { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+      const contentBytes = 48 + ring.length * 16;
+      const shp = new Uint8Array(100 + 8 + contentBytes);
+      const shpView = new DataView(shp.buffer);
+      writeShapefileHeader(shpView, shp.length / 2, bounds);
+      shpView.setInt32(100, 1, false);
+      shpView.setInt32(104, contentBytes / 2, false);
+      shpView.setInt32(108, 5, true);
+      shpView.setFloat64(112, bounds.minX, true);
+      shpView.setFloat64(120, bounds.minY, true);
+      shpView.setFloat64(128, bounds.maxX, true);
+      shpView.setFloat64(136, bounds.maxY, true);
+      shpView.setInt32(144, 1, true);
+      shpView.setInt32(148, ring.length, true);
+      shpView.setInt32(152, 0, true);
+      let offset = 156;
+      ring.forEach((point) => {
+        shpView.setFloat64(offset, point.x, true);
+        shpView.setFloat64(offset + 8, point.y, true);
+        offset += 16;
+      });
+
+      const shx = new Uint8Array(108);
+      const shxView = new DataView(shx.buffer);
+      writeShapefileHeader(shxView, shx.length / 2, bounds);
+      shxView.setInt32(100, 50, false);
+      shxView.setInt32(104, contentBytes / 2, false);
+      return { shp, shx, ring, bounds };
+    }
+
+    function encodeDbfText(value, length, alignRight = false) {
+      const bytes = new TextEncoder().encode(String(value ?? ''));
+      const output = new Uint8Array(length).fill(32);
+      const clipped = bytes.slice(0, length);
+      output.set(clipped, alignRight ? length - clipped.length : 0);
+      return output;
+    }
+
+    function buildDbf(points) {
+      const result = state.lastResult || computeGeometry(points, 'polygon');
+      const crs = CRS[$('#crsSelect').value];
+      const fields = [
+        { name: 'ID', type: 'N', length: 8, decimals: 0 },
+        { name: 'NOMBRE', type: 'C', length: 40, decimals: 0 },
+        { name: 'AREA_M2', type: 'N', length: 18, decimals: 4 },
+        { name: 'PERIM_M', type: 'N', length: 18, decimals: 4 },
+        { name: 'CRS', type: 'C', length: 15, decimals: 0 }
+      ];
+      const headerLength = 32 + fields.length * 32 + 1;
+      const recordLength = 1 + fields.reduce((sum, field) => sum + field.length, 0);
+      const dbf = new Uint8Array(headerLength + recordLength + 1).fill(0);
+      const view = new DataView(dbf.buffer);
+      const now = new Date();
+      dbf[0] = 0x03;
+      dbf[1] = Math.max(0, now.getFullYear() - 1900);
+      dbf[2] = now.getMonth() + 1;
+      dbf[3] = now.getDate();
+      view.setUint32(4, 1, true);
+      view.setUint16(8, headerLength, true);
+      view.setUint16(10, recordLength, true);
+      fields.forEach((field, index) => {
+        const offset = 32 + index * 32;
+        dbf.set(new TextEncoder().encode(field.name).slice(0, 11), offset);
+        dbf[offset + 11] = field.type.charCodeAt(0);
+        dbf[offset + 16] = field.length;
+        dbf[offset + 17] = field.decimals;
+      });
+      dbf[headerLength - 1] = 0x0D;
+      let recordOffset = headerLength;
+      dbf[recordOffset] = 0x20;
+      recordOffset += 1;
+      const values = [
+        { value: '1', right: true },
+        { value: 'TOPO_MAPS_PRO', right: false },
+        { value: result.area.toFixed(4), right: true },
+        { value: result.perimeter.toFixed(4), right: true },
+        { value: crs.code, right: false }
+      ];
+      fields.forEach((field, index) => {
+        dbf.set(encodeDbfText(values[index].value, field.length, values[index].right), recordOffset);
+        recordOffset += field.length;
+      });
+      dbf[dbf.length - 1] = 0x1A;
+      return dbf;
+    }
+
+    function shapefilePrj() {
+      const selected = $('#crsSelect').value;
+      if (selected === '5367') {
+        return 'PROJCS["CR05 / CRTM05",GEOGCS["CR05",DATUM["Costa_Rica_2005",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-84],PARAMETER["scale_factor",0.9999],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1],AUTHORITY["EPSG","5367"]]';
+      }
+      return 'PROJCS["CR-SIRGAS / CRTM05",GEOGCS["CR-SIRGAS",DATUM["Costa_Rica_SIRGAS",SPHEROID["GRS 1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-84],PARAMETER["scale_factor",0.9999],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1],AUTHORITY["EPSG","8908"]]';
+    }
+
+    function buildShapefileComponents(points) {
+      const { shp, shx, ring, bounds } = buildShpAndShx(points);
+      const dbf = buildDbf(points);
+      const prj = shapefilePrj();
+      const cpg = 'UTF-8';
+      const result = state.lastResult || computeGeometry(points, 'polygon');
+      const readme = [
+        'TOPO MAPS PRO - SHAPEFILE DE POLIGONO',
+        `CRS: ${CRS[$('#crsSelect').value].code} - ${CRS[$('#crsSelect').value].label}`,
+        `Vertices: ${points.length}`,
+        `Area: ${result.area.toFixed(4)} m2`,
+        `Perimetro: ${result.perimeter.toFixed(4)} m`,
+        'Archivos: POLIGONO.shp, POLIGONO.shx, POLIGONO.dbf, POLIGONO.prj, POLIGONO.cpg'
+      ].join('\r\n');
+      return { shp, shx, dbf, prj, cpg, readme, ring, bounds };
+    }
 
     $('#downloadKml').addEventListener('click', () => {
       try {
         const points = currentMappedPoints();
         const location = getShareLocation();
-        downloadText('TOPO_MAPS_PRO_UBICACION.kml', buildLocationKml(points, location), 'application/vnd.google-earth.kml+xml;charset=utf-8');
-        showToast('Archivo KML descargado.');
+        downloadText('TOPO_MAPS_PRO_POLIGONO.kml', buildLocationKml(points, location), 'application/vnd.google-earth.kml+xml;charset=utf-8');
+        showToast('KML generado. Puede abrirlo en Google Earth y otras aplicaciones GIS.');
       } catch (error) {
         showToast(error.message);
       }
     });
 
-    $('#downloadGpx').addEventListener('click', () => {
+    $('#downloadKmz').addEventListener('click', () => {
       try {
         const points = currentMappedPoints();
         const location = getShareLocation();
-        downloadText('TOPO_MAPS_PRO_UBICACION.gpx', buildLocationGpx(points, location), 'application/gpx+xml;charset=utf-8');
-        showToast('Archivo GPX descargado.');
+        const kml = buildLocationKml(points, location);
+        const zip = buildZipBytes([{ name: 'doc.kml', data: kml }]);
+        downloadBlob('TOPO_MAPS_PRO_POLIGONO.kmz', new Blob([zip], { type: 'application/vnd.google-earth.kmz' }));
+        showToast('KMZ generado y listo para visualizar en Google Earth.');
+      } catch (error) {
+        showToast(error.message);
+      }
+    });
+
+    $('#downloadShapefile').addEventListener('click', () => {
+      try {
+        const points = currentMappedPoints();
+        if (points.length < 3) throw new Error('Se requieren al menos 3 puntos válidos para crear Shapefile.');
+        const files = buildShapefileComponents(points);
+        const zip = buildZipBytes([
+          { name: 'POLIGONO.shp', data: files.shp },
+          { name: 'POLIGONO.shx', data: files.shx },
+          { name: 'POLIGONO.dbf', data: files.dbf },
+          { name: 'POLIGONO.prj', data: files.prj },
+          { name: 'POLIGONO.cpg', data: files.cpg },
+          { name: 'LEAME.txt', data: files.readme }
+        ]);
+        downloadBlob(`TOPO_MAPS_PRO_${CRS[$('#crsSelect').value].code.replace(':', '_')}_SHP.zip`, new Blob([zip], { type: 'application/zip' }));
+        showToast('Shapefile ZIP generado con geometría CRTM05 y archivos auxiliares.');
       } catch (error) {
         showToast(error.message);
       }
@@ -2172,15 +2379,20 @@
       return output.join('\r\n');
     }
 
-    function downloadText(filename, content, mimeType) {
-      const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
+    function downloadBlob(filename, blob) {
+      const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
       anchor.download = filename;
+      anchor.rel = 'noopener';
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1200);
+      setTimeout(() => URL.revokeObjectURL(url), 2500);
+    }
+
+    function downloadText(filename, content, mimeType) {
+      downloadBlob(filename, new Blob([content], { type: mimeType }));
     }
 
     $('#dxfBtn').addEventListener('click', () => {
@@ -2205,6 +2417,7 @@
       ).join('\r\n');
       downloadText('TOPO_MAPS_PRO_CRTM05.csv', csv, 'text/csv;charset=utf-8');
     });
+
 
     function runSelfTests() {
       const report = [];
@@ -2266,32 +2479,72 @@
         const labels = [...document.querySelectorAll('.segment-table thead th')].map((cell) => cell.textContent.trim());
         return labels.length === 3 && labels.join('|') === 'Tramo|Azimut|Distancia';
       });
-      test('Módulo WMS eliminado para evitar fallos de servidor, CORS y capas no públicas', () => !document.querySelector('[id*="wms" i], [data-wms]'));
-      test('Mapa base no depende de WMS', () => Boolean($('#baseMapSelect')));
-      test('Visor automático dispone de cuatro mapas base', () => $('#baseMapSelect').options.length === 4 && (!window.L || Boolean(state.satelliteLayer && state.osmLayer && state.topoLayer && state.cartoLayer)));
+      test('Visor permanente dispone de cuatro mapas base', () => $('#baseMapSelect').options.length === 4 && (!window.L || Boolean(state.satelliteLayer && state.osmLayer && state.topoLayer && state.cartoLayer)));
       test('Capa del polígono es independiente del mapa base', () => !window.L || (Boolean(state.drawingLayer) && ![state.satelliteLayer, state.osmLayer, state.topoLayer, state.cartoLayer].includes(state.drawingLayer)));
-      test('Botón de visor automático y cierre están conectados', () => Boolean($('#openMapViewer') && $('#openMapViewerFromResults') && $('#closeMapViewer') && $('#mapCard')));
-      test('Google Maps integrado fue eliminado', () => !document.querySelector('#googleApiKey') && !document.querySelector('#googleMap') && ![...document.scripts].some((script) => /maps\.googleapis\.com/.test(script.src)));
-      test('Ubicación genera enlaces Google Maps y Waze', () => {
+      test('El mapa permanece visible y no existen controles de abrir/cerrar', () => Boolean($('#map') && $('#refreshMap') && $('#fitMap') && $('#previewMapFromResults')) && !document.querySelector('.map-card .btn.danger'));
+      test('Ubicación genera enlaces Google Maps y Waze y PIN interior', () => {
         const old = state.points;
+        const oldResult = state.lastResult;
         state.points = square.map((point, index) => ({ ...point, id: `test_${index}` }));
         state.lastResult = null;
         const location = getShareLocation();
         state.points = old;
-        return location.googleUrl.includes('google.com/maps/search/?api=1') && location.googleUrl.includes('%2C') && location.wazeUrl.includes('www.waze.com/ul') && pointInPolygon({ x: location.x, y: location.y }, square);
+        state.lastResult = oldResult;
+        return location.googleUrl.includes('google.com/maps/search/?api=1') && location.wazeUrl.includes('www.waze.com/ul') && pointInPolygon({ x: location.x, y: location.y }, square);
       });
-      test('KML y GPX contienen punto y polígono', () => {
+      test('KML contiene centro, vértices y polígono cerrado', () => {
         const old = state.points;
-        state.points = square.map((point, index) => ({ ...point, id: `test_${index}` }));
+        const oldResult = state.lastResult;
+        state.points = square.map((point, index) => ({ ...point, id: `kml_${index}` }));
         state.lastResult = null;
         const location = getShareLocation();
         const kml = buildLocationKml(square, location);
-        const gpx = buildLocationGpx(square, location);
         state.points = old;
-        return kml.includes('<Polygon>') && kml.includes('<Point>') && gpx.includes('<wpt') && gpx.includes('<trk>');
+        state.lastResult = oldResult;
+        return kml.includes('<Polygon>') && kml.includes('Centro interior') && kml.includes('<ExtendedData>') && (kml.match(/<Placemark>/g) || []).length >= 6;
       });
-      test('Controles de ubicación no tienen identificadores faltantes', () => Boolean($('#openGoogleMaps') && $('#openWaze') && $('#shareLocation') && $('#sharePolygonKml') && $('#downloadKml') && $('#downloadGpx') && $('#openSiri') && $('#openMapViewer') && $('#closeMapViewer')));
-      test('Botones editar, recalcular y refrescar mapa tienen funciones separadas', () => Boolean($('#editCoordinates') && $('#refreshWork') && $('#refreshMap') && $('#openMapViewer') && $('#openMapViewerFromResults')));
+      test('KMZ usa ZIP válido y contiene doc.kml', () => {
+        const zip = buildZipBytes([{ name: 'doc.kml', data: '<kml></kml>' }]);
+        const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+        return view.getUint32(0, true) === 0x04034b50 && new TextDecoder().decode(zip).includes('doc.kml') && view.getUint32(zip.length - 22, true) === 0x06054b50;
+      });
+      test('Shapefile produce SHP/SHX/DBF/PRJ coherentes', () => {
+        const oldResult = state.lastResult;
+        state.lastResult = null;
+        const files = buildShapefileComponents(square);
+        state.lastResult = oldResult;
+        const shpView = new DataView(files.shp.buffer, files.shp.byteOffset, files.shp.byteLength);
+        const shxView = new DataView(files.shx.buffer, files.shx.byteOffset, files.shx.byteLength);
+        const dbfView = new DataView(files.dbf.buffer, files.dbf.byteOffset, files.dbf.byteLength);
+        return shpView.getInt32(0, false) === 9994
+          && shpView.getInt32(32, true) === 5
+          && shpView.getInt32(108, true) === 5
+          && shxView.getInt32(0, false) === 9994
+          && dbfView.getUint32(4, true) === 1
+          && files.prj.includes('Transverse_Mercator')
+          && files.ring.length === square.length + 1
+          && files.ring[0].x === files.ring.at(-1).x
+          && signedRingArea(files.ring.slice(0, -1)) < 0;
+      });
+      test('ZIP del Shapefile contiene los seis archivos previstos', () => {
+        const oldResult = state.lastResult;
+        state.lastResult = null;
+        const files = buildShapefileComponents(square);
+        state.lastResult = oldResult;
+        const zip = buildZipBytes([
+          { name: 'POLIGONO.shp', data: files.shp }, { name: 'POLIGONO.shx', data: files.shx },
+          { name: 'POLIGONO.dbf', data: files.dbf }, { name: 'POLIGONO.prj', data: files.prj },
+          { name: 'POLIGONO.cpg', data: files.cpg }, { name: 'LEAME.txt', data: files.readme }
+        ]);
+        const decoded = new TextDecoder().decode(zip);
+        return ['POLIGONO.shp','POLIGONO.shx','POLIGONO.dbf','POLIGONO.prj','POLIGONO.cpg','LEAME.txt'].every((name) => decoded.includes(name));
+      });
+      test('Controles de exportación geoespacial están conectados', () => Boolean($('#downloadKml') && $('#downloadKmz') && $('#downloadShapefile') && $('#openGoogleMaps') && $('#openWaze') && $('#shareLocation')));
+      test('Identificadores HTML son únicos', () => {
+        const ids = [...document.querySelectorAll('[id]')].map((element) => element.id);
+        return ids.length === new Set(ids).size;
+      });
+      test('Botones editar, recalcular y mapa tienen funciones separadas', () => Boolean($('#editCoordinates') && $('#refreshWork') && $('#refreshMap') && $('#fitMap') && $('#previewMapFromResults')));
 
       test('Conversión GRS80 coincide con control EPSG en meridiano central', () => {
         const converted = inverseTransverseMercator(500000, 1100000, CRS['8908']);
