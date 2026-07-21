@@ -451,6 +451,7 @@ document.getElementById('dxfBtn').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
+// --- PREPROCESAMIENTO DE IMAGEN Y OCR ---
 function handleImageFile(file){
   if(!file) return;
   const previewBox = document.getElementById('previewBox');
@@ -462,676 +463,71 @@ function handleImageFile(file){
 
   const reader = new FileReader();
   reader.onload = function(e){
-    previewImg.src = e.target.result;
-    previewBox.style.display = 'block';
-    rawText.style.display = 'none';
-    ocrStatus.textContent = 'Extrayendo coordenadas de la tabla con OCR…';
-    ocrProgress.style.display = 'block';
-    ocrProgressBar.style.width = '0%';
+    // Preprocesar imagen en Canvas para mejorar lectura OCR de tablas
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(1, 2000 / Math.max(img.width, img.height));
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const processedDataUrl = canvas.toDataURL('image/jpeg', 0.95);
 
-    if(typeof Tesseract === 'undefined'){
-      ocrStatus.textContent = 'No se pudo cargar el motor OCR.';
-      ocrProgress.style.display = 'none';
-      return;
-    }
+      previewImg.src = processedDataUrl;
+      previewBox.style.display = 'block';
+      rawText.style.display = 'none';
+      ocrStatus.textContent = 'Procesando imagen y leyendo con OCR…';
+      ocrProgress.style.display = 'block';
+      ocrProgressBar.style.width = '0%';
 
-    Tesseract.recognize(e.target.result, 'spa+eng', {
-      logger: m => {
-        if(m.status === 'recognizing text'){
-          const pct = Math.round((m.progress || 0) * 100);
-          ocrProgressBar.style.width = pct + '%';
-          ocrStatus.textContent = `Procesando imagen… ${pct}%`;
-        } else {
-          ocrStatus.textContent = m.status;
-        }
+      if(typeof Tesseract === 'undefined'){
+        ocrStatus.textContent = 'No se pudo cargar el motor OCR.';
+        ocrProgress.style.display = 'none';
+        return;
       }
-    }).then(({ data: { text } }) => {
-      ocrProgress.style.display = 'none';
-      ocrStatus.textContent = '¡Lectura y carga automática completada!';
-      rawText.textContent = text.trim() || '(sin texto detectado)';
-      rawText.style.display = 'block';
-      extractAndCalculateAutomatic(text);
-    }).catch(err => {
-      ocrProgress.style.display = 'none';
-      ocrStatus.textContent = 'Error en OCR: ' + err.message;
-    });
+
+      Tesseract.recognize(processedDataUrl, 'spa+eng', {
+        logger: m => {
+          if(m.status === 'recognizing text'){
+            const pct = Math.round((m.progress || 0) * 100);
+            ocrProgressBar.style.width = pct + '%';
+            ocrStatus.textContent = `Leyendo tabla… ${pct}%`;
+          } else {
+            ocrStatus.textContent = m.status;
+          }
+        }
+      }).then(({ data: { text } }) => {
+        ocrProgress.style.display = 'none';
+        ocrStatus.textContent = '¡Lectura y carga automática completada!';
+        rawText.textContent = text.trim() || '(sin texto detectado)';
+        rawText.style.display = 'block';
+        extractAndCalculateAutomatic(text);
+      }).catch(err => {
+        ocrProgress.style.display = 'none';
+        ocrStatus.textContent = 'Error en OCR: ' + err.message;
+      });
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-// Extractor robusto secuencial para tablas de coordenadas (Este y Norte)
+// Extractor robusto para tablas de coordenadas CRTM05
 function extractAndCalculateAutomatic(text){
-  const cleaned = text.replace(/,/g, '.');
-  // Busca cualquier secuencia de números con magnitud de coordenada (5 a 7 dígitos enteros + decimales opcionales)
+  let cleaned = text.replace(/[Oo]/g, '0')
+                    .replace(/[lI]/g, '1')
+                    .replace(/[S]/g, '5')
+                    .replace(/,/g, '.');
+
   const matches = cleaned.match(/\b\d{5,7}(?:\.\d{1,4})?\b/g) || [];
 
-  if (matches.length < 2) return;
-
-  const pairs = [];
-  // Agrupa de par en par: par 1 = X (Este), par 2 = Y (Norte)
-  for(let i = 0; i + 1 < matches.length; i += 2){
-    pairs.push({ 
-      name: 'P' + (pairs.length + 1), 
-      x: parseFloat(matches[i]), 
-      y: parseFloat(matches[i+1]) 
-    });
-  }
-
-  if (pairs.length === 0) return;
-
-  points = [];
-  pointCounter = 0;
-  pairs.forEach(pair => {
-    pointCounter++;
-    const id = 'pt' + pointCounter;
-    points.push({ id, name: pair.name, x: pair.x, y: pair.y });
-  });
-
-  renderPointsTable();
-}
-
-document.getElementById('cameraInput').addEventListener('change', e => handleImageFile(e.target.files[0]));
-document.getElementById('galleryInput').addEventListener('change', e => handleImageFile(e.target.files[0]));
-
-function crtm05ToLatLon(x, y){
-  const a = 6378137.0;
-  const f = 1/298.257223563;
-  const lon0 = -84.0 * Math.PI/180;
-  const k0 = 0.9999;
-  const falseE = 500000.0;
-  const falseN = 0.0;
-
-  const e2 = 2*f - f*f;
-  const ep2 = e2 / (1 - e2);
-  const e1 = (1 - Math.sqrt(1-e2)) / (1 + Math.sqrt(1-e2));
-
-  const M = (y - falseN) / k0;
-  const mu = M / (a*(1 - e2/4 - 3*e2*e2/64 - 5*e2*e2*e2/256));
-
-  const phi1 = mu
-    + (3*e1/2 - 27*Math.pow(e1,3)/32)*Math.sin(2*mu)
-    + (21*e1*e1/16 - 55*Math.pow(e1,4)/32)*Math.sin(4*mu)
-    + (151*Math.pow(e1,3)/96)*Math.sin(6*mu)
-    + (1097*Math.pow(e1,4)/512)*Math.sin(8*mu);
-
-  const sinphi1 = Math.sin(phi1), cosphi1 = Math.cos(phi1), tanphi1 = Math.tan(phi1);
-
-  const N1 = a / Math.sqrt(1 - e2*sinphi1*sinphi1);
-  const T1 = tanphi1*tanphi1;
-  const C1 = ep2 * cosphi1*cosphi1;
-  const R1 = a*(1-e2) / Math.pow(1 - e2*sinphi1*sinphi1, 1.5);
-  const D = (x - falseE) / (N1*k0);
-
-  const lat = phi1 - (N1*tanphi1/R1) * (
-    D*D/2
-    - (5+3*T1+10*C1-4*C1*C1-9*ep2) * Math.pow(D,4)/24
-    + (61+90*T1+298*C1+45*T1*T1-252*ep2-3*C1*C1) * Math.pow(D,6)/720
-  );
-
-  const lon = lon0 + (
-    D - (1+2*T1+C1)*Math.pow(D,3)/6
-    + (5-2*C1+28*T1-3*C1*C1+8*ep2+24*T1*T1)*Math.pow(D,5)/120
-  ) / cosphi1;
-
-  return { lat: lat*180/Math.PI, lon: lon*180/Math.PI };
-}
-
-let leafletMap = null;
-let mapPolygonLayer = null;
-let mapMarkersLayer = null;
-
-function updateMap(valid){
-  if(typeof L === 'undefined') return;
-
-  const latlngs = valid.map(p => {
-    const {lat, lon} = crtm05ToLatLon(p.x, p.y);
-    return { lat, lon, name: p.name };
-  });
-
-  if(!leafletMap){
-    leafletMap = L.map('mapView');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 21,
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(leafletMap);
-    mapPolygonLayer = L.layerGroup().addTo(leafletMap);
-    mapMarkersLayer = L.layerGroup().addTo(leafletMap);
-  }
-
-  mapPolygonLayer.clearLayers();
-  mapMarkersLayer.clearLayers();
-
-  const latlngPairs = latlngs.map(p => [p.lat, p.lon]);
-
-  if(latlngs.length >= 3){
-    L.polygon(latlngPairs, { color:'#8B3A2E', weight:2.5, fillColor:'#B8860B', fillOpacity:0.25 }).addTo(mapPolygonLayer);
-  } else {
-    L.polyline(latlngPairs, { color:'#8B3A2E', weight:2.5 }).addTo(mapPolygonLayer);
-  }
-
-  latlngs.forEach(p => {
-    L.circleMarker([p.lat, p.lon], { radius:6, color:'#1A1A1A', weight:1, fillColor:'#B8860B', fillOpacity:1 })
-      .bindPopup(`<strong>${p.name}</strong><br>Lat: ${p.lat.toFixed(6)}<br>Lon: ${p.lon.toFixed(6)}`)
-      .addTo(mapMarkersLayer);
-  });
-
-  const bounds = L.latLngBounds(latlngPairs);
-  leafletMap.invalidateSize();
-  leafletMap.fitBounds(bounds, { padding: [30,30], maxZoom: 20 });
-}
-</script>
-</body>
-</html>
-
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRTM05 · Distancias y Azimuts</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<style>
-  :root{
-    --navy: #0B1E33;
-    --navy-line: #1C3A5E;
-    --paper: #EDE6D6;
-    --ink: #1A1A1A;
-    --brass: #B8860B;
-    --brass-bright: #D6A421;
-    --ok: #3F6B4C;
-    --err: #8B3A2E;
-    --muted: #6b6456;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:
-      linear-gradient(var(--navy-line) 1px, transparent 1px) 0 0/32px 32px,
-      linear-gradient(90deg, var(--navy-line) 1px, transparent 1px) 0 0/32px 32px,
-      var(--navy);
-    color: var(--paper);
-    font-family:'IBM Plex Sans', sans-serif;
-    min-height:100vh;
-    padding: 40px 20px 80px;
-  }
-  .wrap{max-width: 980px; margin: 0 auto;}
-
-  .hero{
-    display:flex; flex-wrap:wrap; gap:32px; align-items:center;
-    margin-bottom:48px; padding-bottom: 32px;
-    border-bottom: 1px solid rgba(237,230,214,0.15);
-  }
-  .hero-text{flex:1; min-width:280px;}
-  .eyebrow{
-    font-family:'IBM Plex Mono', monospace;
-    letter-spacing:0.18em; text-transform:uppercase;
-    font-size:12px; color: var(--brass-bright);
-    margin:0 0 12px;
-  }
-  h1{
-    font-family:'Spectral', serif; font-weight:700;
-    font-size: clamp(30px, 5vw, 46px);
-    line-height:1.05; margin:0 0 14px; color:var(--paper);
-  }
-  .lede{ font-size:15px; line-height:1.55; color:#C9C0AC; max-width:48ch; margin:0; }
-  .hero-diagram{
-    width:260px; height:260px; flex-shrink:0;
-    background: var(--paper); border-radius: 4px;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.35); position:relative;
-  }
-  .hero-diagram svg{width:100%; height:100%; display:block;}
-
-  section.card{
-    background: var(--paper); color: var(--ink);
-    border-radius: 4px; padding: 28px 30px; margin-bottom: 24px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.28);
-  }
-  .section-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:20px; }
-  .section-num{
-    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--brass);
-    border:1px solid var(--brass); border-radius:2px; padding:2px 7px;
-  }
-  .section-title{ font-family:'Spectral', serif; font-weight:600; font-size:20px; margin:0; color:var(--ink); }
-  .section-sub{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--muted); margin: -10px 0 18px; }
-
-  .camera-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
-  .btn{
-    font-family:'Spectral', serif; font-weight:600; font-size:15px;
-    border:none; border-radius:3px; padding:13px 20px; cursor:pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-  }
-  .btn:active{ transform: translateY(1px); }
-  .btn-primary{ background: var(--brass); color:#1A1A1A; }
-  .btn-primary:hover{ background: var(--brass-bright); }
-  .btn-ghost{ background: transparent; color: var(--navy); border:1px solid var(--navy); }
-  .btn-ghost:hover{ background: rgba(11,30,51,0.06); }
-  .btn-small{ font-size:13px; padding:8px 14px; }
-
-  input[type="file"]{ display:none; }
-
-  .preview-box{ margin-bottom:14px; }
-  .preview-box img{ max-width:100%; max-height:260px; border-radius:4px; border:1px solid #c9bfa6; display:block; }
-
-  .ocr-status{ font-family:'IBM Plex Mono', monospace; font-size:13px; color: var(--navy); margin: 10px 0; }
-  .ocr-progress{ height:6px; background:#ddd3ba; border-radius:3px; overflow:hidden; margin:8px 0 14px; display:none; }
-  .ocr-progress-bar{ height:100%; width:0%; background: var(--brass); transition: width 0.2s ease; }
-
-  .raw-text{
-    font-family:'IBM Plex Mono', monospace; font-size:12.5px; background:#FBF9F3;
-    border:1px solid #c9bfa6; border-radius:3px; padding:10px 12px; white-space:pre-wrap;
-    max-height:140px; overflow:auto; color:#444; margin-bottom:14px; display:none;
-  }
-
-  table{ width:100%; border-collapse:collapse; margin-bottom:16px; font-family:'IBM Plex Mono', monospace; font-size:13.5px; }
-  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); padding:6px 8px; border-bottom:1px solid #ddd3ba; }
-  td{ padding:6px 8px; border-bottom:1px dashed #e4dcc6; }
-  td input{ width:100%; }
-  input[type="text"], input[type="number"]{
-    padding:7px 8px; font-family:'IBM Plex Mono', monospace; font-size:13.5px;
-    border:1px solid #c9bfa6; border-radius:3px; background:#FBF9F3; color:var(--ink);
-  }
-  input:focus{ outline:2px solid var(--brass); outline-offset:1px; border-color:var(--brass); }
-  .row-actions{ text-align:right; }
-  .icon-btn{
-    background:none; border:none; color:var(--err); cursor:pointer;
-    font-family:'IBM Plex Mono', monospace; font-size:12px;
-  }
-
-  .results{ display:none; }
-  .results.show{ display:block; }
-  .status{ font-family:'IBM Plex Mono', monospace; font-size:13px; padding:12px 14px; border-radius:3px; margin-bottom:18px; }
-  .status.ok{ background:#E1EBE3; color:var(--ok); border:1px solid #B7CFBB; }
-  .status.err{ background:#F3E1DD; color:var(--err); border:1px solid #DDB6AD; }
-
-  .total-card{
-    background: var(--navy); color:var(--paper); border-radius:4px; padding:20px 24px;
-    margin-bottom:18px; display:flex; gap:32px; flex-wrap:wrap;
-  }
-  .total-item .k{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--brass-bright); margin:0 0 6px; }
-  .total-item .v{ font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600; margin:0; }
-
-  footer{ text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12px; color:#8494a8; margin-top:40px; }
-
-  #mapView{ width:100%; height:360px; border-radius:4px; border:1px solid #c9bfa6; z-index:0; }
-  .leaflet-popup-content{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; }
-</style>
-</head>
-<body>
-<div class="wrap">
-
-  <div class="hero">
-    <div class="hero-text">
-      <p class="eyebrow">CRTM05 · SIRGAS Costa Rica</p>
-      <h1>Coordenadas a Distancias</h1>
-      <p class="lede">Fotografía tablas o listas con coordenadas CRTM05. La app extrae los puntos automáticamente, calcula azimuts, distancias y genera el plano y DXF al instante.</p>
-    </div>
-    <div class="hero-diagram">
-      <svg viewBox="0 0 260 260" id="diagram"></svg>
-    </div>
-  </div>
-
-  <section class="card">
-    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Capturar coordenadas con cámara</h2></div>
-    <p class="section-sub">Toma una foto clara de la tabla o listado de coordenadas[span_0](start_span)[span_0](end_span).</p>
-
-    <div class="camera-row">
-      <label class="btn btn-primary" for="cameraInput">📷 Tomar foto</label>
-      <input type="file" id="cameraInput" accept="image/*" capture="environment">
-      <label class="btn btn-ghost" for="galleryInput">Subir imagen</label>
-      <input type="file" id="galleryInput" accept="image/*">
-    </div>
-
-    <div class="preview-box" id="previewBox" style="display:none;">
-      <img id="previewImg" alt="Vista previa de la foto capturada">
-    </div>
-
-    <div class="ocr-status" id="ocrStatus"></div>
-    <div class="ocr-progress" id="ocrProgress"><div class="ocr-progress-bar" id="ocrProgressBar"></div></div>
-    <div class="raw-text" id="rawText"></div>
-  </section>
-
-  <section class="card">
-    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de puntos</h2></div>
-    <p class="section-sub">Los puntos detectados aparecen aquí automáticamente. Si editas alguno, presiona actualizar.</p>
-    <table id="pointsTable">
-      <thead>
-        <tr><th>Nombre</th><th>Este (X)</th><th>Norte (Y)</th><th></th></tr>
-      </thead>
-      <tbody id="pointsBody"></tbody>
-    </table>
-    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:14px;">
-      <button class="btn btn-ghost btn-small" id="addPointBtn">+ Agregar punto</button>
-      <button class="btn btn-primary btn-small" id="updateAllBtn" style="flex:1;">🔄 Actualizar todo (Recalcular)</button>
-    </div>
-  </section>
-
-  <section class="card results" id="results">
-    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados y Cálculos</h2></div>
-    <div id="statusBox"></div>
-    <div class="total-card" id="totalCard" style="display:none;">
-      <div class="total-item"><p class="k">Distancia total</p><p class="v" id="outTotal">—</p></div>
-      <div class="total-item"><p class="k">Tramos</p><p class="v" id="outCount">—</p></div>
-    </div>
-    <table id="resultsTable" style="display:none;">
-      <thead><tr><th>Tramo</th><th>Distancia (m)</th><th>Azimut</th></tr></thead>
-      <tbody id="resultsBody"></tbody>
-    </table>
-    <div class="result-diagram-box" id="resultDiagramBox" style="display:none;">
-      <p class="section-sub" style="margin:0 0 10px;">Dibujo del polígono</p>
-      <svg viewBox="0 0 400 400" id="resultDiagram" style="width:100%; max-width:400px; height:auto; display:block; background:#FBF9F3; border:1px solid #c9bfa6; border-radius:4px;"></svg>
-    </div>
-    <button class="btn btn-primary" id="dxfBtn" style="display:none; width:100%; margin-top:16px;">⬇ Descargar polígono cerrado (DXF georeferenciado)</button>
-    <p class="section-sub" id="dxfHint" style="display:none; margin-top:10px;"></p>
-  </section>
-
-  <section class="card results" id="mapSection">
-    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Ver en el mapa</h2></div>
-    <p class="section-sub">Polígono georreferenciado (CRTM05 → WGS84) sobre OpenStreetMap.</p>
-    <div id="mapView"></div>
-  </section>
-
-  <footer>Lectura automática por OCR y procesamiento local · CRTM05 / SIRGAS Costa Rica[span_1](start_span)[span_1](end_span)</footer>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>
-let pointCounter = 0;
-let points = []; 
-
-function addPointRow(name, x, y){
-  pointCounter++;
-  const id = 'pt' + pointCounter;
-  points.push({id, name: name || ('P' + pointCounter), x: x ?? '', y: y ?? ''});
-  renderPointsTable();
-}
-
-function removePoint(id){
-  points = points.filter(p => p.id !== id);
-  renderPointsTable();
-}
-
-function renderPointsTable(){
-  const body = document.getElementById('pointsBody');
-  body.innerHTML = '';
-  points.forEach(p => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><input type="text" value="${p.name}" data-id="${p.id}" data-field="name"></td>
-      <td><input type="number" step="0.01" value="${p.x}" data-id="${p.id}" data-field="x"></td>
-      <td><input type="number" step="0.01" value="${p.y}" data-id="${p.id}" data-field="y"></td>
-      <td class="row-actions"><button class="icon-btn" data-remove="${p.id}">Quitar</button></td>
-    `;
-    body.appendChild(tr);
-  });
-  body.querySelectorAll('input').forEach(inp => {
-    inp.addEventListener('input', e => {
-      const id = e.target.dataset.id, field = e.target.dataset.field;
-      const p = points.find(pt => pt.id === id);
-      if(p) p[field] = field === 'name' ? e.target.value : parseFloat(e.target.value);
-      updatePreviewDiagram();
-    });
-  });
-  body.querySelectorAll('[data-remove]').forEach(btn => {
-    btn.addEventListener('click', e => removePoint(e.target.dataset.remove));
-  });
-  updatePreviewDiagram();
-  calculateAndRender();
-}
-
-document.getElementById('addPointBtn').addEventListener('click', () => addPointRow());
-document.getElementById('updateAllBtn').addEventListener('click', () => {
-  calculateAndRender();
-});
-
-renderPointsTable();
-
-function renderDiagram(pts){
-  const svg = document.getElementById('diagram');
-  const valid = pts.filter(p => !isNaN(p.x) && !isNaN(p.y) && p.x !== '' && p.y !== '');
-  if(valid.length < 2){ svg.innerHTML = ''; return; }
-  const xs = valid.map(p=>p.x), ys = valid.map(p=>p.y);
-  const minX=Math.min(...xs), maxX=Math.max(...xs);
-  const minY=Math.min(...ys), maxY=Math.max(...ys);
-  const pad = 30, w = 260, h = 260;
-  const spanX = (maxX-minX)||1, spanY=(maxY-minY)||1;
-  const scale = Math.min((w-2*pad)/spanX, (h-2*pad)/spanY);
-  function proj(p){
-    const px = pad + (p.x-minX)*scale + (w-2*pad-spanX*scale)/2;
-    const py = h - (pad + (p.y-minY)*scale + (h-2*pad-spanY*scale)/2);
-    return {x:px, y:py};
-  }
-  const proj_pts = valid.map(proj);
-  let lines = '';
-  for(let i=0;i<proj_pts.length-1;i++){
-    lines += `<line x1="${proj_pts[i].x}" y1="${proj_pts[i].y}" x2="${proj_pts[i+1].x}" y2="${proj_pts[i+1].y}" stroke="#8B3A2E" stroke-width="1.5"/>`;
-  }
-  let dots = '';
-  proj_pts.forEach((p, i) => {
-    dots += `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#B8860B"/>
-      <text x="${p.x+7}" y="${p.y-6}" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1A1A">${valid[i].name}</text>`;
-  });
-  svg.innerHTML = lines + dots;
-}
-
-function updatePreviewDiagram(){ renderDiagram(points); }
-
-function calcularAzimut(x1,y1,x2,y2){
-  const azRad = Math.atan2(x2-x1, y2-y1);
-  let azDeg = azRad * 180/Math.PI;
-  return (azDeg + 360) % 360;
-}
-function decimalToDms(decimal){
-  const g = Math.trunc(decimal);
-  const mFull = (decimal - g) * 60;
-  const m = Math.trunc(mFull);
-  const s = (mFull - m) * 60;
-  return `${g}\u00B0 ${m}' ${s.toFixed(1)}"`;
-}
-
-function calculateAndRender(){
-  const resultsSection = document.getElementById('results');
-  const statusBox = document.getElementById('statusBox');
-  const totalCard = document.getElementById('totalCard');
-  const resultsTable = document.getElementById('resultsTable');
-  const resultsBody = document.getElementById('resultsBody');
-  const resultDiagramBox = document.getElementById('resultDiagramBox');
-
-  const valid = points.filter(p => !isNaN(p.x) && !isNaN(p.y) && p.x !== '' && p.y !== '' && p.x !== null && p.y !== null);
-
-  if(valid.length < 2){
-    resultsSection.classList.remove('show');
-    document.getElementById('mapSection').classList.remove('show');
+  if (matches.length < 2) {
+    ocrStatus.innerHTML = '<span style="color:#8B3A2E;">No se detectaron coordenadas suficientes. Verifica la foto o ingresalas manualmente.</span>';
     return;
   }
-  resultsSection.classList.add('show');
-  document.getElementById('mapSection').classList.add('show');
-
-  statusBox.innerHTML = `<div class="status ok">Cálculo actualizado correctamente sobre ${valid.length} puntos (${valid.length-1} tramos).</div>`;
-  resultsBody.innerHTML = '';
-  let total = 0;
-  for(let i=0; i<valid.length-1; i++){
-    const a = valid[i], b = valid[i+1];
-    const dist = Math.hypot(b.x-a.x, b.y-a.y);
-    const az = calcularAzimut(a.x, a.y, b.x, b.y);
-    total += dist;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${a.name} → ${b.name}</td><td>${dist.toFixed(3)}</td><td>${decimalToDms(az)} (${az.toFixed(4)}°)</td>`;
-    resultsBody.appendChild(tr);
-  }
-  document.getElementById('outTotal').textContent = total.toFixed(3) + ' m';
-  document.getElementById('outCount').textContent = (valid.length - 1);
-  totalCard.style.display = 'flex';
-  resultsTable.style.display = 'table';
-  renderDiagram(valid);
-
-  resultDiagramBox.style.display = 'block';
-  renderResultDiagram(valid);
-
-  updateMap(valid);
-
-  lastValidPoints = valid;
-  const dxfBtn = document.getElementById('dxfBtn');
-  const dxfHint = document.getElementById('dxfHint');
-  if(valid.length >= 3){
-    dxfBtn.style.display = 'block';
-    dxfHint.style.display = 'block';
-    dxfHint.textContent = `Polígono cerrado con ${valid.length} vértices, listo para exportar.`;
-  } else {
-    dxfBtn.style.display = 'none';
-    dxfHint.style.display = 'block';
-    dxfHint.textContent = 'Se necesitan mínimo 3 puntos para cerrar un polígono y habilitar la descarga DXF.';
-  }
-}
-
-let lastValidPoints = [];
-
-function renderResultDiagram(valid){
-  const svg = document.getElementById('resultDiagram');
-  if(valid.length < 2){ svg.innerHTML = ''; return; }
-  const xs = valid.map(p=>p.x), ys = valid.map(p=>p.y);
-  const minX=Math.min(...xs), maxX=Math.max(...xs);
-  const minY=Math.min(...ys), maxY=Math.max(...ys);
-  const pad = 40, w = 400, h = 400;
-  const spanX = (maxX-minX)||1, spanY=(maxY-minY)||1;
-  const scale = Math.min((w-2*pad)/spanX, (h-2*pad)/spanY);
-  function proj(p){
-    const px = pad + (p.x-minX)*scale + (w-2*pad-spanX*scale)/2;
-    const py = h - (pad + (p.y-minY)*scale + (h-2*pad-spanY*scale)/2);
-    return {x:px, y:py};
-  }
-  const proj_pts = valid.map(proj);
-  let lines = '';
-  for(let i=0;i<proj_pts.length-1;i++){
-    lines += `<line x1="${proj_pts[i].x}" y1="${proj_pts[i].y}" x2="${proj_pts[i+1].x}" y2="${proj_pts[i+1].y}" stroke="#8B3A2E" stroke-width="2"/>`;
-  }
-  if(valid.length >= 3){
-    const first = proj_pts[0], last = proj_pts[proj_pts.length-1];
-    lines += `<line x1="${last.x}" y1="${last.y}" x2="${first.x}" y2="${first.y}" stroke="#8B3A2E" stroke-width="2" stroke-dasharray="6 4"/>`;
-  }
-  let dots = '';
-  proj_pts.forEach((p, i) => {
-    dots += `<circle cx="${p.x}" cy="${p.y}" r="5.5" fill="#B8860B" stroke="#1A1A1A" stroke-width="1"/>
-      <text x="${p.x+9}" y="${p.y-8}" font-family="IBM Plex Mono, monospace" font-size="13" fill="#1A1A1A" font-weight="600">${valid[i].name}</text>`;
-  });
-  svg.innerHTML = lines + dots;
-}
-
-function buildDXF(pts){
-  const lines = [];
-  const add = (code, value) => { lines.push(String(code)); lines.push(String(value)); };
-
-  add(0, 'SECTION');
-  add(2, 'ENTITIES');
-
-  add(0, 'POLYLINE');
-  add(8, 'POLIGONO');
-  add(66, 1);
-  add(70, 1);
-  pts.forEach(p => {
-    add(0, 'VERTEX');
-    add(8, 'POLIGONO');
-    add(10, p.x.toFixed(4));
-    add(20, p.y.toFixed(4));
-    add(30, '0.0');
-  });
-  add(0, 'SEQEND');
-
-  pts.forEach(p => {
-    add(0, 'POINT');
-    add(8, 'VERTICES');
-    add(10, p.x.toFixed(4));
-    add(20, p.y.toFixed(4));
-    add(30, '0.0');
-
-    add(0, 'TEXT');
-    add(8, 'ETIQUETAS');
-    add(10, (p.x + 0.5).toFixed(4));
-    add(20, (p.y + 0.5).toFixed(4));
-    add(30, '0.0');
-    add(40, '1.0');
-    add(1, p.name);
-  });
-
-  add(0, 'ENDSEC');
-  add(0, 'EOF');
-
-  return lines.join('\n');
-}
-
-document.getElementById('dxfBtn').addEventListener('click', () => {
-  if(lastValidPoints.length < 3) return;
-  const dxfContent = buildDXF(lastValidPoints);
-  const blob = new Blob([dxfContent], { type: 'application/dxf' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  a.href = url;
-  a.download = `poligono-crtm05-${stamp}.dxf`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-});
-
-function handleImageFile(file){
-  if(!file) return;
-  const previewBox = document.getElementById('previewBox');
-  const previewImg = document.getElementById('previewImg');
-  const ocrStatus = document.getElementById('ocrStatus');
-  const ocrProgress = document.getElementById('ocrProgress');
-  const ocrProgressBar = document.getElementById('ocrProgressBar');
-  const rawText = document.getElementById('rawText');
-
-  const reader = new FileReader();
-  reader.onload = function(e){
-    previewImg.src = e.target.result;
-    previewBox.style.display = 'block';
-    rawText.style.display = 'none';
-    ocrStatus.textContent = 'Extrayendo coordenadas de la tabla con OCR…';
-    ocrProgress.style.display = 'block';
-    ocrProgressBar.style.width = '0%';
-
-    if(typeof Tesseract === 'undefined'){
-      ocrStatus.textContent = 'No se pudo cargar el motor OCR.';
-      ocrProgress.style.display = 'none';
-      return;
-    }
-
-    Tesseract.recognize(e.target.result, 'spa+eng', {
-      logger: m => {
-        if(m.status === 'recognizing text'){
-          const pct = Math.round((m.progress || 0) * 100);
-          ocrProgressBar.style.width = pct + '%';
-          ocrStatus.textContent = `Procesando imagen… ${pct}%`;
-        } else {
-          ocrStatus.textContent = m.status;
-        }
-      }
-    }).then(({ data: { text } }) => {
-      ocrProgress.style.display = 'none';
-      ocrStatus.textContent = '¡Lectura y carga automática completada!';
-      rawText.textContent = text.trim() || '(sin texto detectado)';
-      rawText.style.display = 'block';
-      extractAndCalculateAutomatic(text);
-    }).catch(err => {
-      ocrProgress.style.display = 'none';
-      ocrStatus.textContent = 'Error en OCR: ' + err.message;
-    });
-  };
-  reader.readAsDataURL(file);
-}
-
-// Extractor robusto secuencial para tablas de coordenadas (Este y Norte)
-function extractAndCalculateAutomatic(text){
-  const cleaned = text.replace(/,/g, '.');
-  // Busca cualquier secuencia de números con magnitud de coordenada (5 a 7 dígitos enteros + decimales opcionales)
-  const matches = cleaned.match(/\b\d{5,7}(?:\.\d{1,4})?\b/g) || [];
-
-  if (matches.length < 2) return;
 
   const pairs = [];
-  // Agrupa de par en par: par 1 = X (Este), par 2 = Y (Norte)
   for(let i = 0; i + 1 < matches.length; i += 2){
     pairs.push({ 
       name: 'P' + (pairs.length + 1), 
