@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#071827">
-  <title>TOPO MAPS PRO · Prueba móvil 0.6 · Cartografía auditada</title>
+  <title>TOPO MAPS PRO · Prueba móvil 1.0 · Visor automático</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 
@@ -137,13 +137,27 @@
     .map-tool .inline { display: flex; gap: 7px; align-items: end; flex-wrap: wrap; }
     .map-tool .inline > * { flex: 1 1 170px; }
     .map-tool .inline .btn { flex: 0 1 auto; }
-    .wms-fields { display: grid; grid-template-columns: 1.15fr 1fr .75fr; gap: 7px; }
-    #googleMapWrap { display: none; margin-top: 12px; }
-    #googleMapWrap.open { display: block; }
-    #googleMap { height: 490px; background: #d5dde2; border: 1px solid var(--line); border-radius: 12px; }
-    .check { display: flex; gap: 7px; align-items: center; font-size: 13px; font-weight: 700; }
-    .check input { width: 18px; height: 18px; }
+    .share-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 8px; }
     #map { height: 490px; background: #d5dde2; border: 1px solid var(--line); border-radius: 12px; }
+    .map-card { position: relative; }
+    .map-card.viewer-open {
+      position: fixed;
+      inset: 0;
+      z-index: 12000;
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      border-radius: 0;
+      background: var(--panel);
+    }
+    .map-card.viewer-open #map { height: calc(100vh - 235px); min-height: 430px; }
+    .map-card.viewer-open #closeMapViewer { display: inline-flex !important; }
+    body.map-viewer-open { overflow: hidden; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .map-legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 8px 0 0; }
+    .map-legend span { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 12px; }
+    .map-legend i { width: 18px; height: 4px; border-radius: 99px; background: var(--gold); }
+    .map-legend i.center { width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
     .small { color: var(--muted); font-size: 12px; }
     .audit { padding: 12px; color: #dceaf2; background: #0a1b29; border-radius: 10px; white-space: pre-wrap; font: 12px/1.55 ui-monospace, Consolas, monospace; }
 
@@ -170,8 +184,9 @@
       .shell { width: calc(100% - 12px); padding-top: 12px; }
       .card { padding: 14px; }
       .metrics { grid-template-columns: 1fr; }
-      .area-params, .map-tools, .wms-fields { grid-template-columns: 1fr; }
-      #map, #googleMap { height: 390px; }
+      .area-params, .map-tools, .share-grid { grid-template-columns: 1fr; }
+      #map { height: 390px; }
+      .map-card.viewer-open #map { height: calc(100vh - 270px); min-height: 360px; }
       .btn, label.btn { width: 100%; }
       .controls > *, .toolbar > * { width: 100%; }
     }
@@ -183,7 +198,7 @@
       <div>
         <div class="kicker">Topografía · Catastro · Costa Rica</div>
         <h1>TOPO MAPS PRO</h1>
-        <p>Versión de prueba móvil 0.6 auditada con control de área, tabla DXF de azimut/distancia, mapas Esri–OSM, vista Google opcional y WMS SNIT bajo demanda con cambio automático de proyección. El sistema oficial vigente se configura por defecto como CR-SIRGAS época 2014.59 / CRTM05 (EPSG:8908).</p>
+        <p>Versión de prueba móvil 1.0 auditada. El visor cartográfico ubica y encuadra automáticamente el polígono, conserva su geometría al cambiar entre mapas base y permite enviar el polígono completo mediante KML, además de compartir su centro en Google Maps y Waze.</p>
       </div>
       <div class="badge" id="selfBadge">AUTOPRUEBA: PENDIENTE</div>
     </header>
@@ -328,17 +343,18 @@
             <div class="controls">
               <button class="btn primary" id="dxfBtn" type="button">Descargar DXF R12</button>
               <button class="btn ghost" id="csvBtn" type="button">Descargar CSV</button>
+              <button class="btn secondary" id="openMapViewerFromResults" type="button">Ver polígono en visor</button>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="card span-2">
+      <section class="card span-2 map-card" id="mapCard">
         <div class="head">
           <span class="num">04</span>
           <div>
-            <h2>Cartografía georreferenciada anti-bloqueo</h2>
-            <p>Leaflet usa Esri satelital como base estable. Google Maps y los servicios WMS se cargan únicamente cuando el usuario los solicita.</p>
+            <h2>Visor cartográfico con ubicación automática</h2>
+            <p>Al abrir el visor, el sistema recalcula, dibuja y encuadra el polígono. La geometría permanece visible al cambiar entre todos los mapas base disponibles.</p>
           </div>
         </div>
 
@@ -348,63 +364,37 @@
               <select id="baseMapSelect">
                 <option value="esri" selected>Satélite Esri World Imagery</option>
                 <option value="osm">OpenStreetMap</option>
+                <option value="topo">OpenTopoMap</option>
+                <option value="carto">Carto Voyager</option>
               </select>
             </label>
-            <div class="inline">
-              <button class="btn ghost" id="openGoogleMaps" type="button">Abrir ubicación en Google Maps</button>
-            </div>
-            <span class="small">El botón abre el centro del levantamiento en Google Maps sin requerir clave.</span>
+            <span class="small">El polígono se dibuja en una capa independiente y permanece visible al cambiar entre Satélite, OpenStreetMap, OpenTopoMap y Carto Voyager.</span>
           </div>
 
           <div class="map-tool">
-            <label>Google Maps integrado (opcional)
-              <input id="googleApiKey" type="password" autocomplete="off" placeholder="Clave de Google Maps JavaScript API">
-            </label>
-            <div class="inline">
-              <button class="btn secondary" id="googleMapToggle" type="button">Cargar vista Google</button>
-              <button class="btn ghost" id="hideGoogleMap" type="button">Ocultar vista Google</button>
+            <label>Ubicación externa y archivos de intercambio</label>
+            <div class="share-grid">
+              <button class="btn ghost" id="openGoogleMaps" type="button">Centro en Google Maps</button>
+              <button class="btn ghost" id="openWaze" type="button">Centro en Waze</button>
+              <button class="btn secondary" id="shareLocation" type="button">Compartir ubicación</button>
+              <button class="btn secondary" id="sharePolygonKml" type="button">Enviar polígono KML</button>
+              <button class="btn ghost" id="downloadKml" type="button">Descargar KML</button>
+              <button class="btn ghost" id="downloadGpx" type="button">Descargar GPX</button>
+              <button class="btn ghost" id="openSiri" type="button">SIRI + copiar centro CRTM05</button>
             </div>
-            <span class="small">Requiere una clave propia de Google Maps JavaScript API. En archivos locales, una clave restringida por dominio puede fallar; la clave se usa solo en esta sesión y no se guarda.</span>
+            <span class="small">Google Maps y Waze reciben un punto central porque sus enlaces públicos no admiten polígonos. Para visualizar la figura completa en Google Earth u otra aplicación GIS, use «Enviar polígono KML» o descargue el KML. SIRI se abre externamente y copia el centro CRTM05 al portapapeles.</span>
           </div>
         </div>
-
-        <div class="map-tool" style="margin-bottom:10px">
-          <div class="inline">
-            <label>Servicio WMS
-              <select id="wmsPreset">
-                <option value="snit_districts" selected>SNIT cartografía · Distritos</option>
-                <option value="snit_roads">SNIT cartografía · Vías 1:5 000</option>
-                <option value="snit_urban">SNIT cartografía · Urbano 1:5 000</option>
-                <option value="snit_values">SNIT cartografía · Zonas de valor ONT</option>
-                <option value="snit_hydro">SNIT cartografía · Hidrografía 1:5 000</option>
-                <option value="snit_ign_current">SNIT · Nodo IGN actual (indicar capa)</option>
-                <option value="siri_custom">SIRI / Registro Inmobiliario (indicar capa)</option>
-                <option value="crt_limits">CRT · Límites</option>
-                <option value="custom">WMS personalizado</option>
-              </select>
-            </label>
-            <label class="check" style="align-self:end"><input id="wmsToggle" type="checkbox"> Activar WMS seleccionado</label>
-          </div>
-          <div class="wms-fields">
-            <label>URL WMS<input id="wmsUrl" autocomplete="off"></label>
-            <label>Nombre exacto de capa<input id="wmsLayerName" autocomplete="off"></label>
-            <label>Proyección solicitada
-              <select id="wmsProjection">
-                <option value="auto" selected>Automática: 3857 → 4326</option>
-                <option value="EPSG:3857">EPSG:3857</option>
-                <option value="EPSG:4326">EPSG:4326</option>
-              </select>
-            </label>
-          </div>
-          <span class="small">El WMS es independiente del mapa base. Si no responde, se retira automáticamente sin bloquear cálculos, DXF ni cartografía principal.</span>
-        </div>
-
         <div class="mapbar">
-          <button class="btn primary" id="refreshMap" type="button">Refrescar mapa</button>
+          <div class="viewer-actions">
+            <button class="btn primary" id="openMapViewer" type="button">Abrir visor y ubicar polígono</button>
+            <button class="btn ghost" id="refreshMap" type="button">Refrescar mapa</button>
+            <button class="btn danger" id="closeMapViewer" type="button" style="display:none">Cerrar visor</button>
+          </div>
           <span class="small" id="mapState">Mapa listo; pendiente de coordenadas válidas.</span>
         </div>
         <div id="map"></div>
-        <div id="googleMapWrap"><div id="googleMap"></div></div>
+        <div class="map-legend"><span><i></i>Polígono CRTM05</span><span><i class="center"></i>Centro interior compartible</span></div>
         <p class="note">La conversión al mapa es para visualización. CR-SIRGAS es un marco dinámico; trabajos geodésicos de alta precisión requieren considerar época, velocidades y transformación oficial aplicable.</p>
       </section>
 
@@ -413,7 +403,7 @@
           <span class="num">05</span>
           <div>
             <h2>Auditoría interna</h2>
-            <p>Pruebas automáticas de geometría, azimut, tabla visible, WMS, actualización, conversión y DXF.</p>
+            <p>Pruebas automáticas de geometría, área, azimut, DXF, tabla visible, visor automático, persistencia del polígono entre mapas base, enlaces externos, KML/GPX, conversión y rendimiento.</p>
           </div>
         </div>
         <div class="audit" id="audit">Ejecutando pruebas…</div>
@@ -461,17 +451,11 @@
       drawingLayer: null,
       satelliteLayer: null,
       osmLayer: null,
+      topoLayer: null,
+      cartoLayer: null,
       baseLayerControl: null,
       activeBaseLayer: 'esri',
-      wmsLayer: null,
-      wmsTimer: null,
-      wmsLoadCount: 0,
-      wmsErrorCount: 0,
-      googleApiPromise: null,
-      googleMap: null,
-      googlePolygon: null,
-      googleMarkers: [],
-      googleVisible: false,
+      lastMapBounds: null,
       lastResult: null
     };
 
@@ -492,18 +476,6 @@
         inverseFlattening: 298.257223563,
         proj4: '+proj=tmerc +lat_0=0 +lon_0=-84 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-0.16959,0.35312,0.51846,-0.03385,0.16325,-0.03446,0.03693 +units=m +no_defs'
       }
-    };
-
-    const WMS_PRESETS = {
-      snit_districts: { label: 'SNIT cartografía · Distritos', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'distritos' },
-      snit_roads: { label: 'SNIT cartografía · Vías 1:5 000', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'vias_5000' },
-      snit_urban: { label: 'SNIT cartografía · Urbano 1:5 000', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'urbano_5000' },
-      snit_values: { label: 'SNIT cartografía · Zonas de valor ONT', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'zonas_valor' },
-      snit_hydro: { label: 'SNIT cartografía · Hidrografía 1:5 000', url: 'https://www.snitcr.go.cr/servicios/cartografia/wms', layer: 'hidrografia_5000' },
-      snit_ign_current: { label: 'SNIT · Nodo IGN actual', url: 'https://geos.snitcr.go.cr/be/IGN_5/wms', layer: '' },
-      siri_custom: { label: 'SIRI / Registro Inmobiliario', url: 'https://siri.snitcr.go.cr/Geoservicios/wms', layer: '' },
-      crt_limits: { label: 'CRT · Límites', url: 'https://geostec.crt.or.cr/geoserver/wms', layer: 'crt:limites' },
-      custom: { label: 'WMS personalizado', url: '', layer: '' }
     };
 
     if (window.proj4) {
@@ -966,10 +938,8 @@
         const result = calculateAll();
         if (state.map) {
           state.map.invalidateSize();
-          if (state.wmsLayer && state.map.hasLayer(state.wmsLayer)) state.wmsLayer.bringToFront();
         }
-        if (result && state.googleVisible) updateGoogleMap(result.mode === 'traverse' && result.points.length > 3 ? result.points.slice(0, -1) : result.points);
-        if (result) showToast('Trabajo actualizado: tabla, área, azimuts, distancias y mapas fueron recalculados.');
+        if (result) showToast('Trabajo actualizado: tabla, área, azimuts, distancias y mapa fueron recalculados.');
         return result;
       } finally {
         button.disabled = false;
@@ -1087,17 +1057,47 @@
           'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
           { maxZoom: 21, attribution: '© OpenStreetMap contributors' }
         );
+        state.topoLayer = L.tileLayer(
+          'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+          { maxZoom: 17, attribution: 'Map data © OpenStreetMap · SRTM | Map style © OpenTopoMap' }
+        );
+        state.cartoLayer = L.tileLayer(
+          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          { maxZoom: 20, subdomains: 'abcd', attribution: '© OpenStreetMap contributors © CARTO' }
+        );
         state.map = L.map('map', {
           center: [9.93, -84.08],
           zoom: 8,
           layers: [state.satelliteLayer],
           preferCanvas: true
         });
-        state.baseLayerControl = L.control.layers({ 'Satélite Esri': state.satelliteLayer, 'OpenStreetMap': state.osmLayer }).addTo(state.map);
+        state.baseLayerControl = L.control.layers({
+          'Satélite Esri': state.satelliteLayer,
+          'OpenStreetMap': state.osmLayer,
+          'OpenTopoMap': state.topoLayer,
+          'Carto Voyager': state.cartoLayer
+        }).addTo(state.map);
         state.drawingLayer = L.layerGroup().addTo(state.map);
 
-        state.satelliteLayer.on('tileerror', () => {
-          $('#mapState').textContent = 'Algunas teselas satelitales no respondieron; puede usar OpenStreetMap.';
+        state.map.on('baselayerchange', (event) => {
+          const pairs = [
+            ['esri', state.satelliteLayer],
+            ['osm', state.osmLayer],
+            ['topo', state.topoLayer],
+            ['carto', state.cartoLayer]
+          ];
+          const match = pairs.find(([, layer]) => layer === event.layer);
+          if (match) {
+            state.activeBaseLayer = match[0];
+            $('#baseMapSelect').value = match[0];
+          }
+          setTimeout(() => fitPolygonInMap(false), 100);
+        });
+
+        [state.satelliteLayer, state.osmLayer, state.topoLayer, state.cartoLayer].forEach((layer) => {
+          layer.on('tileerror', () => {
+            $('#mapState').textContent = 'Algunas teselas no respondieron. Cambie el mapa base; el polígono y los cálculos permanecen activos.';
+          });
         });
       } catch (error) {
         console.error(error);
@@ -1105,8 +1105,9 @@
       }
     }
 
-    function updateMap(points) {
+    function updateMap(points, options = {}) {
       if (!state.map || !state.drawingLayer) return;
+      const shouldFit = options.fit !== false;
       try {
         state.drawingLayer.clearLayers();
         const converted = points.map((point) => ({ ...point, ...toWgs84(point.x, point.y) }));
@@ -1114,7 +1115,18 @@
         if (valid.length < 3) throw new Error('La conversión produjo menos de tres puntos dentro del entorno de Costa Rica. Revise el CRS seleccionado.');
 
         const latLngs = valid.map((point) => [point.lat, point.lon]);
-        L.polygon(latLngs, { color: '#e0b653', weight: 3, fillColor: '#c99a31', fillOpacity: .35 }).addTo(state.drawingLayer);
+        const polygonLayer = L.polygon(latLngs, {
+          color: '#e0b653',
+          weight: 4,
+          fillColor: '#c99a31',
+          fillOpacity: .30,
+          interactive: true
+        }).addTo(state.drawingLayer);
+        const areaText = state.lastResult?.area
+          ? `${state.lastResult.area.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m²`
+          : 'Área pendiente de cálculo';
+        polygonLayer.bindPopup(`<b>Polígono TOPO MAPS PRO</b><br>${valid.length} vértices<br>${areaText}`);
+
         valid.forEach((point) => {
           L.circleMarker([point.lat, point.lon], {
             radius: 5,
@@ -1124,25 +1136,58 @@
             fillOpacity: 1
           }).bindPopup(`<b>${escapeHtml(point.name)}</b><br>Este: ${point.x.toFixed(3)}<br>Norte: ${point.y.toFixed(3)}<br>${escapeHtml(CRS[$('#crsSelect').value].code)}`).addTo(state.drawingLayer);
         });
+
+        const centerCrtm = interiorSharePoint(points);
+        const center = toWgs84(centerCrtm.x, centerCrtm.y);
+        if (Number.isFinite(center.lat) && Number.isFinite(center.lon)) {
+          L.circleMarker([center.lat, center.lon], {
+            radius: 7,
+            color: '#fff',
+            weight: 2,
+            fillColor: '#c63b34',
+            fillOpacity: 1
+          }).bindPopup(`<b>Centro interior</b><br>${escapeHtml(centerCrtm.method)}<br>X: ${centerCrtm.x.toFixed(3)}<br>Y: ${centerCrtm.y.toFixed(3)}`).addTo(state.drawingLayer);
+        }
+
+        state.lastMapBounds = L.latLngBounds(latLngs);
         state.map.invalidateSize();
-        state.map.fitBounds(L.latLngBounds(latLngs), { padding: [35, 35], maxZoom: 19 });
-        $('#mapState').textContent = `${valid.length} puntos mostrados · ${CRS[$('#crsSelect').value].code} → WGS84`;
+        if (shouldFit) fitPolygonInMap(true);
+        $('#mapState').textContent = `${valid.length} vértices ubicados automáticamente · ${CRS[$('#crsSelect').value].code} → WGS84 · mapa ${baseMapLabel(state.activeBaseLayer)}`;
       } catch (error) {
         $('#mapState').textContent = error.message;
         showToast(error.message);
       }
     }
 
+    function baseMapLabel(key) {
+      return ({ esri: 'Satélite Esri', osm: 'OpenStreetMap', topo: 'OpenTopoMap', carto: 'Carto Voyager' })[key] || 'base';
+    }
+
+    function fitPolygonInMap(animate = true) {
+      if (!state.map || !state.lastMapBounds || !state.lastMapBounds.isValid()) return false;
+      state.map.invalidateSize();
+      state.map.fitBounds(state.lastMapBounds, { padding: [35, 35], maxZoom: 20, animate });
+      return true;
+    }
+
     function selectLeafletBaseLayer(key) {
       if (!state.map) return;
-      const requested = key === 'osm' ? state.osmLayer : state.satelliteLayer;
-      [state.satelliteLayer, state.osmLayer].forEach((layer) => {
+      const layers = {
+        esri: state.satelliteLayer,
+        osm: state.osmLayer,
+        topo: state.topoLayer,
+        carto: state.cartoLayer
+      };
+      const normalized = layers[key] ? key : 'esri';
+      const requested = layers[normalized];
+      Object.values(layers).forEach((layer) => {
         if (layer && layer !== requested && state.map.hasLayer(layer)) state.map.removeLayer(layer);
       });
       if (requested && !state.map.hasLayer(requested)) requested.addTo(state.map);
-      state.activeBaseLayer = key === 'osm' ? 'osm' : 'esri';
-      $('#baseMapSelect').value = state.activeBaseLayer;
-      $('#mapState').textContent = state.activeBaseLayer === 'osm' ? 'OpenStreetMap activo.' : 'Satélite Esri activo.';
+      state.activeBaseLayer = normalized;
+      $('#baseMapSelect').value = normalized;
+      fitPolygonInMap(false);
+      $('#mapState').textContent = `${baseMapLabel(normalized)} activo. El polígono permanece visible y encuadrado.`;
     }
 
     $('#baseMapSelect').addEventListener('change', (event) => selectLeafletBaseLayer(event.target.value));
@@ -1158,217 +1203,294 @@
       const points = currentMappedPoints();
       if (points.length < 3) return showToast('Se requieren al menos 3 puntos válidos para actualizar el mapa.');
       updateMap(points);
-      if (state.googleVisible) updateGoogleMap(points);
       state.map?.invalidateSize();
       showToast('Mapa actualizado con las coordenadas vigentes.');
     });
 
-    $('#openGoogleMaps').addEventListener('click', () => {
-      const points = currentMappedPoints();
-      if (!points.length) return showToast('Primero ingrese coordenadas válidas.');
-      const converted = points.map((point) => toWgs84(point.x, point.y)).filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon));
-      if (!converted.length) return showToast('No fue posible convertir la ubicación a WGS84.');
-      const center = converted.reduce((acc, point) => ({ lat: acc.lat + point.lat, lon: acc.lon + point.lon }), { lat: 0, lon: 0 });
-      center.lat /= converted.length;
-      center.lon /= converted.length;
-      window.open(`https://www.google.com/maps?q=${center.lat.toFixed(8)},${center.lon.toFixed(8)}`, '_blank', 'noopener,noreferrer');
+    function openMapViewer() {
+      const points = getValidPoints();
+      if (points.length < 3) return showToast('Se requieren al menos 3 puntos válidos para abrir el visor.');
+      const result = calculateAll();
+      if (!result) return;
+      $('#mapCard').classList.add('viewer-open');
+      document.body.classList.add('map-viewer-open');
+      setTimeout(() => {
+        state.map?.invalidateSize();
+        updateMap(currentMappedPoints());
+        fitPolygonInMap(false);
+      }, 120);
+      showToast('Visor abierto: polígono ubicado y encuadrado automáticamente.');
+    }
+
+    function closeMapViewer() {
+      $('#mapCard').classList.remove('viewer-open');
+      document.body.classList.remove('map-viewer-open');
+      setTimeout(() => {
+        state.map?.invalidateSize();
+        fitPolygonInMap(false);
+      }, 100);
+    }
+
+    $('#openMapViewer').addEventListener('click', openMapViewer);
+    $('#openMapViewerFromResults').addEventListener('click', openMapViewer);
+    $('#closeMapViewer').addEventListener('click', closeMapViewer);
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && $('#mapCard').classList.contains('viewer-open')) closeMapViewer();
     });
 
-    function loadGoogleMapsApi(apiKey) {
-      if (window.google?.maps) return Promise.resolve(window.google.maps);
-      if (state.googleApiPromise) return state.googleApiPromise;
-      if (!apiKey) return Promise.reject(new Error('Ingrese una clave válida de Google Maps JavaScript API.'));
-      state.googleApiPromise = new Promise((resolve, reject) => {
-        const callbackName = '__topoMapsGoogleReady_' + Date.now();
-        const script = document.createElement('script');
-        let finished = false;
-        const cleanup = () => {
-          try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
-        };
-        const timer = setTimeout(() => {
-          if (finished) return;
-          finished = true;
-          cleanup();
-          state.googleApiPromise = null;
-          reject(new Error('Google Maps excedió el tiempo de carga. Revise la clave, facturación y conexión.'));
-        }, 25000);
-        window[callbackName] = () => {
-          if (finished) return;
-          finished = true;
-          clearTimeout(timer);
-          cleanup();
-          resolve(window.google.maps);
-        };
-        script.onerror = () => {
-          if (finished) return;
-          finished = true;
-          clearTimeout(timer);
-          cleanup();
-          state.googleApiPromise = null;
-          reject(new Error('No se pudo cargar Google Maps. La cartografía Leaflet continúa disponible.'));
-        };
-        script.async = true;
-        script.defer = true;
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&callback=${callbackName}`;
-        document.head.appendChild(script);
-      });
-      return state.googleApiPromise;
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setTimeout(() => {
+            state.map?.invalidateSize();
+            fitPolygonInMap(false);
+          }, 80);
+        }
+      }, { threshold: 0.15 });
+      observer.observe($('#mapCard'));
     }
 
-    function clearGoogleDrawing() {
-      if (state.googlePolygon) state.googlePolygon.setMap(null);
-      state.googlePolygon = null;
-      state.googleMarkers.forEach((marker) => marker.setMap(null));
-      state.googleMarkers = [];
+    function projectedCentroid(points) {
+      if (!points.length) throw new Error('No hay coordenadas válidas para calcular la ubicación.');
+      if (points.length < 3) {
+        const total = points.reduce((acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }), { x: 0, y: 0 });
+        return { x: total.x / points.length, y: total.y / points.length };
+      }
+      const originX = points[0].x;
+      const originY = points[0].y;
+      let twiceArea = 0;
+      let cx = 0;
+      let cy = 0;
+      for (let i = 0; i < points.length; i += 1) {
+        const current = points[i];
+        const next = points[(i + 1) % points.length];
+        const x1 = current.x - originX;
+        const y1 = current.y - originY;
+        const x2 = next.x - originX;
+        const y2 = next.y - originY;
+        const cross = x1 * y2 - x2 * y1;
+        twiceArea += cross;
+        cx += (x1 + x2) * cross;
+        cy += (y1 + y2) * cross;
+      }
+      if (Math.abs(twiceArea) < 1e-9) {
+        const total = points.reduce((acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }), { x: 0, y: 0 });
+        return { x: total.x / points.length, y: total.y / points.length };
+      }
+      return { x: originX + cx / (3 * twiceArea), y: originY + cy / (3 * twiceArea) };
     }
 
-    function updateGoogleMap(points) {
-      if (!state.googleMap || !window.google?.maps) return;
-      const converted = points.map((point) => ({ ...point, ...toWgs84(point.x, point.y) })).filter((point) => point.lat >= 8 && point.lat <= 12 && point.lon >= -86.5 && point.lon <= -82);
-      if (converted.length < 3) return;
-      clearGoogleDrawing();
-      const path = converted.map((point) => ({ lat: point.lat, lng: point.lon }));
-      state.googlePolygon = new google.maps.Polygon({ paths: path, strokeColor: '#c99a31', strokeOpacity: 1, strokeWeight: 3, fillColor: '#c99a31', fillOpacity: 0.30, map: state.googleMap });
-      const bounds = new google.maps.LatLngBounds();
-      converted.forEach((point) => {
-        const position = { lat: point.lat, lng: point.lon };
-        bounds.extend(position);
-        state.googleMarkers.push(new google.maps.Marker({ position, map: state.googleMap, title: `${point.name} · E ${point.x.toFixed(3)} · N ${point.y.toFixed(3)}` }));
-      });
-      state.googleMap.fitBounds(bounds, 45);
+    function pointInPolygon(point, polygon) {
+      if (!point || polygon.length < 3) return false;
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].x, yi = polygon[i].y;
+        const xj = polygon[j].x, yj = polygon[j].y;
+        const onSegment = Math.abs((point.y - yi) * (xj - xi) - (point.x - xi) * (yj - yi)) < 1e-7
+          && point.x >= Math.min(xi, xj) - 1e-7 && point.x <= Math.max(xi, xj) + 1e-7
+          && point.y >= Math.min(yi, yj) - 1e-7 && point.y <= Math.max(yi, yj) + 1e-7;
+        if (onSegment) return true;
+        const intersects = ((yi > point.y) !== (yj > point.y))
+          && point.x < (xj - xi) * (point.y - yi) / ((yj - yi) || Number.EPSILON) + xi;
+        if (intersects) inside = !inside;
+      }
+      return inside;
     }
 
-    $('#googleMapToggle').addEventListener('click', async () => {
-      const key = $('#googleApiKey').value.trim();
-      const button = $('#googleMapToggle');
-      button.disabled = true;
+    function interiorSharePoint(points) {
+      const centroid = projectedCentroid(points);
+      if (points.length < 3 || pointInPolygon(centroid, points)) return { ...centroid, method: 'centroide del polígono' };
+      const average = points.reduce((acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }), { x: 0, y: 0 });
+      average.x /= points.length;
+      average.y /= points.length;
+      if (pointInPolygon(average, points)) return { ...average, method: 'promedio interior de vértices' };
+      for (let factor = 0.9; factor >= 0.1; factor -= 0.1) {
+        const candidate = {
+          x: points[0].x * (1 - factor) + centroid.x * factor,
+          y: points[0].y * (1 - factor) + centroid.y * factor
+        };
+        if (pointInPolygon(candidate, points)) return { ...candidate, method: 'punto interior de respaldo' };
+      }
+      return { x: points[0].x, y: points[0].y, method: 'primer vértice de respaldo' };
+    }
+
+    function getShareLocation() {
+      const points = currentMappedPoints();
+      if (!points.length) throw new Error('Primero ingrese coordenadas válidas.');
+      const centerCrtm = interiorSharePoint(points);
+      const center = toWgs84(centerCrtm.x, centerCrtm.y);
+      if (!Number.isFinite(center.lat) || !Number.isFinite(center.lon)) throw new Error('No fue posible convertir la ubicación a WGS84.');
+      const lat = Number(center.lat.toFixed(8));
+      const lon = Number(center.lon.toFixed(8));
+      const encodedCoordinates = encodeURIComponent(`${lat},${lon}`);
+      return {
+        lat,
+        lon,
+        x: centerCrtm.x,
+        y: centerCrtm.y,
+        method: centerCrtm.method,
+        googleUrl: `https://www.google.com/maps/search/?api=1&query=${encodedCoordinates}&utm_source=topo_maps_pro&utm_campaign=location_sharing`,
+        wazeUrl: `https://www.waze.com/ul?ll=${encodedCoordinates}&navigate=yes&zoom=17&utm_source=topo_maps_pro`
+      };
+    }
+
+    function openExternalLocation(url, serviceName) {
+      if (!/^https:\/\//i.test(url)) throw new Error(`Dirección no segura para ${serviceName}.`);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      anchor.style.display = 'none';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    }
+
+    $('#openGoogleMaps').addEventListener('click', () => {
       try {
-        await loadGoogleMapsApi(key);
-        $('#googleMapWrap').classList.add('open');
-        state.googleVisible = true;
-        if (!state.googleMap) state.googleMap = new google.maps.Map($('#googleMap'), { center: { lat: 9.93, lng: -84.08 }, zoom: 8, mapTypeId: 'satellite', streetViewControl: false, mapTypeControl: true });
-        const points = currentMappedPoints();
-        if (points.length >= 3) updateGoogleMap(points);
-        showToast('Vista Google cargada. Leaflet y WMS permanecen independientes.');
+        openExternalLocation(getShareLocation().googleUrl, 'Google Maps');
       } catch (error) {
         showToast(error.message);
-        $('#mapState').textContent = error.message;
-      } finally {
-        button.disabled = false;
       }
     });
 
-    $('#hideGoogleMap').addEventListener('click', () => {
-      $('#googleMapWrap').classList.remove('open');
-      state.googleVisible = false;
-      showToast('Vista Google oculta.');
+    $('#openWaze').addEventListener('click', () => {
+      try {
+        openExternalLocation(getShareLocation().wazeUrl, 'Waze');
+      } catch (error) {
+        showToast(error.message);
+      }
     });
 
-    function applyWmsPreset(key) {
-      const preset = WMS_PRESETS[key] || WMS_PRESETS.custom;
-      $('#wmsUrl').value = preset.url;
-      $('#wmsLayerName').value = preset.layer;
-      $('#wmsProjection').value = 'auto';
-      if ($('#wmsToggle').checked) reloadWms();
+
+    $('#openSiri').addEventListener('click', async () => {
+      try {
+        const location = getShareLocation();
+        const crtmText = `${CRS[$('#crsSelect').value].code} | X=${location.x.toFixed(3)} | Y=${location.y.toFixed(3)}`;
+        await copyTextFallback(crtmText);
+        openExternalLocation('https://siri.snitcr.go.cr/siri/mapa', 'visor oficial SIRI');
+        showToast('SIRI abierto. El centro CRTM05 quedó copiado para pegarlo en Navegador X/Y.');
+      } catch (error) {
+        showToast(error.message);
+      }
+    });
+
+    async function copyTextFallback(text) {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      const copied = document.execCommand('copy');
+      area.remove();
+      if (!copied) throw new Error('No fue posible copiar los enlaces.');
     }
 
-    function disableWms(message) {
-      clearTimeout(state.wmsTimer);
-      if (state.map && state.wmsLayer && state.map.hasLayer(state.wmsLayer)) state.map.removeLayer(state.wmsLayer);
-      state.wmsLayer = null;
-      $('#wmsToggle').checked = false;
-      $('#mapState').textContent = message;
+    function locationShareText(location) {
+      return [
+        'TOPO MAPS PRO',
+        `Latitud: ${location.lat}`,
+        `Longitud: ${location.lon}`,
+        `Referencia: ${location.method}`,
+        `Google Maps: ${location.googleUrl}`,
+        `Waze: ${location.wazeUrl}`
+      ].join('\n');
     }
 
-    function reloadWms() {
-      if (!state.map || !window.L) return disableWms('Leaflet no está disponible; el WMS no se cargó.');
-      const url = $('#wmsUrl').value.trim();
-      const layerName = $('#wmsLayerName').value.trim();
-      const preset = WMS_PRESETS[$('#wmsPreset').value] || WMS_PRESETS.custom;
-      const requestedProjection = $('#wmsProjection').value || 'auto';
-      if (!url || !layerName) return disableWms('Indique la URL WMS y el nombre exacto de la capa.');
-
-      clearTimeout(state.wmsTimer);
-      if (state.wmsLayer && state.map.hasLayer(state.wmsLayer)) state.map.removeLayer(state.wmsLayer);
-      state.wmsLayer = null;
-
-      const attempts = requestedProjection === 'auto'
-        ? ['EPSG:3857', 'EPSG:4326']
-        : [requestedProjection];
-      let attemptIndex = 0;
-
-      const startAttempt = () => {
-        const projectionCode = attempts[attemptIndex];
-        if (state.wmsLayer && state.map.hasLayer(state.wmsLayer)) state.map.removeLayer(state.wmsLayer);
-        clearTimeout(state.wmsTimer);
-        state.wmsLoadCount = 0;
-        state.wmsErrorCount = 0;
-
-        try {
-          const options = {
-            layers: layerName,
-            format: 'image/png',
-            transparent: true,
-            version: '1.1.1',
-            maxZoom: 21,
-            opacity: .82,
-            uppercase: false
-          };
-          if (projectionCode === 'EPSG:4326') options.crs = L.CRS.EPSG4326;
-          const layer = L.tileLayer.wms(url, options);
-          state.wmsLayer = layer;
-
-          const failOrRetry = (reason) => {
-            if (state.wmsLayer !== layer || state.wmsLoadCount > 0) return;
-            if (attemptIndex + 1 < attempts.length) {
-              attemptIndex += 1;
-              $('#mapState').textContent = `${reason} Reintentando en ${attempts[attemptIndex]}…`;
-              startAttempt();
-            } else {
-              disableWms(`${reason} El WMS fue retirado sin afectar Esri/OSM, cálculos ni DXF.`);
-            }
-          };
-
-          layer.on('tileload', () => {
-            if (state.wmsLayer !== layer) return;
-            state.wmsLoadCount += 1;
-            clearTimeout(state.wmsTimer);
-            $('#mapState').textContent = `${preset.label}: capa ${layerName} activa en ${projectionCode}.`;
-          });
-          layer.on('tileerror', () => {
-            if (state.wmsLayer !== layer) return;
-            state.wmsErrorCount += 1;
-            if (state.wmsErrorCount >= 4 && state.wmsLoadCount === 0) {
-              failOrRetry(`El WMS no respondió en ${projectionCode}.`);
-            }
-          });
-          layer.addTo(state.map);
-          layer.bringToFront();
-          $('#mapState').textContent = `Solicitando ${preset.label} · ${layerName} en ${projectionCode}…`;
-          state.wmsTimer = setTimeout(() => {
-            failOrRetry(`Tiempo de espera agotado en ${projectionCode}.`);
-          }, 18000);
-        } catch (error) {
-          if (attemptIndex + 1 < attempts.length) {
-            attemptIndex += 1;
-            startAttempt();
-          } else {
-            disableWms('No fue posible activar el WMS. El mapa base continúa activo.');
-          }
+    $('#shareLocation').addEventListener('click', async () => {
+      try {
+        const location = getShareLocation();
+        const text = locationShareText(location);
+        if (navigator.share) {
+          await navigator.share({ title: 'Ubicación TOPO MAPS PRO', text, url: location.googleUrl });
+          showToast('Ubicación compartida.');
+        } else {
+          await copyTextFallback(text);
+          showToast('Enlaces de ubicación copiados al portapapeles.');
         }
-      };
+      } catch (error) {
+        if (error?.name !== 'AbortError') showToast(error.message || 'No fue posible compartir la ubicación.');
+      }
+    });
 
-      startAttempt();
+    function xmlEscape(value) {
+      return String(value ?? '').replace(/[<>&'\"]/g, (char) => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', "'":'&apos;', '\"':'&quot;' })[char]);
     }
 
-    $('#wmsPreset').addEventListener('change', (event) => applyWmsPreset(event.target.value));
-    $('#wmsToggle').addEventListener('change', (event) => {
-      if (!event.target.checked) return disableWms('WMS desactivado. El mapa base permanece disponible.');
-      reloadWms();
+    function buildLocationKml(points, location) {
+      const converted = points.map((point) => ({ ...point, ...toWgs84(point.x, point.y) }));
+      const coordinates = converted.map((point) => `${point.lon.toFixed(8)},${point.lat.toFixed(8)},0`);
+      if (coordinates.length >= 3) coordinates.push(coordinates[0]);
+      const polygon = coordinates.length >= 4 ? `
+    <Placemark><name>Polígono TOPO MAPS PRO</name><Style><LineStyle><color>ff0055aa</color><width>3</width></LineStyle><PolyStyle><color>5500aaff</color></PolyStyle></Style><Polygon><outerBoundaryIs><LinearRing><coordinates>${coordinates.join(' ')}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>` : '';
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>TOPO MAPS PRO</name>
+    <Placemark><name>Ubicación del levantamiento</name><description>${xmlEscape(location.method)}</description><Point><coordinates>${location.lon},${location.lat},0</coordinates></Point></Placemark>${polygon}
+</Document></kml>`;
+    }
+
+    function buildLocationGpx(points, location) {
+      const converted = points.map((point) => ({ ...point, ...toWgs84(point.x, point.y) }));
+      const trackPoints = converted.map((point) => `<trkpt lat="${point.lat.toFixed(8)}" lon="${point.lon.toFixed(8)}"><name>${xmlEscape(point.name)}</name></trkpt>`);
+      if (trackPoints.length >= 3) trackPoints.push(trackPoints[0]);
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="TOPO MAPS PRO" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="${location.lat}" lon="${location.lon}"><name>Ubicación TOPO MAPS PRO</name><desc>${xmlEscape(location.method)}</desc></wpt>
+  <trk><name>Polígono TOPO MAPS PRO</name><trkseg>${trackPoints.join('')}</trkseg></trk>
+</gpx>`;
+    }
+
+    $('#sharePolygonKml').addEventListener('click', async () => {
+      try {
+        const points = currentMappedPoints();
+        if (points.length < 3) throw new Error('Se requieren al menos 3 puntos válidos para compartir el polígono.');
+        const location = getShareLocation();
+        const kml = buildLocationKml(points, location);
+        const file = typeof File === 'function'
+          ? new File([kml], 'TOPO_MAPS_PRO_POLIGONO.kml', { type: 'application/vnd.google-earth.kml+xml' })
+          : null;
+        if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            title: 'Polígono TOPO MAPS PRO',
+            text: 'Polígono georreferenciado en KML para Google Earth o aplicación GIS.',
+            files: [file]
+          });
+          showToast('Polígono KML enviado al menú de compartir.');
+        } else {
+          downloadText(file?.name || 'TOPO_MAPS_PRO_POLIGONO.kml', kml, (file?.type || 'application/vnd.google-earth.kml+xml') + ';charset=utf-8');
+          showToast('El navegador no permite compartir archivos; se descargó el KML del polígono.');
+        }
+      } catch (error) {
+        if (error?.name !== 'AbortError') showToast(error.message || 'No fue posible compartir el polígono KML.');
+      }
     });
-    $('#wmsUrl').addEventListener('change', () => { if ($('#wmsToggle').checked) reloadWms(); });
-    $('#wmsLayerName').addEventListener('change', () => { if ($('#wmsToggle').checked) reloadWms(); });
-    $('#wmsProjection').addEventListener('change', () => { if ($('#wmsToggle').checked) reloadWms(); });
+
+    $('#downloadKml').addEventListener('click', () => {
+      try {
+        const points = currentMappedPoints();
+        const location = getShareLocation();
+        downloadText('TOPO_MAPS_PRO_UBICACION.kml', buildLocationKml(points, location), 'application/vnd.google-earth.kml+xml;charset=utf-8');
+        showToast('Archivo KML descargado.');
+      } catch (error) {
+        showToast(error.message);
+      }
+    });
+
+    $('#downloadGpx').addEventListener('click', () => {
+      try {
+        const points = currentMappedPoints();
+        const location = getShareLocation();
+        downloadText('TOPO_MAPS_PRO_UBICACION.gpx', buildLocationGpx(points, location), 'application/gpx+xml;charset=utf-8');
+        showToast('Archivo GPX descargado.');
+      } catch (error) {
+        showToast(error.message);
+      }
+    });
 
     function detectCoordinateColumns(rows, sheetName) {
       const maxColumns = Math.min(50, Math.max(0, ...rows.map((row) => Array.isArray(row) ? row.length : 0)));
@@ -2144,9 +2266,32 @@
         const labels = [...document.querySelectorAll('.segment-table thead th')].map((cell) => cell.textContent.trim());
         return labels.length === 3 && labels.join('|') === 'Tramo|Azimut|Distancia';
       });
-      test('Preset WMS SNIT oficial configurado bajo demanda', () => WMS_PRESETS.snit_districts.layer === 'distritos' && WMS_PRESETS.snit_roads.layer === 'vias_5000' && WMS_PRESETS.snit_districts.url.includes('snitcr.go.cr'));
-      test('Botones editar, recalcular y refrescar mapa tienen funciones separadas', () => Boolean($('#editCoordinates') && $('#refreshWork') && $('#refreshMap')));
-      test('Selector WMS incluye fallback 3857 → 4326', () => Boolean($('#wmsProjection')));
+      test('Módulo WMS eliminado para evitar fallos de servidor, CORS y capas no públicas', () => !document.querySelector('[id*="wms" i], [data-wms]'));
+      test('Mapa base no depende de WMS', () => Boolean($('#baseMapSelect')));
+      test('Visor automático dispone de cuatro mapas base', () => $('#baseMapSelect').options.length === 4 && (!window.L || Boolean(state.satelliteLayer && state.osmLayer && state.topoLayer && state.cartoLayer)));
+      test('Capa del polígono es independiente del mapa base', () => !window.L || (Boolean(state.drawingLayer) && ![state.satelliteLayer, state.osmLayer, state.topoLayer, state.cartoLayer].includes(state.drawingLayer)));
+      test('Botón de visor automático y cierre están conectados', () => Boolean($('#openMapViewer') && $('#openMapViewerFromResults') && $('#closeMapViewer') && $('#mapCard')));
+      test('Google Maps integrado fue eliminado', () => !document.querySelector('#googleApiKey') && !document.querySelector('#googleMap') && ![...document.scripts].some((script) => /maps\.googleapis\.com/.test(script.src)));
+      test('Ubicación genera enlaces Google Maps y Waze', () => {
+        const old = state.points;
+        state.points = square.map((point, index) => ({ ...point, id: `test_${index}` }));
+        state.lastResult = null;
+        const location = getShareLocation();
+        state.points = old;
+        return location.googleUrl.includes('google.com/maps/search/?api=1') && location.googleUrl.includes('%2C') && location.wazeUrl.includes('www.waze.com/ul') && pointInPolygon({ x: location.x, y: location.y }, square);
+      });
+      test('KML y GPX contienen punto y polígono', () => {
+        const old = state.points;
+        state.points = square.map((point, index) => ({ ...point, id: `test_${index}` }));
+        state.lastResult = null;
+        const location = getShareLocation();
+        const kml = buildLocationKml(square, location);
+        const gpx = buildLocationGpx(square, location);
+        state.points = old;
+        return kml.includes('<Polygon>') && kml.includes('<Point>') && gpx.includes('<wpt') && gpx.includes('<trk>');
+      });
+      test('Controles de ubicación no tienen identificadores faltantes', () => Boolean($('#openGoogleMaps') && $('#openWaze') && $('#shareLocation') && $('#sharePolygonKml') && $('#downloadKml') && $('#downloadGpx') && $('#openSiri') && $('#openMapViewer') && $('#closeMapViewer')));
+      test('Botones editar, recalcular y refrescar mapa tienen funciones separadas', () => Boolean($('#editCoordinates') && $('#refreshWork') && $('#refreshMap') && $('#openMapViewer') && $('#openMapViewerFromResults')));
 
       test('Conversión GRS80 coincide con control EPSG en meridiano central', () => {
         const converted = inverseTransverseMercator(500000, 1100000, CRS['8908']);
@@ -2188,7 +2333,6 @@
     });
 
     appendBlankRow();
-    applyWmsPreset('snit_districts');
     initMap();
     runSelfTests();
   </script>
