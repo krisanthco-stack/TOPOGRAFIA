@@ -111,16 +111,18 @@
   .status.ok{ background:#E1EBE3; color:var(--ok); border:1px solid #B7CFBB; }
   .status.err{ background:#F3E1DD; color:var(--err); border:1px solid #DDB6AD; }
 
-  .total-card{
-    background: var(--navy); color:var(--paper); border-radius:4px; padding:20px 24px;
-    margin-bottom:18px; display:flex; gap:32px; flex-wrap:wrap;
+  .metrics-grid{
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:18px;
   }
-  .total-item .k{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--brass-bright); margin:0 0 6px; }
-  .total-item .v{ font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600; margin:0; }
+  .metric-card{
+    background: var(--navy); color:var(--paper); border-radius:4px; padding:16px 20px;
+  }
+  .metric-card .k{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--brass-bright); margin:0 0 6px; }
+  .metric-card .v{ font-family:'IBM Plex Mono', monospace; font-size:18px; font-weight:600; margin:0; }
 
   footer{ text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12px; color:#8494a8; margin-top:40px; }
 
-  #mapView{ width:100%; height:360px; border-radius:4px; border:1px solid #c9bfa6; z-index:0; }
+  #mapView{ width:100%; height:420px; border-radius:4px; border:1px solid #c9bfa6; z-index:0; }
   .leaflet-popup-content{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; }
 </style>
 </head>
@@ -130,8 +132,8 @@
   <div class="hero">
     <div class="hero-text">
       <p class="eyebrow">CRTM05 · SIRGAS Costa Rica[span_0](start_span)[span_0](end_span)</p>
-      <h1>Gestión Topográfica CRTM05</h1>
-      <p class="lede">Importación instantánea desde Excel/CSV o carga visual de planos. Cálculo automatizado de distancias, azimuts en DMS[span_1](start_span)[span_1](end_span), polígonos, mapa WGS84 y exportación CAD/DXF[span_2](start_span)[span_2](end_span).</p>
+      <h1>TOPO MAPS PRO</h1>
+      <p class="lede">Importación de Excel/CSV, cartografía satelital, conexión WMS, cálculo de cierre de poligonal, área, azimuts en DMS[span_1](start_span)[span_1](end_span) y exportación DXF[span_2](start_span)[span_2](end_span).</p>
     </div>
     <div class="hero-diagram">
       <svg viewBox="0 0 260 260" id="diagram"></svg>
@@ -139,8 +141,8 @@
   </div>
 
   <section class="card">
-    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Ingreso de Datos (Excel / CSV o Imagen)</h2></div>
-    <p class="section-sub">Carga un archivo Excel con columnas de coordenadas o sube una imagen de referencia visual[span_3](start_span)[span_3](end_span).</p>
+    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Ingreso de Datos Topográficos</h2></div>
+    <p class="section-sub">Carga tu archivo Excel/CSV con coordenadas CRTM05[span_3](start_span)[span_3](end_span) o sube imagen de respaldo[span_4](start_span)[span_4](end_span).</p>
 
     <div class="action-row">
       <label class="btn btn-primary" for="excelInput">📊 Cargar Excel / CSV</label>
@@ -157,8 +159,8 @@
   </section>
 
   <section class="card">
-    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de Puntos Activos</h2></div>
-    <p class="section-sub">Edita nombres o coordenadas y presiona actualizar para recalcular[span_4](start_span)[span_4](end_span).</p>
+    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de Vértices</h2></div>
+    <p class="section-sub">Edita nombres o coordenadas y pulsa actualizar[span_5](start_span)[span_5](end_span).</p>
     <table id="pointsTable">
       <thead>
         <tr><th>Vértice</th><th>Este (X) [m]</th><th>Norte (Y) [m]</th><th></th></tr>
@@ -172,31 +174,35 @@
   </section>
 
   <section class="card results" id="results">
-    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados Analíticos</h2></div>
+    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados y Análisis de Cierre</h2></div>
     <div id="statusBox"></div>
-    <div class="total-card" id="totalCard" style="display:none;">
-      <div class="total-item"><p class="k">Perímetro total</p><p class="v" id="outTotal">—</p></div>
-      <div class="total-item"><p class="k">Tramos</p><p class="v" id="outCount">—</p></div>
+    
+    <div class="metrics-grid" id="metricsGrid" style="display:none;">
+      <div class="metric-card"><p class="k">Perímetro Total</p><p class="v" id="outPerimeter">—</p></div>
+      <div class="metric-card"><p class="k">Área Calculada</p><p class="v" id="outArea">—</p></div>
+      <div class="metric-card"><p class="k">Error Lineal (El)</p><p class="v" id="outClosureErr">—</p></div>
+      <div class="metric-card"><p class="k">Precisión Relativa</p><p class="v" id="outPrecision">—</p></div>
     </div>
+
     <table id="resultsTable" style="display:none;">
-      <thead><tr><th>Tramo</th><th>Distancia (m)</th><th>Azimut (DMS / Dec)[span_5](start_span)[span_5](end_span)</th></tr></thead>
+      <thead><tr><th>Tramo</th><th>Distancia (m)</th><th>Azimut (DMS / Dec)[span_6](start_span)[span_6](end_span)</th></tr></thead>
       <tbody id="resultsBody"></tbody>
     </table>
     <div class="result-diagram-box" id="resultDiagramBox" style="display:none;">
-      <p class="section-sub" style="margin:0 0 10px;">Diagrama del Polígono[span_6](start_span)[span_6](end_span)</p>
+      <p class="section-sub" style="margin:0 0 10px;">Diagrama del Polígono[span_7](start_span)[span_7](end_span)</p>
       <svg viewBox="0 0 400 400" id="resultDiagram" style="width:100%; max-width:400px; height:auto; display:block; background:#FBF9F3; border:1px solid #c9bfa6; border-radius:4px;"></svg>
     </div>
-    <button class="btn btn-primary" id="dxfBtn" style="display:none; width:100%; margin-top:16px;">⬇ Descargar DXF Georreferenciado[span_7](start_span)[span_7](end_span)</button>
+    <button class="btn btn-primary" id="dxfBtn" style="display:none; width:100%; margin-top:16px;">⬇ Descargar DXF Georreferenciado[span_8](start_span)[span_8](end_span)</button>
     <p class="section-sub" id="dxfHint" style="display:none; margin-top:10px;"></p>
   </section>
 
   <section class="card results" id="mapSection">
-    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Visualización Cartográfica</h2></div>
-    <p class="section-sub">Polígono convertido de CRTM05 a WGS84 sobre OpenStreetMap[span_8](start_span)[span_8](end_span)[span_9](start_span)[span_9](end_span).</p>
+    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Visualización Cartográfica y Satelital (WMS)</h2></div>
+    <p class="section-sub">Alterna entre Mapas base (OSM, Satelital Esri) y capas WMS oficiales (SNIT Costa Rica)[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span).</p>
     <div id="mapView"></div>
   </section>
 
-  <footer>Topografía Costa Rica · CRTM05 / SIRGAS[span_10](start_span)[span_10](end_span)</footer>
+  <footer>TOPO MAPS PRO · CRTM05 / SIRGAS Costa Rica[span_11](start_span)[span_11](end_span)</footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -248,11 +254,11 @@ function renderPointsTable(){
 document.getElementById('addPointBtn').addEventListener('click', () => addPointRow());
 document.getElementById('updateAllBtn').addEventListener('click', () => calculateAndRender());
 
-// Iniciar con dos puntos vacíos por defecto
 addPointRow('P1', '', '');
 addPointRow('P2', '', '');
+addPointRow('P3', '', '');
 
-// --- PROCESAMIENTO EXCEL / CSV ---
+// --- EXCEL / CSV PARSER ---
 document.getElementById('excelInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -264,20 +270,18 @@ document.getElementById('excelInput').addEventListener('change', function(e) {
     try {
       const data = new Uint8Array(evt.target.result);
       const workbook = XLSX.read(data, {type: 'array'});
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
 
       let parsedPoints = [];
-      rows.forEach((row, idx) => {
-        // Filtrar celdas numéricas con magnitud de coordenada CRTM05 en CR (> 100000)
+      rows.forEach((row) => {
         let numericCols = [];
         let rowName = 'P' + (parsedPoints.length + 1);
 
         row.forEach((cell, cellIdx) => {
           let val = parseFloat(cell);
           if (!isNaN(val)) {
-            if (val > 10000 || val < -10000) { // Magnitud típica CRTM05 Este/Norte
+            if (val > 10000 || val < -10000) {
               numericCols.push(val);
             } else if (cellIdx === 0 && String(cell).trim() !== '') {
               rowName = String(cell).trim();
@@ -302,18 +306,17 @@ document.getElementById('excelInput').addEventListener('change', function(e) {
           points.push({ id: 'pt' + pointCounter, name: p.name, x: p.x, y: p.y });
         });
         renderPointsTable();
-        statusMsg.innerHTML = `<span style="color:var(--ok);">¡Excel cargado correctamente (${parsedPoints.length} vértices)!</span>`;
+        statusMsg.innerHTML = `<span style="color:var(--ok);">¡Excel cargado con éxito (${parsedPoints.length} vértices)!</span>`;
       } else {
-        statusMsg.innerHTML = '<span style="color:var(--err);">No se detectaron columnas válidas de coordenadas (Este/Norte).</span>';
+        statusMsg.innerHTML = '<span style="color:var(--err);">No se detectaron columnas válidas de coordenadas.</span>';
       }
     } catch(err) {
-      statusMsg.innerHTML = `<span style="color:var(--err);">Error al leer Excel: ${err.message}</span>`;
+      statusMsg.innerHTML = `<span style="color:var(--err);">Error: ${err.message}</span>`;
     }
   };
   reader.readAsArrayBuffer(file);
 });
 
-// --- VISUALIZADOR DE IMAGEN / PLANO ---
 document.getElementById('imageInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -321,12 +324,12 @@ document.getElementById('imageInput').addEventListener('change', function(e) {
   reader.onload = function(evt) {
     document.getElementById('previewImg').src = evt.target.result;
     document.getElementById('previewBox').style.display = 'block';
-    document.getElementById('statusMsg').textContent = 'Plano o imagen cargada como referencia visual.';
+    document.getElementById('statusMsg').textContent = 'Imagen de respaldo cargada.';
   };
   reader.readAsDataURL(file);
 });
 
-// --- DIAGRAMA VECTORIAL (SVG) ---
+// --- DIAGRAMA SVG ---
 function renderDiagram(pts){
   const svg = document.getElementById('diagram');
   const valid = pts.filter(p => !isNaN(p.x) && !isNaN(p.y) && p.x !== '' && p.y !== '');
@@ -357,7 +360,7 @@ function renderDiagram(pts){
 
 function updatePreviewDiagram(){ renderDiagram(points); }
 
-// --- MOTOR TOPOMÉTRICO (AZIMUTS Y DISTANCIAS) ---
+// --- CÁLCULOS TOPOGRÁFICOS ---
 function calcularAzimut(x1,y1,x2,y2){
   const azRad = Math.atan2(x2-x1, y2-y1);
   let azDeg = azRad * 180/Math.PI;
@@ -374,7 +377,7 @@ function decimalToDms(decimal){
 function calculateAndRender(){
   const resultsSection = document.getElementById('results');
   const statusBox = document.getElementById('statusBox');
-  const totalCard = document.getElementById('totalCard');
+  const metricsGrid = document.getElementById('metricsGrid');
   const resultsTable = document.getElementById('resultsTable');
   const resultsBody = document.getElementById('resultsBody');
   const resultDiagramBox = document.getElementById('resultDiagramBox');
@@ -389,21 +392,53 @@ function calculateAndRender(){
   resultsSection.classList.add('show');
   document.getElementById('mapSection').classList.add('show');
 
-  statusBox.innerHTML = `<div class="status ok">Cálculo completado exitosamente para ${valid.length} vértices (${valid.length-1} tramos).</div>`;
+  statusBox.innerHTML = `<div class="status ok">Cálculo completado exitosamente para ${valid.length} vértices.</div>`;
   resultsBody.innerHTML = '';
-  let total = 0;
+  let perimeter = 0;
+
   for(let i=0; i<valid.length-1; i++){
     const a = valid[i], b = valid[i+1];
     const dist = Math.hypot(b.x-a.x, b.y-a.y);
     const az = calcularAzimut(a.x, a.y, b.x, b.y);
-    total += dist;
+    perimeter += dist;
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${a.name} → ${b.name}</td><td>${dist.toFixed(3)}</td><td>${decimalToDms(az)} (${az.toFixed(4)}°)</td>`;
     resultsBody.appendChild(tr);
   }
-  document.getElementById('outTotal').textContent = total.toFixed(3) + ' m';
-  document.getElementById('outCount').textContent = (valid.length - 1);
-  totalCard.style.display = 'flex';
+
+  // Si es polígono cerrado (3 o más puntos), cerramos el último tramo para área y cierre
+  let closureError = 0;
+  let precisionStr = 'N/A (Línea abierta)';
+  let area = 0;
+
+  if(valid.length >= 3){
+    const first = valid[0], last = valid[valid.length-1];
+    const closingDist = Math.hypot(first.x - last.x, first.y - last.y);
+    perimeter += closingDist;
+
+    // Error lineal de cierre entre el último punto y el primero
+    const dx = last.x - first.x;
+    const dy = last.y - first.y;
+    closureError = Math.hypot(dx, dy);
+    let precisionDenom = Math.round(perimeter / (closureError || 1));
+    precisionStr = `1 : ${precisionDenom > 0 ? precisionDenom.toLocaleString() : 1}`;
+
+    // Cálculo de área por fórmula de Gauss (Shoelace)
+    let sum1 = 0, sum2 = 0;
+    for(let i=0; i<valid.length; i++){
+      let next = (i + 1) % valid.length;
+      sum1 += valid[i].x * valid[next].y;
+      sum2 += valid[i].y * valid[next].x;
+    }
+    area = Math.abs(sum1 - sum2) / 2.0;
+  }
+
+  document.getElementById('outPerimeter').textContent = perimeter.toFixed(3) + ' m';
+  document.getElementById('outArea').textContent = area > 0 ? `${area.toFixed(2)} m² (${(area/10000).toFixed(4)} ha)` : '—';
+  document.getElementById('outClosureErr').textContent = closureError.toFixed(3) + ' m';
+  document.getElementById('outPrecision').textContent = precisionStr;
+
+  metricsGrid.style.display = 'grid';
   resultsTable.style.display = 'table';
   renderDiagram(valid);
 
@@ -418,11 +453,11 @@ function calculateAndRender(){
   if(valid.length >= 3){
     dxfBtn.style.display = 'block';
     dxfHint.style.display = 'block';
-    dxfHint.textContent = `Polígono cerrado con ${valid.length} vértices, listo para exportación CAD.`;
+    dxfHint.textContent = `Polígono cerrado con ${valid.length} vértices, listo para exportar a DXF.`;
   } else {
     dxfBtn.style.display = 'none';
     dxfHint.style.display = 'block';
-    dxfHint.textContent = 'Se requieren al menos 3 vértices para cerrar el polígono y habilitar el formato DXF.';
+    dxfHint.textContent = 'Se necesitan mínimo 3 puntos para cerrar el polígono y habilitar DXF.';
   }
 }
 
@@ -459,7 +494,7 @@ function renderResultDiagram(valid){
   svg.innerHTML = lines + dots;
 }
 
-// --- EXPORTACIÓN DXF INDUSTRIAL ---
+// --- EXPORTACIÓN DXF ---
 function buildDXF(pts){
   const lines = [];
   const add = (code, value) => { lines.push(String(code)); lines.push(String(value)); };
@@ -517,7 +552,7 @@ document.getElementById('dxfBtn').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-// --- CONVERSIÓN GEODÉSICA CRTM05 (EPSG:5367) -> WGS84 ---
+// --- CRTM05 (EPSG:5367) -> WGS84 ---
 function crtm05ToLatLon(x, y){
   const a = 6378137.0;
   const f = 1/298.257223563;
@@ -561,7 +596,7 @@ function crtm05ToLatLon(x, y){
   return { lat: lat*180/Math.PI, lon: lon*180/Math.PI };
 }
 
-// --- MAPA LEAFLET ---
+// --- MAPA LEAFLET CON CAPAS BASE Y WMS ---
 let leafletMap = null;
 let mapPolygonLayer = null;
 let mapMarkersLayer = null;
@@ -575,11 +610,33 @@ function updateMap(valid){
   });
 
   if(!leafletMap){
-    leafletMap = L.map('mapView');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 21,
-      attribution: '© OpenStreetMap contributors[span_11](start_span)[span_11](end_span)'
-    }).addTo(leafletMap);
+    // Mapas base
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21, attribution: '© OpenStreetMap[span_12](start_span)[span_12](end_span)' });
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21, attribution: 'Tiles &copy; Esri[span_13](start_span)[span_13](end_span)' });
+
+    // Capa WMS de ejemplo (SNIT Costa Rica / IGN - Catastro u Ortofotos)
+    const wmsLayer = L.tileLayer.wms('https://geostec.crt.or.cr/geoserver/wms?', {
+      layers: 'crt:limites', // Ejemplo de capa WMS estándar
+      format: 'image/png',
+      transparent: true,
+      attribution: 'SNIT Costa Rica WMS[span_14](start_span)[span_14](end_span)'
+    });
+
+    leafletMap = L.map('mapView', {
+      layers: [satellite] // Iniciar con satelital por defecto
+    });
+
+    const baseLayers = {
+      "Satelital (Esri)": satellite,
+      "Calles (OpenStreetMap)": osm
+    };
+
+    const overlays = {
+      "WMS SNIT Costa Rica": wmsLayer
+    };
+
+    L.control.layers(baseLayers, overlays).addTo(leafletMap);
+
     mapPolygonLayer = L.layerGroup().addTo(leafletMap);
     mapMarkersLayer = L.layerGroup().addTo(leafletMap);
   }
@@ -590,14 +647,14 @@ function updateMap(valid){
   const latlngPairs = latlngs.map(p => [p.lat, p.lon]);
 
   if(latlngs.length >= 3){
-    L.polygon(latlngPairs, { color:'#8B3A2E', weight:2.5, fillColor:'#B8860B', fillOpacity:0.25 }).addTo(mapPolygonLayer);
+    L.polygon(latlngPairs, { color:'#D6A421', weight:3, fillColor:'#B8860B', fillOpacity:0.35 }).addTo(mapPolygonLayer);
   } else {
-    L.polyline(latlngPairs, { color:'#8B3A2E', weight:2.5 }).addTo(mapPolygonLayer);
+    L.polyline(latlngPairs, { color:'#D6A421', weight:3 }).addTo(mapPolygonLayer);
   }
 
   latlngs.forEach(p => {
-    L.circleMarker([p.lat, p.lon], { radius:6, color:'#1A1A1A', weight:1, fillColor:'#B8860B', fillOpacity:1 })
-      .bindPopup(`<strong>${p.name}</strong><br>Lat: ${p.lat.toFixed(6)}<br>Lon: ${p.lon.toFixed(6)}`)
+    L.circleMarker([p.lat, p.lon], { radius:6, color:'#1A1A1A', weight:1.5, fillColor:'#D6A421', fillOpacity:1 })
+      .bindPopup(`<strong>${p.name}</strong><br>X (Este): ${p.x.toFixed(3)}<br>Y (Norte): ${p.y.toFixed(3)}<br>Lat: ${p.lat.toFixed(6)}<br>Lon: ${p.lon.toFixed(6)}`)
       .addTo(mapMarkersLayer);
   });
 
