@@ -140,7 +140,7 @@
     <div class="hero-text">
       <p class="eyebrow">CRTM05 · SIRGAS Costa Rica</p>
       <h1>Coordenadas a Distancias</h1>
-      <p class="lede">Fotografía tablas o listas con coordenadas CRTM05. La app extrae los puntos automáticamente, calcula azimuts, distancias y genera el plano y DXF al instante.</p>
+      <p class="lede">Captura tablas de coordenadas CRTM05. Extracción OCR local blindada, cálculo de azimuts, plano y exportación DXF.</p>
     </div>
     <div class="hero-diagram">
       <svg viewBox="0 0 260 260" id="diagram"></svg>
@@ -149,7 +149,7 @@
 
   <section class="card">
     <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Capturar coordenadas con cámara</h2></div>
-    <p class="section-sub">Toma una foto clara de la tabla o listado de coordenadas[span_0](start_span)[span_0](end_span).</p>
+    <p class="section-sub">Fotografía la tabla de coordenadas. El sistema procesará la imagen localmente[span_0](start_span)[span_0](end_span).</p>
 
     <div class="camera-row">
       <label class="btn btn-primary" for="cameraInput">📷 Tomar foto</label>
@@ -159,7 +159,7 @@
     </div>
 
     <div class="preview-box" id="previewBox" style="display:none;">
-      <img id="previewImg" alt="Vista previa de la foto capturada">
+      <img id="previewImg" alt="Vista previa">
     </div>
 
     <div class="ocr-status" id="ocrStatus"></div>
@@ -169,7 +169,7 @@
 
   <section class="card">
     <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de puntos</h2></div>
-    <p class="section-sub">Los puntos detectados aparecen aquí automáticamente. Si editas alguno, presiona actualizar.</p>
+    <p class="section-sub">Edita cualquier valor directamente y presiona actualizar para recalcular.</p>
     <table id="pointsTable">
       <thead>
         <tr><th>Nombre</th><th>Este (X)</th><th>Norte (Y)</th><th></th></tr>
@@ -207,7 +207,7 @@
     <div id="mapView"></div>
   </section>
 
-  <footer>Lectura automática por OCR y procesamiento local · CRTM05 / SIRGAS Costa Rica[span_1](start_span)[span_1](end_span)</footer>
+  <footer>Procesamiento local blindado · CRTM05 / SIRGAS Costa Rica[span_1](start_span)[span_1](end_span)</footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
@@ -257,9 +257,7 @@ function renderPointsTable(){
 }
 
 document.getElementById('addPointBtn').addEventListener('click', () => addPointRow());
-document.getElementById('updateAllBtn').addEventListener('click', () => {
-  calculateAndRender();
-});
+document.getElementById('updateAllBtn').addEventListener('click', () => calculateAndRender());
 
 renderPointsTable();
 
@@ -451,7 +449,7 @@ document.getElementById('dxfBtn').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-// --- PREPROCESAMIENTO DE IMAGEN Y OCR ---
+// --- OCR BLINDADO (Tesseract.recognize nativo) ---
 function handleImageFile(file){
   if(!file) return;
   const previewBox = document.getElementById('previewBox');
@@ -463,7 +461,6 @@ function handleImageFile(file){
 
   const reader = new FileReader();
   reader.onload = function(e){
-    // Preprocesar imagen en Canvas para mejorar lectura OCR de tablas
     const img = new Image();
     img.onload = function(){
       const canvas = document.createElement('canvas');
@@ -477,12 +474,12 @@ function handleImageFile(file){
       previewImg.src = processedDataUrl;
       previewBox.style.display = 'block';
       rawText.style.display = 'none';
-      ocrStatus.textContent = 'Procesando imagen y leyendo con OCR…';
+      ocrStatus.textContent = 'Procesando imagen con OCR local…';
       ocrProgress.style.display = 'block';
-      ocrProgressBar.style.width = '0%';
+      ocrProgressBar.style.width = '10%';
 
       if(typeof Tesseract === 'undefined'){
-        ocrStatus.textContent = 'No se pudo cargar el motor OCR.';
+        ocrStatus.textContent = 'Error: El motor OCR no está disponible.';
         ocrProgress.style.display = 'none';
         return;
       }
@@ -490,16 +487,16 @@ function handleImageFile(file){
       Tesseract.recognize(processedDataUrl, 'spa+eng', {
         logger: m => {
           if(m.status === 'recognizing text'){
-            const pct = Math.round((m.progress || 0) * 100);
-            ocrProgressBar.style.width = pct + '%';
-            ocrStatus.textContent = `Leyendo tabla… ${pct}%`;
+            const pct = Math.round((m.progress || 0) * 90);
+            ocrProgressBar.style.width = (10 + pct) + '%';
+            ocrStatus.textContent = `Leyendo tabla de coordenadas… ${pct}%`;
           } else {
             ocrStatus.textContent = m.status;
           }
         }
       }).then(({ data: { text } }) => {
         ocrProgress.style.display = 'none';
-        ocrStatus.textContent = '¡Lectura y carga automática completada!';
+        ocrStatus.textContent = '¡Lectura completada y calculada automáticamente!';
         rawText.textContent = text.trim() || '(sin texto detectado)';
         rawText.style.display = 'block';
         extractAndCalculateAutomatic(text);
@@ -513,17 +510,17 @@ function handleImageFile(file){
   reader.readAsDataURL(file);
 }
 
-// Extractor robusto para tablas de coordenadas CRTM05
 function extractAndCalculateAutomatic(text){
   let cleaned = text.replace(/[Oo]/g, '0')
                     .replace(/[lI]/g, '1')
                     .replace(/[S]/g, '5')
                     .replace(/,/g, '.');
 
+  // Expresión regular robusta para capturar números con formato CRTM05 (5 a 7 dígitos enteros + decimales)
   const matches = cleaned.match(/\b\d{5,7}(?:\.\d{1,4})?\b/g) || [];
 
   if (matches.length < 2) {
-    ocrStatus.innerHTML = '<span style="color:#8B3A2E;">No se detectaron coordenadas suficientes. Verifica la foto o ingresalas manualmente.</span>';
+    ocrStatus.innerHTML = '<span style="color:#8B3A2E;">No se detectaron suficientes coordenadas. Ingresa los puntos en la tabla inferior.</span>';
     return;
   }
 
