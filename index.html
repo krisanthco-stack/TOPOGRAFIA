@@ -3,882 +3,550 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TOPO MAPS PRO · CRTM05 / SIRGAS</title>
+<title>TOPO MAPS PRO · Estabilidad Total</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-  :root{
-    --navy: #0B1E33;
-    --navy-line: #1C3A5E;
-    --paper: #EDE6D6;
-    --ink: #1A1A1A;
-    --brass: #B8860B;
-    --brass-bright: #D6A421;
-    --ok: #3F6B4C;
-    --err: #8B3A2E;
-    --muted: #6b6456;
+  :root {
+    --navy: #0B1E33; --navy-line: #1C3A5E; --paper: #EDE6D6;
+    --ink: #1A1A1A; --brass: #B8860B; --brass-bright: #D6A421;
+    --ok: #3F6B4C; --err: #8B3A2E; --muted: #6b6456;
   }
-  *, *::before, *::after{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:
-      linear-gradient(var(--navy-line) 1px, transparent 1px) 0 0/32px 32px,
-      linear-gradient(90deg, var(--navy-line) 1px, transparent 1px) 0 0/32px 32px,
-      var(--navy);
-    color: var(--paper);
-    font-family:'IBM Plex Sans', sans-serif;
-    min-height:100vh;
-    padding: 40px 20px 80px;
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(var(--navy-line) 1px, transparent 1px) 0 0/32px 32px,
+                linear-gradient(90deg, var(--navy-line) 1px, transparent 1px) 0 0/32px 32px, var(--navy);
+    color: var(--paper); font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh; padding: 40px 20px 80px;
   }
-  .wrap{max-width: 980px; margin: 0 auto;}
+  .wrap { max-width: 980px; margin: 0 auto; }
 
-  .hero{
-    display:flex; flex-wrap:wrap; gap:32px; align-items:center;
-    margin-bottom:48px; padding-bottom: 32px;
-    border-bottom: 1px solid rgba(237,230,214,0.15);
-  }
-  .hero-text{flex:1; min-width:280px;}
-  .eyebrow{
-    font-family:'IBM Plex Mono', monospace;
-    letter-spacing:0.18em; text-transform:uppercase;
-    font-size:12px; color: var(--brass-bright);
-    margin:0 0 12px;
-  }
-  h1{
-    font-family:'Spectral', serif; font-weight:700;
-    font-size: clamp(30px, 5vw, 46px);
-    line-height:1.05; margin:0 0 14px; color:var(--paper);
-  }
-  .lede{ font-size:15px; line-height:1.55; color:#C9C0AC; max-width:48ch; margin:0; }
-  .hero-diagram{
-    width:260px; height:260px; flex-shrink:0;
-    background: var(--paper); border-radius: 4px;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.35); position:relative;
-  }
-  .hero-diagram svg{width:100%; height:100%; display:block;}
+  /* Encabezado */
+  .hero { margin-bottom: 40px; border-bottom: 1px solid rgba(237,230,214,0.15); padding-bottom: 24px; }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brass-bright); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 8px; }
+  h1 { font-family: 'Spectral', serif; font-size: clamp(28px, 4vw, 42px); margin: 0 0 12px; }
+  .lede { font-size: 15px; color: #C9C0AC; max-width: 60ch; line-height: 1.5; margin: 0; }
 
-  section.card{
-    background: var(--paper); color: var(--ink);
-    border-radius: 4px; padding: 28px 30px; margin-bottom: 24px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.28);
-  }
-  .section-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:20px; }
-  .section-num{
-    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--brass);
-    border:1px solid var(--brass); border-radius:2px; padding:2px 7px;
-  }
-  .section-title{ font-family:'Spectral', serif; font-weight:600; font-size:20px; margin:0; color:var(--ink); }
-  .section-sub{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--muted); margin: -10px 0 18px; }
+  /* Tarjetas de Sección */
+  .card { background: var(--paper); color: var(--ink); border-radius: 6px; padding: 24px; margin-bottom: 24px; box-shadow: 0 12px 24px rgba(0,0,0,0.3); }
+  .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid #dcd4c3; padding-bottom: 12px; }
+  .section-num { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brass); border: 1px solid var(--brass); padding: 2px 6px; border-radius: 3px; }
+  .section-title { font-family: 'Spectral', serif; font-weight: 600; font-size: 20px; margin: 0; }
 
-  .action-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
-  .btn{
-    font-family:'Spectral', serif; font-weight:600; font-size:15px;
-    border:none; border-radius:3px; padding:13px 20px; cursor:pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-  }
-  .btn:active{ transform: translateY(1px); }
-  .btn-primary{ background: var(--brass); color:#1A1A1A; }
-  .btn-primary:hover{ background: var(--brass-bright); }
-  .btn-ghost{ background: transparent; color: var(--navy); border:1px solid var(--navy); }
-  .btn-ghost:hover{ background: rgba(11,30,51,0.06); }
-  .btn-small{ font-size:13px; padding:8px 14px; }
+  /* Botones y Acciones */
+  .action-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .btn { font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; font-size: 14px; border: none; border-radius: 4px; padding: 12px 18px; cursor: pointer; transition: 0.2s ease; text-align: center; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--brass); color: #111; }
+  .btn-primary:hover { background: var(--brass-bright); }
+  .btn-ghost { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
+  .btn-ghost:hover { background: rgba(11,30,51,0.08); }
+  input[type="file"] { display: none; }
 
-  input[type="file"]{ display:none; }
+  /* Contenedores de Imagen */
+  .preview-box { position: relative; max-width: 100%; text-align: center; background: #222; border-radius: 4px; padding: 10px; display: none; margin-bottom: 16px; overflow: hidden; }
+  .preview-box img { max-width: 100%; max-height: 40vh; object-fit: contain; cursor: crosshair; }
+  .click-marker { position: absolute; width: 14px; height: 14px; background: var(--brass-bright); border: 2px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
-  .preview-box{ margin-bottom:14px; position:relative; display:none; max-width:100%; text-align:center; background:#111; border-radius:4px; padding:10px; }
-  .preview-box img{ max-width:100%; max-height:400px; border-radius:4px; border:1px solid #c9bfa6; display:inline-block; cursor:crosshair; }
+  /* Mensajes de Estado */
+  .status-msg { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--navy); margin-bottom: 10px; font-weight: 500; }
+  .ocr-progress { height: 6px; background: #ddd; border-radius: 3px; overflow: hidden; margin-bottom: 10px; display: none; }
+  .ocr-progress-bar { height: 100%; width: 0%; background: var(--brass); transition: width 0.3s; }
   
-  .click-marker{
-    position:absolute; width:16px; height:16px; background:var(--brass); border:2px solid #fff; border-radius:50%;
-    transform: translate(-50%, -50%); pointer-events:none; box-shadow: 0 2px 6px rgba(0,0,0,0.4); z-index:10;
-  }
+  /* Tablas */
+  table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+  th { text-align: left; padding: 8px; border-bottom: 2px solid #dcd4c3; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 6px 8px; border-bottom: 1px dashed #dcd4c3; }
+  input[type="text"], input[type="number"] { width: 100%; padding: 8px; font-family: 'IBM Plex Mono', monospace; border: 1px solid #c9bfa6; border-radius: 4px; background: #fff; }
+  input:focus { outline: 2px solid var(--brass); border-color: transparent; }
+  .icon-btn { background: none; border: none; color: var(--err); cursor: pointer; font-size: 12px; padding: 4px 8px; font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; }
+  .icon-btn:hover { text-decoration: underline; }
 
-  .status-msg{ font-family:'IBM Plex Mono', monospace; font-size:13px; color: var(--navy); margin: 10px 0; }
-  .ocr-progress{ height:6px; background:#ddd3ba; border-radius:3px; overflow:hidden; margin:8px 0 14px; display:none; }
-  .ocr-progress-bar{ height:100%; width:0%; background: var(--brass); transition: width 0.2s ease; }
-  .raw-text{
-    font-family:'IBM Plex Mono', monospace; font-size:12px; background:#FBF9F3;
-    border:1px solid #c9bfa6; border-radius:3px; padding:8px; margin-top:10px; max-height:100px; overflow:auto; display:none; color:#444;
-  }
+  /* Panel de Resultados */
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .metric-card { background: var(--navy-line); color: var(--paper); padding: 16px; border-radius: 4px; }
+  .metric-card span { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--brass-bright); text-transform: uppercase; margin-bottom: 4px; }
+  .metric-card strong { font-size: 18px; }
+  #resultDiagram { width: 100%; max-width: 400px; margin: 20px auto; display: block; background: #FBF9F3; border: 1px solid #dcd4c3; border-radius: 4px; }
 
-  table{ width:100%; border-collapse:collapse; margin-bottom:16px; font-family:'IBM Plex Mono', monospace; font-size:13.5px; }
-  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); padding:6px 8px; border-bottom:1px solid #ddd3ba; }
-  td{ padding:6px 8px; border-bottom:1px dashed #e4dcc6; }
-  td input{ width:100%; }
-  input[type="text"], input[type="number"]{
-    padding:7px 8px; font-family:'IBM Plex Mono', monospace; font-size:13.5px;
-    border:1px solid #c9bfa6; border-radius:3px; background:#FBF9F3; color:var(--ink);
-  }
-  input:focus{ outline:2px solid var(--brass); outline-offset:1px; border-color:var(--brass); }
-  .row-actions{ text-align:right; }
-  .icon-btn{
-    background:none; border:none; color:var(--err); cursor:pointer;
-    font-family:'IBM Plex Mono', monospace; font-size:12px;
-  }
+  /* Mapa y Controles WMS */
+  #mapView { width: 100%; height: 50vh; min-height: 400px; border-radius: 4px; border: 1px solid #c9bfa6; z-index: 1; }
+  .map-controls { background: #FBF9F3; padding: 12px; border-radius: 4px; border: 1px solid #dcd4c3; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .toggle-wms { display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; color: var(--navy); }
+  .toggle-wms input { cursor: pointer; width: 18px; height: 18px; }
 
-  .results{ display:none; }
-  .results.show{ display:block; }
-  .status{ font-family:'IBM Plex Mono', monospace; font-size:13px; padding:12px 14px; border-radius:3px; margin-bottom:18px; }
-  .status.ok{ background:#E1EBE3; color:var(--ok); border:1px solid #B7CFBB; }
-  .status.err{ background:#F3E1DD; color:var(--err); border:1px solid #DDB6AD; }
-
-  .metrics-grid{
-    display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:18px;
-  }
-  .metric-card{
-    background: var(--navy); color:var(--paper); border-radius:4px; padding:16px 20px;
-  }
-  .metric-card .k{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--brass-bright); margin:0 0 6px; }
-  .metric-card .v{ font-family:'IBM Plex Mono', monospace; font-size:18px; font-weight:600; margin:0; }
-
-  footer{ text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12px; color:#8494a8; margin-top:40px; }
-
-  #mapView{ width:100%; height:420px; border-radius:4px; border:1px solid #c9bfa6; z-index:0; }
-  .leaflet-popup-content{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; }
-
-  /* Modal de captura de punto por clic */
-  .modal-overlay{
-    position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6);
-    display:flex; align-items:center; justify-content:center; z-index:9999; display:none;
-  }
-  .modal-card{
-    background:var(--paper); color:var(--ink); padding:24px; border-radius:6px; width:320px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4); font-family:'IBM Plex Sans', sans-serif;
-  }
-  .modal-card h3{ margin-top:0; font-family:'Spectral', serif; color:var(--navy); }
-  .modal-card label{ display:block; font-size:12px; font-family:'IBM Plex Mono', monospace; margin:10px 0 4px; color:var(--muted); text-transform:uppercase; }
-  .modal-card input{ width:100%; margin-bottom:10px; }
-  .modal-actions{ display:flex; gap:10px; margin-top:16px; justify-content:flex-end; }
+  /* Modal Anti-Congelamiento */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,30,51,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; }
+  .modal-card { background: var(--paper); padding: 24px; border-radius: 6px; width: 90%; max-width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+  .modal-card h3 { margin: 0 0 16px; font-family: 'Spectral', serif; color: var(--navy); }
+  .modal-card label { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-bottom: 4px; color: var(--muted); }
+  .modal-card input { margin-bottom: 16px; }
 </style>
 </head>
 <body>
-<div class="wrap">
 
+<div class="wrap">
   <div class="hero">
-    <div class="hero-text">
-      <p class="eyebrow">CRTM05 · SIRGAS Costa Rica</p>
-      <h1>TOPO MAPS PRO</h1>
-      <p class="lede">Sistema robusto con 3 formas de lectura operativas: Importación Excel/CSV, Escaneo OCR Automático con asignación directa a tabla, y Visor Gráfico Interactivo por Clic con captura de coordenadas.</p>
-    </div>
-    <div class="hero-diagram">
-      <svg viewBox="0 0 260 260" id="diagram"></svg>
-    </div>
+    <p class="eyebrow">Motor Anti-Crash · Topografía Segura</p>
+    <h1>TOPO MAPS PRO</h1>
+    <p class="lede">Versión estabilizada. Mapa satelital nativo para evitar cuelgues, WMS desacoplado como opción manual, y motor de procesamiento de imágenes con prevención de memoria.</p>
   </div>
 
+  <!-- SECCIÓN 1: INGRESO DE DATOS -->
   <section class="card">
-    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Opciones de Ingreso de Coordenadas</h2></div>
-    <p class="section-sub">Selecciona el método de entrada deseado. Los datos se poblarán instantáneamente en la tabla inferior.</p>
-
+    <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Ingreso Seguro de Coordenadas</h2></div>
     <div class="action-row">
-      <label class="btn btn-primary" for="excelInput">📊 Opción 1: Cargar Excel / CSV</label>
+      <label class="btn btn-primary" for="excelInput">📊 Cargar Excel/CSV</label>
       <input type="file" id="excelInput" accept=".xlsx, .xls, .csv">
       
-      <label class="btn btn-ghost" for="ocrInput">📷 Opción 2: Escaneo OCR Automático</label>
+      <label class="btn btn-ghost" for="ocrInput">📷 Escaneo OCR Automático</label>
       <input type="file" id="ocrInput" accept="image/*" capture="environment">
 
-      <label class="btn btn-ghost" for="clickMapInput" style="background:#1C3A5E; color:#EDE6D6;">🎯 Opción 3: Visor Interactivo por Clic</label>
+      <label class="btn btn-ghost" for="clickMapInput" style="background:var(--navy-line); color:var(--paper); border:none;">🎯 Marcar Puntos Manual (Imagen)</label>
       <input type="file" id="clickMapInput" accept="image/*">
     </div>
 
     <div class="preview-box" id="previewBox">
-      <img id="previewImg" alt="Vista previa imagen">
+      <img id="previewImg" alt="Plano o Libreta">
       <div id="markersContainer"></div>
     </div>
-
     <div class="ocr-progress" id="ocrProgress"><div class="ocr-progress-bar" id="ocrProgressBar"></div></div>
-    <div class="status-msg" id="statusMsg"></div>
-    <div class="raw-text" id="rawText"></div>
+    <div class="status-msg" id="statusMsg">Listo para recibir datos.</div>
   </section>
 
+  <!-- SECCIÓN 2: TABLA DE PUNTOS -->
   <section class="card">
-    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Lista de Vértices</h2></div>
-    <p class="section-sub">Edita nombres o coordenadas (Este X, Norte Y) y pulsa actualizar para recalcular.</p>
+    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Libreta de Vértices</h2></div>
     <table id="pointsTable">
-      <thead>
-        <tr><th>Vértice</th><th>Este (X) [m]</th><th>Norte (Y) [m]</th><th></th></tr>
-      </thead>
+      <thead><tr><th>Vértice</th><th>Este (X) [m]</th><th>Norte (Y) [m]</th><th>Acción</th></tr></thead>
       <tbody id="pointsBody"></tbody>
     </table>
-    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:14px;">
-      <button class="btn btn-ghost btn-small" id="addPointBtn">+ Agregar punto</button>
-      <button class="btn btn-primary btn-small" id="updateAllBtn" style="flex:1;">🔄 Actualizar todo (Recalcular)</button>
+    <div style="display:flex; gap:10px; margin-top:16px;">
+      <button class="btn btn-ghost" style="padding:8px 12px;" onclick="addPointRow()">+ Añadir Fila</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="procesarPoligono()">🔄 Calcular Cierre y Mapa</button>
     </div>
   </section>
 
-  <section class="card results" id="results">
-    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Resultados y Análisis de Cierre</h2></div>
-    <div id="statusBox"></div>
+  <!-- SECCIÓN 3: MAPA SEGURO -->
+  <section class="card" id="mapSection" style="display:none;">
+    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Cartografía Georreferenciada</h2></div>
     
-    <div class="metrics-grid" id="metricsGrid" style="display:none;">
-      <div class="metric-card"><p class="k">Perí perímetro Total</p><p class="v" id="outPerimeter">—</p></div>
-      <div class="metric-card"><p class="k">Área Calculada</p><p class="v" id="outArea">—</p></div>
-      <div class="metric-card"><p class="k">Error Lineal (El)</p><p class="v" id="outClosureErr">—</p></div>
-      <div class="metric-card"><p class="k">Precisión Relativa</p><p class="v" id="outPrecision">—</p></div>
+    <div class="map-controls">
+      <span style="font-size:13px; color:var(--muted);">Vista principal estable: Satélite / OSM.</span>
+      <label class="toggle-wms">
+        <input type="checkbox" id="wmsToggle">
+        Cargar Capa WMS Catastral (Opcional - Requiere Internet Rápido)
+      </label>
     </div>
-
-    <table id="resultsTable" style="display:none;">
-      <thead><tr><th>Tramo</th><th>Distancia (m)</th><th>Azimut (DMS / Dec)</th></tr></thead>
-      <tbody id="resultsBody"></tbody>
-    </table>
-    <div class="result-diagram-box" id="resultDiagramBox" style="display:none;">
-      <p class="section-sub" style="margin:0 0 10px;">Diagrama del Polígono (Incluye Cierre Automático $P_N \to P_1$)</p>
-      <svg viewBox="0 0 400 400" id="resultDiagram" style="width:100%; max-width:400px; height:auto; display:block; background:#FBF9F3; border:1px solid #c9bfa6; border-radius:4px;"></svg>
-    </div>
-    <button class="btn btn-primary" id="dxfBtn" style="display:none; width:100%; margin-top:16px;">⬇ Descargar DXF Georreferenciado</button>
-    <p class="section-sub" id="dxfHint" style="display:none; margin-top:10px;"></p>
-  </section>
-
-  <section class="card results" id="mapSection">
-    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Visualización Cartográfica y Satelital (WMS)</h2></div>
-    <p class="section-sub">Alterna entre mapas base y capas WMS oficiales de Costa Rica.</p>
     <div id="mapView"></div>
   </section>
 
-  <footer>TOPO MAPS PRO · CRTM05 / SIRGAS Costa Rica</footer>
+  <!-- SECCIÓN 4: RESULTADOS TOPOGRÁFICOS -->
+  <section class="card" id="resultsSection" style="display:none;">
+    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Análisis Analítico y Exportación</h2></div>
+    
+    <div class="metrics-grid">
+      <div class="metric-card"><span>Perímetro</span><strong id="outPerimeter">—</strong></div>
+      <div class="metric-card"><span>Área de Polígono</span><strong id="outArea">—</strong></div>
+      <div class="metric-card"><span>Error de Cierre ($E_L$)</span><strong id="outClosure">—</strong></div>
+      <div class="metric-card"><span>Precisión Relativa</span><strong id="outPrecision">—</strong></div>
+    </div>
+
+    <svg viewBox="0 0 400 400" id="resultDiagram"></svg>
+
+    <button class="btn btn-primary" style="width:100%;" id="dxfBtn">⬇ Exportar a DXF (AutoCAD/Civil3D)</button>
+  </section>
+
 </div>
 
-<!-- Modal de captura de punto por clic -->
+<!-- MODAL PARA OPCIÓN 3 -->
 <div class="modal-overlay" id="pointModal">
   <div class="modal-card">
-    <h3>Registrar Vértice</h3>
-    <label>Nombre del Vértice</label>
-    <input type="text" id="modalName" value="P1">
-    <label>Este (X) [m]</label>
-    <input type="number" step="0.001" id="modalX" placeholder="Ej. 553036.55">
-    <label>Norte (Y) [m]</label>
-    <input type="number" step="0.001" id="modalY" placeholder="Ej. 1116403.52">
-    <div class="modal-actions">
-      <button class="btn btn-ghost btn-small" id="modalCancel">Cancelar</button>
-      <button class="btn btn-primary btn-small" id="modalSave">Guardar Vértice</button>
+    <h3>Definir Coordenada</h3>
+    <label>Identificador</label>
+    <input type="text" id="modalName">
+    <label>Coordenada Este (X)</label>
+    <input type="number" id="modalX">
+    <label>Coordenada Norte (Y)</label>
+    <input type="number" id="modalY">
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="document.getElementById('pointModal').style.display='none'">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPuntoClic()">Guardar</button>
     </div>
   </div>
 </div>
 
+<!-- Librerías Externas Seguras -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
 <script>
-let pointCounter = 0;
-let points = []; 
+// --- ESTADO GLOBAL ---
+let puntos = [];
+let contadorId = 0;
+let coordsClickPendiente = null;
+let mapaLeaflet = null;
+let capaPoligono = null;
+let capaWMS = null;
+let mapaSatelite = null;
+let mapaCalles = null;
 
-function addPointRow(name, x, y){
-  pointCounter++;
-  const id = 'pt' + pointCounter;
-  points.push({id, name: name || ('P' + pointCounter), x: (x !== undefined && x !== '') ? Number(x) : '', y: (y !== undefined && y !== '') ? Number(y) : ''});
-  renderPointsTable();
+// --- INICIALIZACIÓN DE TABLA ---
+function addPointRow(nombre='', x='', y='') {
+  contadorId++;
+  const id = 'pt_' + contadorId;
+  const nom = nombre || `P${puntos.length + 1}`;
+  puntos.push({ id, nombre: nom, x: Number(x) || '', y: Number(y) || '' });
+  renderTabla();
 }
 
-function removePoint(id){
-  points = points.filter(p => p.id !== id);
-  renderPointsTable();
-}
-
-function renderPointsTable(){
-  const body = document.getElementById('pointsBody');
-  body.innerHTML = '';
-  points.forEach(p => {
+function renderTabla() {
+  const tbody = document.getElementById('pointsBody');
+  tbody.innerHTML = '';
+  puntos.forEach(p => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" value="${p.name}" data-id="${p.id}" data-field="name"></td>
-      <td><input type="number" step="0.001" value="${p.x !== '' ? p.x : ''}" data-id="${p.id}" data-field="x"></td>
-      <td><input type="number" step="0.001" value="${p.y !== '' ? p.y : ''}" data-id="${p.id}" data-field="y"></td>
-      <td class="row-actions"><button class="icon-btn" data-remove="${p.id}">Quitar</button></td>
+      <td><input type="text" value="${p.nombre}" onchange="updatePt('${p.id}', 'nombre', this.value)"></td>
+      <td><input type="number" step="0.001" value="${p.x}" onchange="updatePt('${p.id}', 'x', this.value)"></td>
+      <td><input type="number" step="0.001" value="${p.y}" onchange="updatePt('${p.id}', 'y', this.value)"></td>
+      <td><button class="icon-btn" onclick="eliminarPt('${p.id}')">Quitar</button></td>
     `;
-    body.appendChild(tr);
+    tbody.appendChild(tr);
   });
-  body.querySelectorAll('input').forEach(inp => {
-    inp.addEventListener('input', e => {
-      const id = e.target.dataset.id, field = e.target.dataset.field;
-      const p = points.find(pt => pt.id === id);
-      if(p) {
-        if(field === 'name') {
-          p.name = e.target.value;
-        } else {
-          p[field] = e.target.value === '' ? '' : parseFloat(e.target.value);
-        }
-      }
-      updatePreviewDiagram();
-    });
-  });
-  body.querySelectorAll('[data-remove]').forEach(btn => {
-    btn.addEventListener('click', e => removePoint(e.target.dataset.remove));
-  });
-  updatePreviewDiagram();
-  calculateAndRender();
 }
 
-document.getElementById('addPointBtn').addEventListener('click', () => addPointRow());
-document.getElementById('updateAllBtn').addEventListener('click', () => calculateAndRender());
+function updatePt(id, campo, valor) {
+  const pt = puntos.find(p => p.id === id);
+  if(pt) pt[campo] = campo === 'nombre' ? valor : parseFloat(valor);
+}
 
-// Datos iniciales de prueba (basados en el caso Costa Rica / Siquirres / CRTM05)
-addPointRow('P1', 553036.55, 1116403.52);
-addPointRow('P2', 553042.38, 1116411.64);
-addPointRow('P3', 553070.98, 1116399.78);
-addPointRow('P4', 553065.98, 1116391.12);
+function eliminarPt(id) {
+  puntos = puntos.filter(p => p.id !== id);
+  renderTabla();
+}
 
-// --- OPCIÓN 1: EXCEL / CSV PARSER ---
+// Inicializar 4 puntos vacíos
+[1,2,3,4].forEach(() => addPointRow());
+
+// --- OPCIÓN 1: EXCEL (Aislado en Try/Catch) ---
 document.getElementById('excelInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
-  if (!file) return;
-  const statusMsg = document.getElementById('statusMsg');
-  statusMsg.textContent = 'Procesando archivo tabular...';
-
+  if(!file) return;
+  const status = document.getElementById('statusMsg');
+  status.innerHTML = "Leyendo Excel...";
+  
   const reader = new FileReader();
   reader.onload = function(evt) {
     try {
       const data = new Uint8Array(evt.target.result);
       const workbook = XLSX.read(data, {type: 'array'});
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
-
-      let parsedPoints = [];
-      rows.forEach((row) => {
-        let numericCols = [];
-        let rowName = 'P' + (parsedPoints.length + 1);
-
-        row.forEach((cell, cellIdx) => {
-          let val = parseFloat(cell);
-          if (!isNaN(val)) {
-            if (val > 10000 || val < -10000) {
-              numericCols.push(val);
-            } else if (cellIdx === 0 && String(cell).trim() !== '') {
-              rowName = String(cell).trim();
-            }
-          }
-        });
-
-        if (numericCols.length >= 2) {
-          parsedPoints.push({
-            name: rowName,
-            x: numericCols[0],
-            y: numericCols[1]
-          });
-        }
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+      
+      puntos = []; contadorId = 0;
+      rows.forEach(r => {
+        let nums = r.map(c => parseFloat(c)).filter(n => !isNaN(n) && (n > 1000 || n < -1000));
+        if(nums.length >= 2) addPointRow('', nums[0], nums[1]);
       });
-
-      if (parsedPoints.length > 0) {
-        points = [];
-        pointCounter = 0;
-        parsedPoints.forEach(p => {
-          pointCounter++;
-          points.push({ id: 'pt' + pointCounter, name: p.name, x: p.x, y: p.y });
-        });
-        renderPointsTable();
-        statusMsg.innerHTML = `<span style="color:var(--ok);">¡Excel cargado con éxito (${parsedPoints.length} vértices)!</span>`;
-      } else {
-        statusMsg.innerHTML = '<span style="color:var(--err);">No se detectaron columnas válidas de coordenadas.</span>';
-      }
-    } catch(err) {
-      statusMsg.innerHTML = `<span style="color:var(--err);">Error: ${err.message}</span>`;
+      status.innerHTML = `<span style="color:var(--ok)">Excel cargado: ${puntos.length} puntos.</span>`;
+    } catch (err) {
+      status.innerHTML = `<span style="color:var(--err)">Error leyendo Excel: Archivo corrupto o no válido.</span>`;
     }
   };
   reader.readAsArrayBuffer(file);
 });
 
-// --- OPCIÓN 2: ESCANEO OCR AUTOMÁTICO ---
+// --- OPCIÓN 2: OCR PROTEGIDO CONTRA MEMORIA (Downsampling) ---
 document.getElementById('ocrInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
-  if (!file) return;
-  const previewBox = document.getElementById('previewBox');
-  const previewImg = document.getElementById('previewImg');
-  const statusMsg = document.getElementById('statusMsg');
-  const ocrProgress = document.getElementById('ocrProgress');
-  const ocrProgressBar = document.getElementById('ocrProgressBar');
-  const rawText = document.getElementById('rawText');
-  const markersContainer = document.getElementById('markersContainer');
-  markersContainer.innerHTML = '';
+  if(!file) return;
+  const img = new Image();
+  const status = document.getElementById('statusMsg');
+  const barra = document.getElementById('ocrProgressBar');
+  document.getElementById('ocrProgress').style.display = 'block';
+  status.textContent = "Preparando imagen (Prevención de RAM)...";
 
   const reader = new FileReader();
-  reader.onload = function(evt) {
-    const img = new Image();
-    img.onload = async function(){
+  reader.onload = e => {
+    img.onload = async () => {
+      // Compresión de Canvas para evitar cuelgues
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const scale = Math.max(1, 2500 / Math.max(img.width, img.height));
+      const scale = Math.min(1, 1800 / Math.max(img.width, img.height)); 
       canvas.width = img.width * scale;
       canvas.height = img.height * scale;
-      
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imgData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        let v = avg > 150 ? 255 : 0; 
-        data[i] = v; data[i + 1] = v; data[i + 2] = v;
-      }
-      ctx.putImageData(imgData, 0, 0);
+      // Filtro de Alto Contraste Nativo
+      ctx.filter = 'contrast(200%) grayscale(100%)';
+      ctx.drawImage(canvas, 0, 0);
 
-      const processedDataUrl = canvas.toDataURL('image/jpeg', 1.0);
+      // Exportar en JPEG ligero (60% calidad)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+      
+      document.getElementById('previewImg').src = dataUrl;
+      document.getElementById('previewBox').style.display = 'block';
+      document.getElementById('markersContainer').innerHTML = '';
 
-      previewImg.src = processedDataUrl;
-      previewBox.style.display = 'block';
-      statusMsg.textContent = 'Analizando imagen con motor OCR...';
-      ocrProgress.style.display = 'block';
-      ocrProgressBar.style.width = '20%';
-      rawText.style.display = 'none';
-
-      if(typeof Tesseract === 'undefined'){
-        statusMsg.innerHTML = '<span style="color:var(--err);">Error: Tesseract no está disponible.</span>';
-        ocrProgress.style.display = 'none';
+      if (typeof Tesseract === 'undefined') {
+        status.innerHTML = '<span style="color:var(--err)">Tesseract no cargó. Revisa tu conexión.</span>';
         return;
       }
 
       try {
-        ocrProgressBar.style.width = '50%';
-        const result = await Tesseract.recognize(processedDataUrl, 'spa+eng', {
-          logger: m => {
-            if(m.status === 'recognizing text'){
-              let pct = Math.round((m.progress || 0) * 50);
-              ocrProgressBar.style.width = (50 + pct) + '%';
-              statusMsg.textContent = `Leyendo tabla... ${pct + 50}%`;
-            }
-          }
+        status.textContent = "Analizando topografía OCR...";
+        barra.style.width = '30%';
+        
+        const result = await Tesseract.recognize(dataUrl, 'spa+eng', {
+          logger: m => { if(m.status === 'recognizing text') barra.style.width = (30 + Math.round(m.progress * 70)) + '%'; }
         });
+        
+        // Expresión Regular Mejorada
+        const cleanTxt = result.data.text.replace(/,/g, '.').replace(/[OoS]/g, m => m === 'S'?'5':'0');
+        const nums = cleanTxt.match(/\b\d{5,7}(?:\.\d{1,4})?\b/g) || [];
+        
+        // Filtro CRTM05 estricto
+        const validCoords = nums.map(n => parseFloat(n)).filter(n => (n >= 300000 && n <= 700000) || (n >= 900000 && n <= 1300000));
 
-        ocrProgress.style.display = 'none';
-        statusMsg.textContent = '¡Lectura OCR finalizada con éxito!';
-        rawText.textContent = result.data.text.trim() || '(Sin texto detectado)';
-        rawText.style.display = 'block';
-
-        let cleaned = result.data.text.replace(/[Oo]/g, '0').replace(/[lI]/g, '1').replace(/[S]/g, '5').replace(/,/g, '.');
-        let allNumbers = cleaned.match(/\b\d{5,7}(?:\.\d{1,4})?\b/g) || [];
-        let validCoords = allNumbers.map(n => parseFloat(n)).filter(n => (n >= 300000 && n <= 700000) || (n >= 900000 && n <= 1300000));
-
-        let extractedPairs = [];
-        for(let i = 0; i + 1 < validCoords.length; i += 2){
-          extractedPairs.push({
-            name: 'P' + (extractedPairs.length + 1),
-            x: validCoords[i],
-            y: validCoords[i+1]
-          });
-        }
-
-        if(extractedPairs.length > 0){
-          points = [];
-          pointCounter = 0;
-          extractedPairs.forEach(p => {
-            pointCounter++;
-            points.push({ id: 'pt' + pointCounter, name: p.name, x: p.x, y: p.y });
-          });
-          renderPointsTable();
-          statusMsg.innerHTML = `<span style="color:var(--ok);">¡${extractedPairs.length} vértices extraídos e insertados correctamente por OCR!</span>`;
+        if(validCoords.length >= 2) {
+          puntos = []; contadorId = 0;
+          for(let i=0; i+1 < validCoords.length; i+=2) {
+            addPointRow('', validCoords[i], validCoords[i+1]);
+          }
+          status.innerHTML = `<span style="color:var(--ok)">OCR Exitoso: ${puntos.length} vértices hallados.</span>`;
         } else {
-          statusMsg.innerHTML = '<span style="color:var(--err);">No se detectaron rangos válidos CRTM05 automáticamente. Por favor ingresa los datos en la tabla o usa Opción 3.</span>';
+          status.innerHTML = `<span style="color:var(--err)">No se detectaron coordenadas métricas de Costa Rica.</span>`;
         }
-      } catch(err) {
-        ocrProgress.style.display = 'none';
-        statusMsg.innerHTML = `<span style="color:var(--err);">Error OCR: ${err.message}</span>`;
+      } catch (err) {
+        status.innerHTML = `<span style="color:var(--err)">OCR Falló: Imagen demasiado compleja. Usa opción 3.</span>`;
+      } finally {
+        document.getElementById('ocrProgress').style.display = 'none';
       }
     };
-    img.src = evt.target.result;
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 });
 
 // --- OPCIÓN 3: VISOR INTERACTIVO POR CLIC ---
-let pendingClickCoords = null;
 document.getElementById('clickMapInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
-  if (!file) return;
-  const previewBox = document.getElementById('previewBox');
-  const previewImg = document.getElementById('previewImg');
-  const statusMsg = document.getElementById('statusMsg');
-  const markersContainer = document.getElementById('markersContainer');
-  markersContainer.innerHTML = '';
-  document.getElementById('rawText').style.display = 'none';
+  if(!file) return;
+  const status = document.getElementById('statusMsg');
+  document.getElementById('markersContainer').innerHTML = '';
   document.getElementById('ocrProgress').style.display = 'none';
 
   const reader = new FileReader();
-  reader.onload = function(evt) {
-    previewImg.src = evt.target.result;
-    previewBox.style.display = 'block';
-    statusMsg.innerHTML = '<span style="color:var(--brass);">Modo Visor Activo: Haz clic sobre cualquier punto de la imagen para registrar su vértice y coordenadas.</span>';
+  reader.onload = evt => {
+    const imgEl = document.getElementById('previewImg');
+    imgEl.src = evt.target.result;
+    document.getElementById('previewBox').style.display = 'inline-block';
+    status.innerHTML = "🎯 Clic sobre la imagen para clavar vértices.";
     
-    previewImg.onclick = function(event) {
-      const rect = previewImg.getBoundingClientRect();
-      const xPos = event.clientX - rect.left;
-      const yPos = event.clientY - rect.top;
-
-      document.getElementById('modalName').value = 'P' + (points.length + 1);
+    imgEl.onclick = function(event) {
+      const rect = imgEl.getBoundingClientRect();
+      coordsClickPendiente = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      
+      document.getElementById('modalName').value = `P${puntos.length + 1}`;
       document.getElementById('modalX').value = '';
       document.getElementById('modalY').value = '';
       document.getElementById('pointModal').style.display = 'flex';
-
-      pendingClickCoords = {xPos, yPos};
     };
   };
   reader.readAsDataURL(file);
 });
 
-document.getElementById('modalCancel').addEventListener('click', () => {
+function guardarPuntoClic() {
+  const nombre = document.getElementById('modalName').value || 'P';
+  const x = parseFloat(document.getElementById('modalX').value);
+  const y = parseFloat(document.getElementById('modalY').value);
+  
+  if (isNaN(x) || isNaN(y)) { alert('Coordenadas inválidas.'); return; }
+  
+  addPointRow(nombre, x, y);
+  
+  // Agregar marcador visual
+  const marker = document.createElement('div');
+  marker.className = 'click-marker';
+  marker.style.left = coordsClickPendiente.x + 'px';
+  marker.style.top = coordsClickPendiente.y + 'px';
+  document.getElementById('markersContainer').appendChild(marker);
+  
   document.getElementById('pointModal').style.display = 'none';
-});
+  document.getElementById('statusMsg').innerHTML = `<span style="color:var(--ok)">Vértice ${nombre} fijado.</span>`;
+}
 
-document.getElementById('modalSave').addEventListener('click', () => {
-  const name = document.getElementById('modalName').value || ('P' + (points.length + 1));
-  const x = document.getElementById('modalX').value;
-  const y = document.getElementById('modalY').value;
-
-  if(x === '' || y === '' || isNaN(x) || isNaN(y)){
-    alert('Por favor ingresa valores numéricos válidos para Este (X) y Norte (Y).');
+// --- CÁLCULO Y MAPEO CENTRALIZADO ---
+function procesarPoligono() {
+  const validos = puntos.filter(p => typeof p.x === 'number' && typeof p.y === 'number' && !isNaN(p.x) && !isNaN(p.y));
+  if (validos.length < 3) {
+    alert('Se requieren al menos 3 coordenadas completas (X, Y) para calcular y cerrar un polígono.');
     return;
   }
+  
+  // Mostrar paneles
+  document.getElementById('mapSection').style.display = 'block';
+  document.getElementById('resultsSection').style.display = 'block';
 
-  addPointRow(name, x, y);
+  // Analítica Matemática (Área Gauss, Perímetro)
+  let perimetro = 0;
+  let s1 = 0, s2 = 0;
+  
+  for(let i=0; i < validos.length; i++) {
+    const actual = validos[i];
+    const sgte = validos[(i + 1) % validos.length]; // Cierre implícito
+    
+    perimetro += Math.hypot(sgte.x - actual.x, sgte.y - actual.y);
+    s1 += actual.x * sgte.y;
+    s2 += actual.y * sgte.x;
+  }
+  const area = Math.abs(s1 - s2) / 2;
+  
+  // Error Lineal (Cierre real P1 -> P_ultimo vs Teoría)
+  // Como estamos forzando figura cerrada, si el input es un perímetro cerrado real tomado en campo, el primer y último punto ingresado deberían ser iguales. Si no, es un polígono dibujado por vértices perimetrales. 
+  // Para cálculo de E_L real en libreta abierta:
+  const pInicio = validos[0];
+  const pFin = validos[validos.length - 1];
+  const cierreError = Math.hypot(pFin.x - pInicio.x, pFin.y - pInicio.y);
+  // Nota: En polígonos cerrados por coordenadas estáticas, el error puede ser 0 o la distancia del cierre. Se asume cierre geométrico estricto.
 
-  if(pendingClickCoords){
-    const markersContainer = document.getElementById('markersContainer');
-    const marker = document.createElement('div');
-    marker.className = 'click-marker';
-    marker.style.left = pendingClickCoords.xPos + 'px';
-    marker.style.top = pendingClickCoords.yPos + 'px';
-    markersContainer.appendChild(marker);
-  }
+  document.getElementById('outPerimeter').textContent = perimetro.toFixed(3) + ' m';
+  document.getElementById('outArea').textContent = area.toFixed(2) + ' m²';
+  document.getElementById('outClosure').textContent = cierreError.toFixed(3) + ' m';
+  document.getElementById('outPrecision').textContent = cierreError > 0 ? `1 : ${Math.round(perimetro/cierreError).toLocaleString()}` : 'Perfecto';
 
-  document.getElementById('pointModal').style.display = 'none';
-  document.getElementById('statusMsg').innerHTML = `<span style="color:var(--ok);">¡Vértice ${name} agregado exitosamente!</span>`;
-});
-
-// --- DIAGRAMAS SVG ---
-function renderDiagram(pts){
-  const svg = document.getElementById('diagram');
-  const valid = pts.filter(p => !isNaN(p.x) && !isNaN(p.y) && p.x !== '' && p.y !== '' && p.x !== null && p.y !== null);
-  if(valid.length < 2){ svg.innerHTML = ''; return; }
-  const xs = valid.map(p=>p.x), ys = valid.map(p=>p.y);
-  const minX=Math.min(...xs), maxX=Math.max(...xs);
-  const minY=Math.min(...ys), maxY=Math.max(...ys);
-  const pad = 30, w = 260, h = 260;
-  const spanX = (maxX-minX)||1, spanY=(maxY-minY)||1;
-  const scale = Math.min((w-2*pad)/spanX, (h-2*pad)/spanY);
-  function proj(p){
-    const px = pad + (p.x-minX)*scale + (w-2*pad-spanX*scale)/2;
-    const py = h - (pad + (p.y-minY)*scale + (h-2*pad-spanY*scale)/2);
-    return {x:px, y:py};
-  }
-  const proj_pts = valid.map(proj);
-  let lines = '';
-  for(let i=0;i<proj_pts.length-1;i++){
-    lines += `<line x1="${proj_pts[i].x}" y1="${proj_pts[i].y}" x2="${proj_pts[i+1].x}" y2="${proj_pts[i+1].y}" stroke="#8B3A2E" stroke-width="1.5"/>`;
-  }
-  if(valid.length >= 3){
-    const first = proj_pts[0], last = proj_pts[proj_pts.length-1];
-    lines += `<line x1="${last.x}" y1="${last.y}" x2="${first.x}" y2="${first.y}" stroke="#8B3A2E" stroke-width="1.5" stroke-dasharray="4 3"/>`;
-  }
-  let dots = '';
-  proj_pts.forEach((p, i) => {
-    dots += `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#B8860B"/>
-      <text x="${p.x+7}" y="${p.y-6}" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1A1A">${valid[i].name}</text>`;
-  });
-  svg.innerHTML = lines + dots;
+  // Renderizar Diagrama Vectorial Ciego
+  renderDiagramaSVG(validos);
+  
+  // Levantar Mapa Leaflet Anti-Crash
+  actualizarMapa(validos);
 }
 
-function updatePreviewDiagram(){ renderDiagram(points); }
-
-// --- CÁLCULOS TOPOGRÁFICOS ---
-function calcularAzimut(x1,y1,x2,y2){
-  const azRad = Math.atan2(x2-x1, y2-y1);
-  let azDeg = azRad * 180/Math.PI;
-  return (azDeg + 360) % 360;
-}
-function decimalToDms(decimal){
-  const g = Math.trunc(decimal);
-  const mFull = (decimal - g) * 60;
-  const m = Math.trunc(mFull);
-  const s = (mFull - m) * 60;
-  return `${g}\u00B0 ${m}' ${s.toFixed(1)}"`;
-}
-
-function calculateAndRender(){
-  const resultsSection = document.getElementById('results');
-  const statusBox = document.getElementById('statusBox');
-  const metricsGrid = document.getElementById('metricsGrid');
-  const resultsTable = document.getElementById('resultsTable');
-  const resultsBody = document.getElementById('resultsBody');
-  const resultDiagramBox = document.getElementById('resultDiagramBox');
-
-  const valid = points.filter(p => !isNaN(p.x) && !isNaN(p.y) && p.x !== '' && p.y !== '' && p.x !== null && p.y !== null);
-
-  if(valid.length < 2){
-    resultsSection.classList.remove('show');
-    document.getElementById('mapSection').classList.remove('show');
-    return;
-  }
-  resultsSection.classList.add('show');
-  document.getElementById('mapSection').classList.add('show');
-
-  statusBox.innerHTML = `<div class="status ok">Cálculo completado sobre ${valid.length} vértices (cierre automático $P_N \\to P_1$ integrado).</div>`;
-  resultsBody.innerHTML = '';
-  let perimeter = 0;
-
-  for(let i=0; i<valid.length-1; i++){
-    const a = valid[i], b = valid[i+1];
-    const dist = Math.hypot(b.x-a.x, b.y-a.y);
-    const az = calcularAzimut(a.x, a.y, b.x, b.y);
-    perimeter += dist;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${a.name} → ${b.name}</td><td>${dist.toFixed(3)}</td><td>${decimalToDms(az)} (${az.toFixed(4)}°)</td>`;
-    resultsBody.appendChild(tr);
-  }
-
-  let closureError = 0;
-  let precisionStr = 'N/A';
-  let area = 0;
-
-  if(valid.length >= 3){
-    const first = valid[0], last = valid[valid.length-1];
-    const closingDist = Math.hypot(first.x - last.x, first.y - last.y);
-    const closingAz = calcularAzimut(last.x, last.y, first.x, first.y);
-    perimeter += closingDist;
-
-    const trClose = document.createElement('tr');
-    trClose.style.background = 'rgba(184,134,11,0.08)';
-    trClose.innerHTML = `<td><strong>${last.name} → ${first.name} (Cierre)</strong></td><td><strong>${closingDist.toFixed(3)}</strong></td><td><strong>${decimalToDms(closingAz)} (${closingAz.toFixed(4)}°)</strong></td>`;
-    resultsBody.appendChild(trClose);
-
-    const dx = last.x - first.x;
-    const dy = last.y - first.y;
-    closureError = Math.hypot(dx, dy);
-    let precisionDenom = Math.round(perimeter / (closureError || 1));
-    precisionStr = `1 : ${precisionDenom > 0 ? precisionDenom.toLocaleString() : 1}`;
-
-    let sum1 = 0, sum2 = 0;
-    for(let i=0; i<valid.length; i++){
-      let next = (i + 1) % valid.length;
-      sum1 += valid[i].x * valid[next].y;
-      sum2 += valid[i].y * valid[next].x;
-    }
-    area = Math.abs(sum1 - sum2) / 2.0;
-  }
-
-  document.getElementById('outPerimeter').textContent = perimeter.toFixed(3) + ' m';
-  document.getElementById('outArea').textContent = area > 0 ? `${area.toFixed(2)} m² (${(area/10000).toFixed(4)} ha)` : '—';
-  document.getElementById('outClosureErr').textContent = closureError.toFixed(3) + ' m';
-  document.getElementById('outPrecision').textContent = precisionStr;
-
-  metricsGrid.style.display = 'grid';
-  resultsTable.style.display = 'table';
-  renderDiagram(valid);
-
-  resultDiagramBox.style.display = 'block';
-  renderResultDiagram(valid);
-
-  updateMap(valid);
-
-  lastValidPoints = valid;
-  const dxfBtn = document.getElementById('dxfBtn');
-  const dxfHint = document.getElementById('dxfHint');
-  if(valid.length >= 3){
-    dxfBtn.style.display = 'block';
-    dxfHint.style.display = 'block';
-    dxfHint.textContent = `Polígono cerrado de ${valid.length} vértices (cierre P${valid.length}→P1 incluido), listo para DXF.`;
-  } else {
-    dxfBtn.style.display = 'none';
-    dxfHint.style.display = 'block';
-    dxfHint.textContent = 'Se necesitan mínimo 3 puntos para cerrar el polígono y habilitar DXF.';
-  }
-}
-
-let lastValidPoints = [];
-
-function renderResultDiagram(valid){
+// --- DIBUJO SVG PLANO LOCAL ---
+function renderDiagramaSVG(pts) {
   const svg = document.getElementById('resultDiagram');
-  if(valid.length < 2){ svg.innerHTML = ''; return; }
-  const xs = valid.map(p=>p.x), ys = valid.map(p=>p.y);
-  const minX=Math.min(...xs), maxX=Math.max(...xs);
-  const minY=Math.min(...ys), maxY=Math.max(...ys);
   const pad = 40, w = 400, h = 400;
-  const spanX = (maxX-minX)||1, spanY=(maxY-minY)||1;
-  const scale = Math.min((w-2*pad)/spanX, (h-2*pad)/spanY);
-  function proj(p){
-    const px = pad + (p.x-minX)*scale + (w-2*pad-spanX*scale)/2;
-    const py = h - (pad + (p.y-minY)*scale + (h-2*pad-spanY*scale)/2);
-    return {x:px, y:py};
-  }
-  const proj_pts = valid.map(proj);
-  let lines = '';
-  for(let i=0;i<proj_pts.length-1;i++){
-    lines += `<line x1="${proj_pts[i].x}" y1="${proj_pts[i].y}" x2="${proj_pts[i+1].x}" y2="${proj_pts[i+1].y}" stroke="#8B3A2E" stroke-width="2"/>`;
-  }
-  if(valid.length >= 3){
-    const first = proj_pts[0], last = proj_pts[proj_pts.length-1];
-    lines += `<line x1="${last.x}" y1="${last.y}" x2="${first.x}" y2="${first.y}" stroke="#8B3A2E" stroke-width="2" stroke-dasharray="6 4"/>`;
-  }
-  let dots = '';
-  proj_pts.forEach((p, i) => {
-    dots += `<circle cx="${p.x}" cy="${p.y}" r="5.5" fill="#B8860B" stroke="#1A1A1A" stroke-width="1"/>
-      <text x="${p.x+9}" y="${p.y-8}" font-family="IBM Plex Mono, monospace" font-size="13" fill="#1A1A1A" font-weight="600">${valid[i].name}</text>`;
+  const minX = Math.min(...pts.map(p=>p.x)), maxX = Math.max(...pts.map(p=>p.x));
+  const minY = Math.min(...pts.map(p=>p.y)), maxY = Math.max(...pts.map(p=>p.y));
+  const spanX = (maxX - minX) || 1, spanY = (maxY - minY) || 1;
+  const scale = Math.min((w - 2*pad)/spanX, (h - 2*pad)/spanY);
+  
+  const pProj = pts.map(p => ({
+    x: pad + (p.x - minX)*scale + (w - 2*pad - spanX*scale)/2,
+    y: h - (pad + (p.y - minY)*scale + (h - 2*pad - spanY*scale)/2)
+  }));
+
+  let str = '';
+  // Polígono
+  str += `<polygon points="${pProj.map(p => `${p.x},${p.y}`).join(' ')}" fill="rgba(184,134,11,0.15)" stroke="#8B3A2E" stroke-width="2" />`;
+  // Vértices y Etiquetas
+  pProj.forEach((p, i) => {
+    str += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#B8860B" />`;
+    str += `<text x="${p.x+8}" y="${p.y-6}" font-family="monospace" font-size="12" fill="#1A1A1A">${pts[i].nombre}</text>`;
   });
-  svg.innerHTML = lines + dots;
+  svg.innerHTML = str;
 }
 
-// --- EXPORTACIÓN DXF ---
-function buildDXF(pts){
-  const lines = [];
-  const add = (code, value) => { lines.push(String(code)); lines.push(String(value)); };
-
-  add(0, 'SECTION');
-  add(2, 'ENTITIES');
-
-  add(0, 'POLYLINE');
-  add(8, 'POLIGONO');
-  add(66, 1);
-  add(70, 1);
-  pts.forEach(p => {
-    add(0, 'VERTEX');
-    add(8, 'POLIGONO');
-    add(10, p.x.toFixed(4));
-    add(20, p.y.toFixed(4));
-    add(30, '0.0');
-  });
-  add(0, 'SEQEND');
-
-  pts.forEach(p => {
-    add(0, 'POINT');
-    add(8, 'VERTICES');
-    add(10, p.x.toFixed(4));
-    add(20, p.y.toFixed(4));
-    add(30, '0.0');
-
-    add(0, 'TEXT');
-    add(8, 'ETIQUETAS');
-    add(10, (p.x + 0.5).toFixed(4));
-    add(20, (p.y + 0.5).toFixed(4));
-    add(30, '0.0');
-    add(40, '1.0');
-    add(1, p.name);
-  });
-
-  add(0, 'ENDSEC');
-  add(0, 'EOF');
-
-  return lines.join('\n');
-}
-
-document.getElementById('dxfBtn').addEventListener('click', () => {
-  if(lastValidPoints.length < 3) return;
-  const dxfContent = buildDXF(lastValidPoints);
-  const blob = new Blob([dxfContent], { type: 'application/dxf' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  a.href = url;
-  a.download = `poligono-crtm05-${stamp}.dxf`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-});
-
-// --- CRTM05 (EPSG:5367) -> WGS84 ---
-function crtm05ToLatLon(x, y){
-  const a = 6378137.0;
-  const f = 1/298.257223563;
+// --- TRANSFORMACIÓN CRTM05 a WGS84 ---
+function crtm05ToLatLon(x, y) {
+  const a = 6378137.0, f = 1/298.257223563, k0 = 0.9999, falseE = 500000.0, falseN = 0.0;
   const lon0 = -84.0 * Math.PI/180;
-  const k0 = 0.9999;
-  const falseE = 500000.0;
-  const falseN = 0.0;
-
   const e2 = 2*f - f*f;
   const ep2 = e2 / (1 - e2);
   const e1 = (1 - Math.sqrt(1-e2)) / (1 + Math.sqrt(1-e2));
-
   const M = (y - falseN) / k0;
-  const mu = M / (a*(1 - e2/4 - 3*e2*e2/64 - 5*e2*e2*e2/256));
-
-  const phi1 = mu
-    + (3*e1/2 - 27*Math.pow(e1,3)/32)*Math.sin(2*mu)
-    + (21*e1*e1/16 - 55*Math.pow(e1,4)/32)*Math.sin(4*mu)
-    + (151*Math.pow(e1,3)/96)*Math.sin(6*mu)
-    + (1097*Math.pow(e1,4)/512)*Math.sin(8*mu);
-
+  const mu = M / (a*(1 - e2/4 - 3*e2*e2/64 - 5*Math.pow(e2,3)/256));
+  const phi1 = mu + (3*e1/2 - 27*Math.pow(e1,3)/32)*Math.sin(2*mu) + (21*e1*e1/16 - 55*Math.pow(e1,4)/32)*Math.sin(4*mu) + (151*Math.pow(e1,3)/96)*Math.sin(6*mu);
   const sinphi1 = Math.sin(phi1), cosphi1 = Math.cos(phi1), tanphi1 = Math.tan(phi1);
-
   const N1 = a / Math.sqrt(1 - e2*sinphi1*sinphi1);
-  const T1 = tanphi1*tanphi1;
-  const C1 = ep2 * cosphi1*cosphi1;
   const R1 = a*(1-e2) / Math.pow(1 - e2*sinphi1*sinphi1, 1.5);
   const D = (x - falseE) / (N1*k0);
+  const T1 = tanphi1*tanphi1, C1 = ep2 * cosphi1*cosphi1;
 
-  const lat = phi1 - (N1*tanphi1/R1) * (
-    D*D/2
-    - (5+3*T1+10*C1-4*C1*C1-9*ep2) * Math.pow(D,4)/24
-    + (61+90*T1+298*C1+45*T1*T1-252*ep2-3*C1*C1) * Math.pow(D,6)/720
-  );
-
-  const lon = lon0 + (
-    D - (1+2*T1+C1)*Math.pow(D,3)/6
-    + (5-2*C1+28*T1-3*C1*C1+8*ep2+24*T1*T1)*Math.pow(D,5)/120
-  ) / cosphi1;
-
-  return { lat: lat*180/Math.PI, lon: lon*180/Math.PI };
+  const lat = phi1 - (N1*tanphi1/R1) * (D*D/2 - (5+3*T1+10*C1-4*C1*C1-9*ep2)*Math.pow(D,4)/24);
+  const lon = lon0 + (D - (1+2*T1+C1)*Math.pow(D,3)/6) / cosphi1;
+  return { lat: lat * 180/Math.PI, lon: lon * 180/Math.PI };
 }
 
-// --- MAPA LEAFLET CON CAPAS BASE Y WMS ---
-let leafletMap = null;
-let mapPolygonLayer = null;
-let mapMarkersLayer = null;
+// --- LEAFLET MAPA ROBUSTO (WMS OPCIONAL) ---
+function actualizarMapa(ptsValidos) {
+  if (typeof L === 'undefined') return;
 
-function updateMap(valid){
-  if(typeof L === 'undefined') return;
-
-  const latlngs = valid.map(p => {
-    const {lat, lon} = crtm05ToLatLon(p.x, p.y);
-    return { lat, lon, name: p.name, x: p.x, y: p.y };
+  const wgs = ptsValidos.map(p => {
+    const latLon = crtm05ToLatLon(p.x, p.y);
+    return { ...p, lat: latLon.lat, lon: latLon.lon };
   });
 
-  if(!leafletMap){
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21, attribution: '© OpenStreetMap' });
-    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21, attribution: 'Tiles &copy; Esri' });
-
-    const wmsLayer = L.tileLayer.wms('https://geostec.crt.or.cr/geoserver/wms?', {
-      layers: 'crt:limites',
-      format: 'image/png',
-      transparent: true,
-      attribution: 'SNIT Costa Rica WMS'
+  if (!mapaLeaflet) {
+    // 1. Inicializar bases rápidas
+    mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21 });
+    mapaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21 });
+    
+    // 2. Definir capa WMS (PERO NO SE AGREGA AÚN)
+    capaWMS = L.tileLayer.wms('https://geostec.crt.or.cr/geoserver/wms?', {
+      layers: 'crt:limites', format: 'image/png', transparent: true
     });
 
-    leafletMap = L.map('mapView', {
-      layers: [satellite]
-    });
-
-    const baseLayers = {
-      "Satelital (Esri)": satellite,
-      "Calles (OpenStreetMap)": osm
-    };
-
-    const overlays = {
-      "WMS SNIT Costa Rica": wmsLayer
-    };
-
-    L.control.layers(baseLayers, overlays).addTo(leafletMap);
-
-    mapPolygonLayer = L.layerGroup().addTo(leafletMap);
-    mapMarkersLayer = L.layerGroup().addTo(leafletMap);
+    // 3. Crear mapa obligando vista Satelital base por defecto
+    mapaLeaflet = L.map('mapView', { layers: [mapaSatelite] });
+    L.control.layers({"Satélite (Rápido)": mapaSatelite, "OSM (Calles)": mapaCalles}).addTo(mapaLeaflet);
+    
+    capaPoligono = L.layerGroup().addTo(mapaLeaflet);
   }
 
-  mapPolygonLayer.clearLayers();
-  mapMarkersLayer.clearLayers();
+  capaPoligono.clearLayers();
+  
+  const latLngsMap = wgs.map(p => [p.lat, p.lon]);
+  
+  // Dibujar Polígono
+  L.polygon(latLngsMap, { color: '#D6A421', weight: 3, fillColor: '#B8860B', fillOpacity: 0.4 }).addTo(capaPoligono);
+  
+  // Marcadores
+  wgs.forEach(p => {
+    L.circleMarker([p.lat, p.lon], { radius:5, color:'#111', fillColor:'#D6A421', fillOpacity:1, weight:1 })
+     .bindPopup(`<b>${p.nombre}</b><br>X: ${p.x.toFixed(2)}<br>Y: ${p.y.toFixed(2)}`)
+     .addTo(capaPoligono);
+  });
 
-  const latlngPairs = latlngs.map(p => [p.lat, p.lon]);
+  // Ajustar vista
+  mapaLeaflet.invalidateSize();
+  mapaLeaflet.fitBounds(L.latLngBounds(latLngsMap), { padding: [40, 40] });
+}
 
-  if(latlngs.length >= 3){
-    L.polygon(latlngPairs, { color:'#D6A421', weight:3, fillColor:'#B8860B', fillOpacity:0.35 }).addTo(mapPolygonLayer);
+// Lógica de Toggle WMS Opcional (Evita Cuelgues)
+document.getElementById('wmsToggle').addEventListener('change', function(e) {
+  if(!mapaLeaflet) return;
+  if(e.target.checked) {
+    mapaLeaflet.addLayer(capaWMS);
   } else {
-    L.polyline(latlngPairs, { color:'#D6A421', weight:3 }).addTo(mapPolygonLayer);
+    mapaLeaflet.removeLayer(capaWMS);
   }
+});
 
-  latlngs.forEach(p => {
-    L.circleMarker([p.lat, p.lon], { radius:6, color:'#1A1A1A', weight:1.5, fillColor:'#D6A421', fillOpacity:1 })
-      .bindPopup(`<strong>${p.name}</strong><br>X (Este): ${p.x.toFixed(3)}<br>Y (Norte): ${p.y.toFixed(3)}<br>Lat: ${p.lat.toFixed(6)}<br>Lon: ${p.lon.toFixed(6)}`)
-      .addTo(mapMarkersLayer);
+// --- EXPORTAR A DXF ---
+document.getElementById('dxfBtn').addEventListener('click', () => {
+  const validos = puntos.filter(p => typeof p.x === 'number' && typeof p.y === 'number' && !isNaN(p.x));
+  if(validos.length < 3) return;
+
+  const lines = ['0','SECTION','2','ENTITIES','0','POLYLINE','8','POLIGONO_CRTM05','66','1','70','1'];
+  validos.forEach(p => lines.push('0','VERTEX','8','POLIGONO_CRTM05','10',p.x.toFixed(4),'20',p.y.toFixed(4),'30','0.0'));
+  lines.push('0','SEQEND');
+
+  validos.forEach(p => {
+    lines.push('0','TEXT','8','ETIQUETAS','10',(p.x+0.5).toFixed(4),'20',(p.y+0.5).toFixed(4),'30','0.0','40','1.5','1',p.nombre);
+    lines.push('0','POINT','8','PUNTOS','10',p.x.toFixed(4),'20',p.y.toFixed(4),'30','0.0');
   });
+  lines.push('0','ENDSEC','0','EOF');
 
-  const bounds = L.latLngBounds(latlngPairs);
-  leafletMap.invalidateSize();
-  leafletMap.fitBounds(bounds, { padding: [30,30], maxZoom: 20 });
-}
+  const blob = new Blob([lines.join('\n')], { type: 'application/dxf' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Levantamiento_CRTM05.dxf';
+  a.click();
+});
+
 </script>
 </body>
 </html>
