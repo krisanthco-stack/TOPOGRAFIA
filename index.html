@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TOPO MAPS PRO · Estabilidad Total</title>
+<title>TOPO MAPS PRO 路 Estabilidad Total</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -29,7 +29,7 @@
   h1 { font-family: 'Spectral', serif; font-size: clamp(28px, 4vw, 42px); margin: 0 0 12px; }
   .lede { font-size: 15px; color: #C9C0AC; max-width: 60ch; line-height: 1.5; margin: 0; }
 
-  /* Tarjetas de Sección */
+  /* Tarjetas de Secci贸n */
   .card { background: var(--paper); color: var(--ink); border-radius: 6px; padding: 24px; margin-bottom: 24px; box-shadow: 0 12px 24px rgba(0,0,0,0.3); }
   .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid #dcd4c3; padding-bottom: 12px; }
   .section-num { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brass); border: 1px solid var(--brass); padding: 2px 6px; border-radius: 3px; }
@@ -89,22 +89,22 @@
 
 <div class="wrap">
   <div class="hero">
-    <p class="eyebrow">Motor Anti-Crash · Topografía Segura</p>
+    <p class="eyebrow">Motor Anti-Crash 路 Topograf铆a Segura</p>
     <h1>TOPO MAPS PRO</h1>
-    <p class="lede">Versión estabilizada. Mapa satelital nativo para evitar cuelgues, WMS desacoplado como opción manual, y motor de procesamiento de imágenes con prevención de memoria.</p>
+    <p class="lede">Versi贸n estabilizada. Mapa satelital nativo para evitar cuelgues, WMS desacoplado como opci贸n manual, y motor de procesamiento de im谩genes con prevenci贸n de memoria.</p>
   </div>
 
-  <!-- SECCIÓN 1: INGRESO DE DATOS -->
+  <!-- SECCI脫N 1: INGRESO DE DATOS -->
   <section class="card">
     <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Ingreso Seguro de Coordenadas</h2></div>
     <div class="action-row">
-      <label class="btn btn-primary" for="excelInput">📊 Cargar Excel/CSV</label>
+      <label class="btn btn-primary" for="excelInput">馃搳 Cargar Excel/CSV</label>
       <input type="file" id="excelInput" accept=".xlsx, .xls, .csv">
       
-      <label class="btn btn-ghost" for="ocrInput">📷 Escaneo OCR Automático</label>
+      <label class="btn btn-ghost" for="ocrInput">馃摲 Escaneo OCR Autom谩tico</label>
       <input type="file" id="ocrInput" accept="image/*" capture="environment">
 
-      <label class="btn btn-ghost" for="clickMapInput" style="background:var(--navy-line); color:var(--paper); border:none;">🎯 Marcar Puntos Manual (Imagen)</label>
+      <label class="btn btn-ghost" for="clickMapInput" style="background:var(--navy-line); color:var(--paper); border:none;">馃幆 Marcar Puntos Manual (Imagen)</label>
       <input type="file" id="clickMapInput" accept="image/*">
     </div>
 
@@ -116,52 +116,52 @@
     <div class="status-msg" id="statusMsg">Listo para recibir datos.</div>
   </section>
 
-  <!-- SECCIÓN 2: TABLA DE PUNTOS -->
+  <!-- SECCI脫N 2: TABLA DE PUNTOS -->
   <section class="card">
-    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Libreta de Vértices</h2></div>
+    <div class="section-head"><span class="section-num">02</span><h2 class="section-title">Libreta de V茅rtices</h2></div>
     <table id="pointsTable">
-      <thead><tr><th>Vértice</th><th>Este (X) [m]</th><th>Norte (Y) [m]</th><th>Acción</th></tr></thead>
+      <thead><tr><th>V茅rtice</th><th>Este (X) [m]</th><th>Norte (Y) [m]</th><th>Acci贸n</th></tr></thead>
       <tbody id="pointsBody"></tbody>
     </table>
     <div style="display:flex; gap:10px; margin-top:16px;">
-      <button class="btn btn-ghost" style="padding:8px 12px;" onclick="addPointRow()">+ Añadir Fila</button>
-      <button class="btn btn-primary" style="flex:1;" onclick="procesarPoligono()">🔄 Calcular Cierre y Mapa</button>
+      <button class="btn btn-ghost" style="padding:8px 12px;" onclick="addPointRow()">+ A帽adir Fila</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="procesarPoligono()">馃攧 Calcular Cierre y Mapa</button>
     </div>
   </section>
 
-  <!-- SECCIÓN 3: MAPA SEGURO -->
+  <!-- SECCI脫N 3: MAPA SEGURO -->
   <section class="card" id="mapSection" style="display:none;">
-    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Cartografía Georreferenciada</h2></div>
+    <div class="section-head"><span class="section-num">03</span><h2 class="section-title">Cartograf铆a Georreferenciada</h2></div>
     
     <div class="map-controls">
-      <span style="font-size:13px; color:var(--muted);">Vista principal estable: Satélite / OSM.</span>
+      <span style="font-size:13px; color:var(--muted);">Vista principal estable: Sat茅lite / OSM.</span>
       <label class="toggle-wms">
         <input type="checkbox" id="wmsToggle">
-        Cargar Capa WMS Catastral (Opcional - Requiere Internet Rápido)
+        Cargar Capa WMS Catastral (Opcional - Requiere Internet R谩pido)
       </label>
     </div>
     <div id="mapView"></div>
   </section>
 
-  <!-- SECCIÓN 4: RESULTADOS TOPOGRÁFICOS -->
+  <!-- SECCI脫N 4: RESULTADOS TOPOGR脕FICOS -->
   <section class="card" id="resultsSection" style="display:none;">
-    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Análisis Analítico y Exportación</h2></div>
+    <div class="section-head"><span class="section-num">04</span><h2 class="section-title">An谩lisis Anal铆tico y Exportaci贸n</h2></div>
     
     <div class="metrics-grid">
-      <div class="metric-card"><span>Perímetro</span><strong id="outPerimeter">—</strong></div>
-      <div class="metric-card"><span>Área de Polígono</span><strong id="outArea">—</strong></div>
-      <div class="metric-card"><span>Error de Cierre ($E_L$)</span><strong id="outClosure">—</strong></div>
-      <div class="metric-card"><span>Precisión Relativa</span><strong id="outPrecision">—</strong></div>
+      <div class="metric-card"><span>Per铆metro</span><strong id="outPerimeter">鈥�</strong></div>
+      <div class="metric-card"><span>脕rea de Pol铆gono</span><strong id="outArea">鈥�</strong></div>
+      <div class="metric-card"><span>Error de Cierre ($E_L$)</span><strong id="outClosure">鈥�</strong></div>
+      <div class="metric-card"><span>Precisi贸n Relativa</span><strong id="outPrecision">鈥�</strong></div>
     </div>
 
     <svg viewBox="0 0 400 400" id="resultDiagram"></svg>
 
-    <button class="btn btn-primary" style="width:100%;" id="dxfBtn">⬇ Exportar a DXF (AutoCAD/Civil3D)</button>
+    <button class="btn btn-primary" style="width:100%;" id="dxfBtn">猬� Exportar a DXF (AutoCAD/Civil3D)</button>
   </section>
 
 </div>
 
-<!-- MODAL PARA OPCIÓN 3 -->
+<!-- MODAL PARA OPCI脫N 3 -->
 <div class="modal-overlay" id="pointModal">
   <div class="modal-card">
     <h3>Definir Coordenada</h3>
@@ -178,7 +178,7 @@
   </div>
 </div>
 
-<!-- Librerías Externas Seguras -->
+<!-- Librer铆as Externas Seguras -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -194,7 +194,7 @@ let capaWMS = null;
 let mapaSatelite = null;
 let mapaCalles = null;
 
-// --- INICIALIZACIÓN DE TABLA ---
+// --- INICIALIZACI脫N DE TABLA ---
 function addPointRow(nombre='', x='', y='') {
   contadorId++;
   const id = 'pt_' + contadorId;
@@ -228,10 +228,10 @@ function eliminarPt(id) {
   renderTabla();
 }
 
-// Inicializar 4 puntos vacíos
+// Inicializar 4 puntos vac铆os
 [1,2,3,4].forEach(() => addPointRow());
 
-// --- OPCIÓN 1: EXCEL (Aislado en Try/Catch) ---
+// --- OPCI脫N 1: EXCEL (Aislado en Try/Catch) ---
 document.getElementById('excelInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if(!file) return;
@@ -252,13 +252,13 @@ document.getElementById('excelInput').addEventListener('change', function(e) {
       });
       status.innerHTML = `<span style="color:var(--ok)">Excel cargado: ${puntos.length} puntos.</span>`;
     } catch (err) {
-      status.innerHTML = `<span style="color:var(--err)">Error leyendo Excel: Archivo corrupto o no válido.</span>`;
+      status.innerHTML = `<span style="color:var(--err)">Error leyendo Excel: Archivo corrupto o no v谩lido.</span>`;
     }
   };
   reader.readAsArrayBuffer(file);
 });
 
-// --- OPCIÓN 2: OCR PROTEGIDO CONTRA MEMORIA (Downsampling) ---
+// --- OPCI脫N 2: OCR PROTEGIDO CONTRA MEMORIA (Downsampling) ---
 document.getElementById('ocrInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if(!file) return;
@@ -266,12 +266,12 @@ document.getElementById('ocrInput').addEventListener('change', function(e) {
   const status = document.getElementById('statusMsg');
   const barra = document.getElementById('ocrProgressBar');
   document.getElementById('ocrProgress').style.display = 'block';
-  status.textContent = "Preparando imagen (Prevención de RAM)...";
+  status.textContent = "Preparando imagen (Prevenci贸n de RAM)...";
 
   const reader = new FileReader();
   reader.onload = e => {
     img.onload = async () => {
-      // Compresión de Canvas para evitar cuelgues
+      // Compresi贸n de Canvas para evitar cuelgues
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const scale = Math.min(1, 1800 / Math.max(img.width, img.height)); 
@@ -291,19 +291,19 @@ document.getElementById('ocrInput').addEventListener('change', function(e) {
       document.getElementById('markersContainer').innerHTML = '';
 
       if (typeof Tesseract === 'undefined') {
-        status.innerHTML = '<span style="color:var(--err)">Tesseract no cargó. Revisa tu conexión.</span>';
+        status.innerHTML = '<span style="color:var(--err)">Tesseract no carg贸. Revisa tu conexi贸n.</span>';
         return;
       }
 
       try {
-        status.textContent = "Analizando topografía OCR...";
+        status.textContent = "Analizando topograf铆a OCR...";
         barra.style.width = '30%';
         
         const result = await Tesseract.recognize(dataUrl, 'spa+eng', {
           logger: m => { if(m.status === 'recognizing text') barra.style.width = (30 + Math.round(m.progress * 70)) + '%'; }
         });
         
-        // Expresión Regular Mejorada
+        // Expresi贸n Regular Mejorada
         const cleanTxt = result.data.text.replace(/,/g, '.').replace(/[OoS]/g, m => m === 'S'?'5':'0');
         const nums = cleanTxt.match(/\b\d{5,7}(?:\.\d{1,4})?\b/g) || [];
         
@@ -315,12 +315,12 @@ document.getElementById('ocrInput').addEventListener('change', function(e) {
           for(let i=0; i+1 < validCoords.length; i+=2) {
             addPointRow('', validCoords[i], validCoords[i+1]);
           }
-          status.innerHTML = `<span style="color:var(--ok)">OCR Exitoso: ${puntos.length} vértices hallados.</span>`;
+          status.innerHTML = `<span style="color:var(--ok)">OCR Exitoso: ${puntos.length} v茅rtices hallados.</span>`;
         } else {
-          status.innerHTML = `<span style="color:var(--err)">No se detectaron coordenadas métricas de Costa Rica.</span>`;
+          status.innerHTML = `<span style="color:var(--err)">No se detectaron coordenadas m茅tricas de Costa Rica.</span>`;
         }
       } catch (err) {
-        status.innerHTML = `<span style="color:var(--err)">OCR Falló: Imagen demasiado compleja. Usa opción 3.</span>`;
+        status.innerHTML = `<span style="color:var(--err)">OCR Fall贸: Imagen demasiado compleja. Usa opci贸n 3.</span>`;
       } finally {
         document.getElementById('ocrProgress').style.display = 'none';
       }
@@ -330,7 +330,7 @@ document.getElementById('ocrInput').addEventListener('change', function(e) {
   reader.readAsDataURL(file);
 });
 
-// --- OPCIÓN 3: VISOR INTERACTIVO POR CLIC ---
+// --- OPCI脫N 3: VISOR INTERACTIVO POR CLIC ---
 document.getElementById('clickMapInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if(!file) return;
@@ -343,7 +343,7 @@ document.getElementById('clickMapInput').addEventListener('change', function(e) 
     const imgEl = document.getElementById('previewImg');
     imgEl.src = evt.target.result;
     document.getElementById('previewBox').style.display = 'inline-block';
-    status.innerHTML = "🎯 Clic sobre la imagen para clavar vértices.";
+    status.innerHTML = "馃幆 Clic sobre la imagen para clavar v茅rtices.";
     
     imgEl.onclick = function(event) {
       const rect = imgEl.getBoundingClientRect();
@@ -363,7 +363,7 @@ function guardarPuntoClic() {
   const x = parseFloat(document.getElementById('modalX').value);
   const y = parseFloat(document.getElementById('modalY').value);
   
-  if (isNaN(x) || isNaN(y)) { alert('Coordenadas inválidas.'); return; }
+  if (isNaN(x) || isNaN(y)) { alert('Coordenadas inv谩lidas.'); return; }
   
   addPointRow(nombre, x, y);
   
@@ -375,14 +375,14 @@ function guardarPuntoClic() {
   document.getElementById('markersContainer').appendChild(marker);
   
   document.getElementById('pointModal').style.display = 'none';
-  document.getElementById('statusMsg').innerHTML = `<span style="color:var(--ok)">Vértice ${nombre} fijado.</span>`;
+  document.getElementById('statusMsg').innerHTML = `<span style="color:var(--ok)">V茅rtice ${nombre} fijado.</span>`;
 }
 
-// --- CÁLCULO Y MAPEO CENTRALIZADO ---
+// --- C脕LCULO Y MAPEO CENTRALIZADO ---
 function procesarPoligono() {
   const validos = puntos.filter(p => typeof p.x === 'number' && typeof p.y === 'number' && !isNaN(p.x) && !isNaN(p.y));
   if (validos.length < 3) {
-    alert('Se requieren al menos 3 coordenadas completas (X, Y) para calcular y cerrar un polígono.');
+    alert('Se requieren al menos 3 coordenadas completas (X, Y) para calcular y cerrar un pol铆gono.');
     return;
   }
   
@@ -390,13 +390,13 @@ function procesarPoligono() {
   document.getElementById('mapSection').style.display = 'block';
   document.getElementById('resultsSection').style.display = 'block';
 
-  // Analítica Matemática (Área Gauss, Perímetro)
+  // Anal铆tica Matem谩tica (脕rea Gauss, Per铆metro)
   let perimetro = 0;
   let s1 = 0, s2 = 0;
   
   for(let i=0; i < validos.length; i++) {
     const actual = validos[i];
-    const sgte = validos[(i + 1) % validos.length]; // Cierre implícito
+    const sgte = validos[(i + 1) % validos.length]; // Cierre impl铆cito
     
     perimetro += Math.hypot(sgte.x - actual.x, sgte.y - actual.y);
     s1 += actual.x * sgte.y;
@@ -404,16 +404,16 @@ function procesarPoligono() {
   }
   const area = Math.abs(s1 - s2) / 2;
   
-  // Error Lineal (Cierre real P1 -> P_ultimo vs Teoría)
-  // Como estamos forzando figura cerrada, si el input es un perímetro cerrado real tomado en campo, el primer y último punto ingresado deberían ser iguales. Si no, es un polígono dibujado por vértices perimetrales. 
-  // Para cálculo de E_L real en libreta abierta:
+  // Error Lineal (Cierre real P1 -> P_ultimo vs Teor铆a)
+  // Como estamos forzando figura cerrada, si el input es un per铆metro cerrado real tomado en campo, el primer y 煤ltimo punto ingresado deber铆an ser iguales. Si no, es un pol铆gono dibujado por v茅rtices perimetrales. 
+  // Para c谩lculo de E_L real en libreta abierta:
   const pInicio = validos[0];
   const pFin = validos[validos.length - 1];
   const cierreError = Math.hypot(pFin.x - pInicio.x, pFin.y - pInicio.y);
-  // Nota: En polígonos cerrados por coordenadas estáticas, el error puede ser 0 o la distancia del cierre. Se asume cierre geométrico estricto.
+  // Nota: En pol铆gonos cerrados por coordenadas est谩ticas, el error puede ser 0 o la distancia del cierre. Se asume cierre geom茅trico estricto.
 
   document.getElementById('outPerimeter').textContent = perimetro.toFixed(3) + ' m';
-  document.getElementById('outArea').textContent = area.toFixed(2) + ' m²';
+  document.getElementById('outArea').textContent = area.toFixed(2) + ' m虏';
   document.getElementById('outClosure').textContent = cierreError.toFixed(3) + ' m';
   document.getElementById('outPrecision').textContent = cierreError > 0 ? `1 : ${Math.round(perimetro/cierreError).toLocaleString()}` : 'Perfecto';
 
@@ -439,9 +439,9 @@ function renderDiagramaSVG(pts) {
   }));
 
   let str = '';
-  // Polígono
+  // Pol铆gono
   str += `<polygon points="${pProj.map(p => `${p.x},${p.y}`).join(' ')}" fill="rgba(184,134,11,0.15)" stroke="#8B3A2E" stroke-width="2" />`;
-  // Vértices y Etiquetas
+  // V茅rtices y Etiquetas
   pProj.forEach((p, i) => {
     str += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#B8860B" />`;
     str += `<text x="${p.x+8}" y="${p.y-6}" font-family="monospace" font-size="12" fill="#1A1A1A">${pts[i].nombre}</text>`;
@@ -449,7 +449,7 @@ function renderDiagramaSVG(pts) {
   svg.innerHTML = str;
 }
 
-// --- TRANSFORMACIÓN CRTM05 a WGS84 ---
+// --- TRANSFORMACI脫N CRTM05 a WGS84 ---
 function crtm05ToLatLon(x, y) {
   const a = 6378137.0, f = 1/298.257223563, k0 = 0.9999, falseE = 500000.0, falseN = 0.0;
   const lon0 = -84.0 * Math.PI/180;
@@ -480,18 +480,18 @@ function actualizarMapa(ptsValidos) {
   });
 
   if (!mapaLeaflet) {
-    // 1. Inicializar bases rápidas
+    // 1. Inicializar bases r谩pidas
     mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21 });
     mapaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21 });
     
-    // 2. Definir capa WMS (PERO NO SE AGREGA AÚN)
+    // 2. Definir capa WMS (PERO NO SE AGREGA A脷N)
     capaWMS = L.tileLayer.wms('https://geostec.crt.or.cr/geoserver/wms?', {
       layers: 'crt:limites', format: 'image/png', transparent: true
     });
 
     // 3. Crear mapa obligando vista Satelital base por defecto
     mapaLeaflet = L.map('mapView', { layers: [mapaSatelite] });
-    L.control.layers({"Satélite (Rápido)": mapaSatelite, "OSM (Calles)": mapaCalles}).addTo(mapaLeaflet);
+    L.control.layers({"Sat茅lite (R谩pido)": mapaSatelite, "OSM (Calles)": mapaCalles}).addTo(mapaLeaflet);
     
     capaPoligono = L.layerGroup().addTo(mapaLeaflet);
   }
@@ -500,7 +500,7 @@ function actualizarMapa(ptsValidos) {
   
   const latLngsMap = wgs.map(p => [p.lat, p.lon]);
   
-  // Dibujar Polígono
+  // Dibujar Pol铆gono
   L.polygon(latLngsMap, { color: '#D6A421', weight: 3, fillColor: '#B8860B', fillOpacity: 0.4 }).addTo(capaPoligono);
   
   // Marcadores
@@ -515,7 +515,7 @@ function actualizarMapa(ptsValidos) {
   mapaLeaflet.fitBounds(L.latLngBounds(latLngsMap), { padding: [40, 40] });
 }
 
-// Lógica de Toggle WMS Opcional (Evita Cuelgues)
+// L贸gica de Toggle WMS Opcional (Evita Cuelgues)
 document.getElementById('wmsToggle').addEventListener('change', function(e) {
   if(!mapaLeaflet) return;
   if(e.target.checked) {
